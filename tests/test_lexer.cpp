@@ -1,4 +1,4 @@
-#include "../lexer/mod.cpp"
+#include "../lexer/mod.hpp"
 #include <iostream>
 #include <cassert>
 #include <vector>
