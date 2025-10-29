@@ -1,4 +1,4 @@
-#include "../lexer/mod.cpp"
+#include "../lexer/lexer.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
