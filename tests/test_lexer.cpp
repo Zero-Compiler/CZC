@@ -270,9 +270,9 @@ void test_escaped_strings()
 
     assert(tokens.size() == 3); // 2 strings + EOF
     assert(tokens[0].token_type == TokenType::String);
-    assert(tokens[0].value == "hello\\nworld");
+    assert(tokens[0].value == "hello\nworld");
     assert(tokens[1].token_type == TokenType::String);
-    assert(tokens[1].value == "test\\\"quote");
+    assert(tokens[1].value == "test\"quote");
 
     std::cout << "Escaped string test passed" << std::endl;
 }
