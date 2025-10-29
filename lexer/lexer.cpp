@@ -356,7 +356,6 @@ Token Lexer::read_char()
     return Token(TokenType::Char, value, token_line, token_column);
 }
 
-
 Lexer::Lexer(const std::string &input_str)
 {
     input = std::vector<char>(input_str.begin(), input_str.end());
