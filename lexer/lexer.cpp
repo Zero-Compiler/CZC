@@ -452,56 +452,40 @@ Token Lexer::read_string()
             {
             case 'n':
                 value += '\n';
-                position++;
-                break;
+                advance();
+                continue;
             case 't':
                 value += '\t';
-                position++;
-                break;
+                advance();
+                continue;
             case 'r':
                 value += '\r';
-                position++;
-                break;
+                advance();
+                continue;
             case '\\':
                 value += '\\';
-                position++;
-                break;
+                advance();
+                continue;
             case '"':
                 value += '"';
-                position++;
-                break;
+                advance();
+                continue;
             case '\'':
                 value += '\'';
-                position++;
-                break;
+                advance();
+                continue;
             case '0':
                 value += '\0';
-                position++;
-                break;
+                advance();
+                continue;
             case 'x':
                 // 十六进制转义 \xHH
-                position++;
-                if (position < input.size())
-                {
-                    current_char = input[position];
-                }
-                else
-                {
-                    current_char = std::nullopt;
-                }
+                advance();
                 value += parse_hex_escape();
                 continue;
             case 'u':
                 // Unicode 转义
-                position++;
-                if (position < input.size())
-                {
-                    current_char = input[position];
-                }
-                else
-                {
-                    current_char = std::nullopt;
-                }
+                advance();
 
                 if (current_char.has_value() && current_char.value() == '{')
                 {
@@ -599,20 +583,9 @@ Token Lexer::read_string()
             default:
                 throw InvalidEscapeSequenceError(escaped, line, column);
             }
-
-            // 单字节前进到下一个字符（对于简单转义）
-            if (position < input.size())
-            {
-                current_char = input[position];
-            }
-            else
-            {
-                current_char = std::nullopt;
-            }
         }
         else
         {
-            // 对于普通字符（包括 UTF-8），直接添加字节并单字节前进
             value += ch;
             position++;
             if (position < input.size())
