@@ -8,7 +8,7 @@ CMD_DIR = cmd
 BUILD_DIR = build
 
 # Source files
-LEXER_SOURCES = $(SRC_DIR)/token.cpp $(SRC_DIR)/lexer.cpp
+LEXER_SOURCES = $(SRC_DIR)/token.cpp $(SRC_DIR)/lexer.cpp $(SRC_DIR)/lexer_error.cpp
 TEST_SOURCES = $(TEST_DIR)/test_lexer.cpp
 MAIN_SOURCES = $(CMD_DIR)/main.cpp
 
