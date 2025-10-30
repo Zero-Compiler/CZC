@@ -414,6 +414,49 @@ void test_hex_binary_octal()
     std::cout << "Hex, binary, octal test passed" << std::endl;
 }
 
+void test_multiline_strings()
+{
+    std::cout << "\n=== Test: Multiline Strings ===" << std::endl;
+    std::string input = "\"Line 1\nLine 2\nLine 3\"";
+    Lexer lexer(input);
+    auto tokens = lexer.tokenize();
+
+    assert(tokens.size() == 2); // 1 string + EOF
+    assert(tokens[0].token_type == TokenType::String);
+    assert(tokens[0].value == "Line 1\nLine 2\nLine 3");
+
+    std::cout << "Multiline string test passed" << std::endl;
+}
+
+void test_raw_strings()
+{
+    std::cout << "\n=== Test: Raw Strings ===" << std::endl;
+    
+    // Test 1: Raw string with backslashes
+    Lexer lexer1(R"(r"C:\Users\file.txt")");
+    auto tokens1 = lexer1.tokenize();
+    assert(tokens1.size() == 2); // 1 string + EOF
+    assert(tokens1[0].token_type == TokenType::String);
+    assert(tokens1[0].value == R"(C:\Users\file.txt)");
+    
+    // Test 2: Raw string with escape sequences (not processed)
+    Lexer lexer2(R"(r"No escape: \n \t \r")");
+    auto tokens2 = lexer2.tokenize();
+    assert(tokens2.size() == 2);
+    assert(tokens2[0].token_type == TokenType::String);
+    assert(tokens2[0].value == R"(No escape: \n \t \r)");
+    
+    // Test 3: Raw multiline string
+    std::string input3 = "r\"Line 1\nLine 2\nLine 3\"";
+    Lexer lexer3(input3);
+    auto tokens3 = lexer3.tokenize();
+    assert(tokens3.size() == 2);
+    assert(tokens3[0].token_type == TokenType::String);
+    assert(tokens3[0].value == "Line 1\nLine 2\nLine 3");
+
+    std::cout << "Raw string test passed" << std::endl;
+}
+
 int main()
 {
     std::cout << "Running Lexer Tests..." << std::endl;
@@ -440,6 +483,8 @@ int main()
         test_unterminated_string();
         test_invalid_escape_sequence();
         test_hex_binary_octal();
+        test_multiline_strings();
+        test_raw_strings();
 
         std::cout << "\n======================" << std::endl;
         std::cout << "All tests passed!" << std::endl;

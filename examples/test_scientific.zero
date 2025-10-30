@@ -1,1 +1,3 @@
-let sci = 1e10 3.14e-5 2.5E+3;
+let sci = 1e10;
+var sci1 = 3.14e-5;
+let sci2 = 2.5E+3;

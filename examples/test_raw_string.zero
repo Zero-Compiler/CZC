@@ -1,0 +1,13 @@
+// 测试 raw string - 不转义
+let path = r"C:\Users\begonia\Documents\file.txt";
+
+// 测试 raw string 多行
+let regex = r"^\d{3}-\d{4}$
+[a-z]+
+\n\t 这些都不转义";
+
+// 测试 raw string 包含引号
+let json = r"{"key": "value"}";
+
+// 测试空 raw string
+let empty = r"";

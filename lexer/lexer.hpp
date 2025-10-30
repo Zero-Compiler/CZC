@@ -23,6 +23,7 @@ private:
     Token read_number();
     Token read_identifier();
     Token read_string();
+    Token read_raw_string();
 
     bool is_utf8_continuation(unsigned char ch) const;
     size_t get_utf8_char_length(unsigned char first_byte) const;
