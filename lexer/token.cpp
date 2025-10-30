@@ -43,8 +43,6 @@ std::string token_type_to_string(TokenType type)
         return "Float";
     case TokenType::String:
         return "String";
-    case TokenType::Char:
-        return "Char";
     case TokenType::Identifier:
         return "Identifier";
     case TokenType::Let:

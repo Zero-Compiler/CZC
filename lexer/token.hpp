@@ -10,7 +10,6 @@ enum class TokenType
     Integer,
     Float,
     String,
-    Char,
     Identifier,
 
     // 关键字

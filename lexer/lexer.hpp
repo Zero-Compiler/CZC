@@ -2,6 +2,7 @@
 #define LEXER_HPP
 
 #include "token.hpp"
+#include "lexer_error.hpp"
 #include <vector>
 #include <optional>
 #include <string>
@@ -22,7 +23,11 @@ private:
     Token read_number();
     Token read_identifier();
     Token read_string();
-    Token read_char();
+
+    bool is_utf8_continuation(unsigned char ch) const;
+    size_t get_utf8_char_length(unsigned char first_byte) const;
+    std::string parse_unicode_escape(size_t digit_count);
+    std::string parse_hex_escape();
 
 public:
     Lexer(const std::string &input_str);

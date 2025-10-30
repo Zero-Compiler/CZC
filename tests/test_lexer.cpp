@@ -1,4 +1,5 @@
-#include "../lexer/mod.hpp"
+#include "../lexer/lexer.hpp"
+#include "../lexer/lexer_error.hpp"
 #include <iostream>
 #include <cassert>
 #include <vector>
@@ -277,6 +278,142 @@ void test_escaped_strings()
     std::cout << "Escaped string test passed" << std::endl;
 }
 
+void test_utf8_strings()
+{
+    std::cout << "\n=== Test: UTF-8 Strings ===" << std::endl;
+    Lexer lexer("let s = \"你好世界😊\";");
+    auto tokens = lexer.tokenize();
+
+    assert(tokens.size() == 6); // let s = "string" ; EOF
+    assert(tokens[0].token_type == TokenType::Let);
+    assert(tokens[1].token_type == TokenType::Identifier);
+    assert(tokens[2].token_type == TokenType::Equal);
+    assert(tokens[3].token_type == TokenType::String);
+    
+    // 打印实际值用于调试
+    std::cout << "Expected: 你好世界😊" << std::endl;
+    std::cout << "Got: " << tokens[3].value << std::endl;
+    
+    assert(tokens[3].value == "你好世界😊");
+    assert(tokens[4].token_type == TokenType::Semicolon);
+
+    std::cout << "UTF-8 string test passed" << std::endl;
+}
+
+void test_invalid_number_literals()
+{
+    std::cout << "\n=== Test: Invalid Number Literals ===" << std::endl;
+
+    // 测试 0x 后没有数字
+    try
+    {
+        Lexer lexer1("0x");
+        auto tokens1 = lexer1.tokenize();
+        std::cerr << "Should have thrown error for '0x'" << std::endl;
+        assert(false);
+    }
+    catch (const LexerError &e)
+    {
+        std::cout << "Correctly caught error for '0x': " << e.what() << std::endl;
+    }
+
+    // 测试 0b 后没有数字
+    try
+    {
+        Lexer lexer2("0b");
+        auto tokens2 = lexer2.tokenize();
+        std::cerr << "Should have thrown error for '0b'" << std::endl;
+        assert(false);
+    }
+    catch (const LexerError &e)
+    {
+        std::cout << "Correctly caught error for '0b': " << e.what() << std::endl;
+    }
+
+    // 测试 0o 后没有数字
+    try
+    {
+        Lexer lexer3("0o");
+        auto tokens3 = lexer3.tokenize();
+        std::cerr << "Should have thrown error for '0o'" << std::endl;
+        assert(false);
+    }
+    catch (const LexerError &e)
+    {
+        std::cout << "Correctly caught error for '0o': " << e.what() << std::endl;
+    }
+
+    // 测试数字后紧跟字母
+    try
+    {
+        Lexer lexer4("123abc");
+        auto tokens4 = lexer4.tokenize();
+        std::cerr << "Should have thrown error for '123abc'" << std::endl;
+        assert(false);
+    }
+    catch (const LexerError &e)
+    {
+        std::cout << "Correctly caught error for '123abc': " << e.what() << std::endl;
+    }
+
+    std::cout << "Invalid number literals test passed" << std::endl;
+}
+
+void test_unterminated_string()
+{
+    std::cout << "\n=== Test: Unterminated String ===" << std::endl;
+
+    try
+    {
+        Lexer lexer("let s = \"unterminated");
+        auto tokens = lexer.tokenize();
+        std::cerr << "Should have thrown error for unterminated string" << std::endl;
+        assert(false);
+    }
+    catch (const UnterminatedStringError &e)
+    {
+        std::cout << "Correctly caught unterminated string error: " << e.what() << std::endl;
+    }
+
+    std::cout << "Unterminated string test passed" << std::endl;
+}
+
+void test_invalid_escape_sequence()
+{
+    std::cout << "\n=== Test: Invalid Escape Sequence ===" << std::endl;
+
+    try
+    {
+        Lexer lexer("let s = \"test\\x\";");
+        auto tokens = lexer.tokenize();
+        std::cerr << "Should have thrown error for invalid escape sequence" << std::endl;
+        assert(false);
+    }
+    catch (const InvalidEscapeSequenceError &e)
+    {
+        std::cout << "Correctly caught invalid escape sequence error: " << e.what() << std::endl;
+    }
+
+    std::cout << "Invalid escape sequence test passed" << std::endl;
+}
+
+void test_hex_binary_octal()
+{
+    std::cout << "\n=== Test: Hex, Binary, Octal Numbers ===" << std::endl;
+    Lexer lexer("0xFF 0b1010 0o77");
+    auto tokens = lexer.tokenize();
+
+    assert(tokens.size() == 4); // 3 numbers + EOF
+    assert(tokens[0].token_type == TokenType::Integer);
+    assert(tokens[0].value == "0xFF");
+    assert(tokens[1].token_type == TokenType::Integer);
+    assert(tokens[1].value == "0b1010");
+    assert(tokens[2].token_type == TokenType::Integer);
+    assert(tokens[2].value == "0o77");
+
+    std::cout << "Hex, binary, octal test passed" << std::endl;
+}
+
 int main()
 {
     std::cout << "Running Lexer Tests..." << std::endl;
@@ -298,6 +435,11 @@ int main()
         test_whitespace_handling();
         test_empty_input();
         test_escaped_strings();
+        test_utf8_strings();
+        test_invalid_number_literals();
+        test_unterminated_string();
+        test_invalid_escape_sequence();
+        test_hex_binary_octal();
 
         std::cout << "\n======================" << std::endl;
         std::cout << "All tests passed!" << std::endl;

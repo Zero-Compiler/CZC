@@ -1,4 +1,5 @@
 #include "../lexer/lexer.hpp"
+#include "../lexer/lexer_error.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -64,7 +65,7 @@ bool tokenize_file(const std::string &input_path)
         std::string output_path = input_path + ".tokens";
 
         // Write tokens to output file
-        std::ofstream output_file(output_path);
+        std::ofstream output_file(output_path, std::ios::binary);
         if (!output_file.is_open())
         {
             std::cerr << "Error: Cannot create output file '" << output_path << "'" << std::endl;
@@ -91,6 +92,11 @@ bool tokenize_file(const std::string &input_path)
         std::cout << "Output saved to: " << output_path << std::endl;
 
         return true;
+    }
+    catch (const LexerError &e)
+    {
+        std::cerr << e.format_error() << std::endl;
+        return false;
     }
     catch (const std::exception &e)
     {
