@@ -1,5 +1,5 @@
-#include "../lexer/lexer.hpp"
-#include "../lexer/lexer_error.hpp"
+#include "czc/lexer/lexer.hpp"
+#include "czc/lexer/lexer_error.hpp"
 #include <iostream>
 #include <cassert>
 #include <vector>
@@ -289,11 +289,8 @@ void test_utf8_strings()
     assert(tokens[1].token_type == TokenType::Identifier);
     assert(tokens[2].token_type == TokenType::Equal);
     assert(tokens[3].token_type == TokenType::String);
-    
-    // 打印实际值用于调试
     std::cout << "Expected: 你好世界😊" << std::endl;
     std::cout << "Got: " << tokens[3].value << std::endl;
-    
     assert(tokens[3].value == "你好世界😊");
     assert(tokens[4].token_type == TokenType::Semicolon);
 
@@ -304,7 +301,6 @@ void test_invalid_number_literals()
 {
     std::cout << "\n=== Test: Invalid Number Literals ===" << std::endl;
 
-    // 测试 0x 后没有数字
     try
     {
         Lexer lexer1("0x");
@@ -317,7 +313,6 @@ void test_invalid_number_literals()
         std::cout << "Correctly caught error for '0x': " << e.what() << std::endl;
     }
 
-    // 测试 0b 后没有数字
     try
     {
         Lexer lexer2("0b");
@@ -330,7 +325,6 @@ void test_invalid_number_literals()
         std::cout << "Correctly caught error for '0b': " << e.what() << std::endl;
     }
 
-    // 测试 0o 后没有数字
     try
     {
         Lexer lexer3("0o");
@@ -343,7 +337,6 @@ void test_invalid_number_literals()
         std::cout << "Correctly caught error for '0o': " << e.what() << std::endl;
     }
 
-    // 测试数字后紧跟字母
     try
     {
         Lexer lexer4("123abc");
@@ -431,21 +424,21 @@ void test_multiline_strings()
 void test_raw_strings()
 {
     std::cout << "\n=== Test: Raw Strings ===" << std::endl;
-    
+
     // Test 1: Raw string with backslashes
     Lexer lexer1(R"(r"C:\Users\file.txt")");
     auto tokens1 = lexer1.tokenize();
     assert(tokens1.size() == 2); // 1 string + EOF
     assert(tokens1[0].token_type == TokenType::String);
     assert(tokens1[0].value == R"(C:\Users\file.txt)");
-    
+
     // Test 2: Raw string with escape sequences (not processed)
     Lexer lexer2(R"(r"No escape: \n \t \r")");
     auto tokens2 = lexer2.tokenize();
     assert(tokens2.size() == 2);
     assert(tokens2[0].token_type == TokenType::String);
     assert(tokens2[0].value == R"(No escape: \n \t \r)");
-    
+
     // Test 3: Raw multiline string
     std::string input3 = "r\"Line 1\nLine 2\nLine 3\"";
     Lexer lexer3(input3);

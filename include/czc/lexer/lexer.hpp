@@ -1,5 +1,5 @@
-#ifndef LEXER_HPP
-#define LEXER_HPP
+#ifndef CZC_LEXER_HPP
+#define CZC_LEXER_HPP
 
 #include "token.hpp"
 #include "lexer_error.hpp"
@@ -36,4 +36,4 @@ public:
     std::vector<Token> tokenize();
 };
 
-#endif // LEXER_HPP
+#endif // CZC_LEXER_HPP

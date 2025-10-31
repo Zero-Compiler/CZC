@@ -1,4 +1,18 @@
 .DS_Store
 
+# Build artifacts
 build/
 *.tokens
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled files
+*.o
+*.a
+*.so
+*.exe
