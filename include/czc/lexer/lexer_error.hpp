@@ -1,5 +1,5 @@
-#ifndef LEXER_ERROR_HPP
-#define LEXER_ERROR_HPP
+#ifndef CZC_LEXER_ERROR_HPP
+#define CZC_LEXER_ERROR_HPP
 
 #include <stdexcept>
 #include <string>
@@ -59,4 +59,4 @@ public:
     std::string format_error() const override;
 };
 
-#endif // LEXER_ERROR_HPP
+#endif // CZC_LEXER_ERROR_HPP

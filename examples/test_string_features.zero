@@ -1,0 +1,21 @@
+// Test 1: Regular multiline string
+let text1 = "Line 1
+Line 2
+Line 3";
+
+// Test 2: Raw string with Windows path
+let path = r"C:\Users\begonia\Documents\GitHub\CZC";
+
+// Test 3: Raw string with regex
+let regex = r"\d+\.\d+";
+
+// Test 4: Raw multiline string
+let raw_text = r"Raw Line 1
+Raw Line 2
+Raw Line 3";
+
+// Test 5: Regular string with escape sequences
+let escaped = "Tab:\there\nNewline:\nhere";
+
+// Test 6: Raw string - no escape processing
+let raw_escaped = r"Tab:\there\nNewline:\nhere";

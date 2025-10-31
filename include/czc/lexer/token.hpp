@@ -1,5 +1,5 @@
-#ifndef TOKEN_HPP
-#define TOKEN_HPP
+#ifndef CZC_LEXER_TOKEN_HPP
+#define CZC_LEXER_TOKEN_HPP
 
 #include <string>
 #include <optional>
@@ -81,4 +81,4 @@ std::optional<TokenType> get_keyword(const std::string &word);
 // Helper function to convert TokenType to string representation
 std::string token_type_to_string(TokenType type);
 
-#endif // TOKEN_HPP
+#endif // CZC_LEXER_TOKEN_HPP

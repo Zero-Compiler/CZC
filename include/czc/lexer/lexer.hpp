@@ -1,5 +1,5 @@
-#ifndef LEXER_HPP
-#define LEXER_HPP
+#ifndef CZC_LEXER_HPP
+#define CZC_LEXER_HPP
 
 #include "token.hpp"
 #include "lexer_error.hpp"
@@ -23,6 +23,7 @@ private:
     Token read_number();
     Token read_identifier();
     Token read_string();
+    Token read_raw_string();
 
     bool is_utf8_continuation(unsigned char ch) const;
     size_t get_utf8_char_length(unsigned char first_byte) const;
@@ -35,4 +36,4 @@ public:
     std::vector<Token> tokenize();
 };
 
-#endif // LEXER_HPP
+#endif // CZC_LEXER_HPP

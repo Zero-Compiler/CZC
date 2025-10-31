@@ -1,4 +1,4 @@
-#include "lexer.hpp"
+#include "czc/lexer/lexer.hpp"
 #include <cctype>
 #include <sstream>
 #include <iomanip>
@@ -429,7 +429,9 @@ Token Lexer::read_string()
 
         if (ch == '\n')
         {
-            throw UnterminatedStringError(token_line, token_column);
+            value += ch;
+            advance();
+            continue;
         }
 
         if (ch == '\\')
@@ -613,6 +615,50 @@ Token Lexer::read_string()
     return Token(TokenType::String, value, token_line, token_column);
 }
 
+Token Lexer::read_raw_string()
+{
+    size_t token_line = line;
+    size_t token_column = column;
+
+    // 跳过 'r'
+    advance();
+
+    if (!current_char.has_value() || current_char.value() != '"')
+    {
+        throw InvalidCharacterError('r', token_line, token_column);
+    }
+
+    advance();
+
+    std::string value;
+    bool terminated = false;
+
+    while (current_char.has_value())
+    {
+        char ch = current_char.value();
+
+        if (ch == '"')
+        {
+            terminated = true;
+            break;
+        }
+
+        // Raw string 中的所有字符都按字面值处理
+        // 包括 \n, \t, \\, \" 等都不转义
+        value += ch;
+        advance();
+    }
+
+    if (!terminated)
+    {
+        throw UnterminatedStringError(token_line, token_column);
+    }
+
+    advance();
+
+    return Token(TokenType::String, value, token_line, token_column);
+}
+
 Lexer::Lexer(const std::string &input_str)
 {
     input = std::vector<char>(input_str.begin(), input_str.end());
@@ -660,6 +706,11 @@ Token Lexer::next_token()
 
     if (std::isalpha(ch) || ch == '_')
     {
+        // 检查是否是 raw string (r"...")
+        if (ch == 'r' && peek(1) == '"')
+        {
+            return read_raw_string();
+        }
         return read_identifier();
     }
 

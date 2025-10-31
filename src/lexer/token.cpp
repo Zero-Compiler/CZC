@@ -1,4 +1,4 @@
-#include "token.hpp"
+#include "czc/lexer/token.hpp"
 
 // Token constructor
 Token::Token(TokenType type, const std::string &val, size_t line, size_t column)
