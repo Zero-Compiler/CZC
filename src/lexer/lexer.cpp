@@ -23,30 +23,31 @@ size_t Lexer::get_utf8_char_length(unsigned char first_byte) const
 
 void Lexer::advance()
 {
-    if (current_char == '\n')
+    if (!current_char.has_value())
+    {
+        return;
+    }
+
+    char ch = current_char.value();
+    
+    // 处理换行符
+    if (ch == '\n')
     {
         line++;
         column = 1;
         position++;
     }
-    else if (current_char.has_value())
+    else
     {
-        // 获取当前字符的 UTF-8 字节长度
-        unsigned char byte = static_cast<unsigned char>(current_char.value());
+        unsigned char byte = static_cast<unsigned char>(ch);
         size_t char_length = get_utf8_char_length(byte);
 
-        // 跳过整个 UTF-8 字符的所有字节
         for (size_t i = 0; i < char_length && position < input.size(); ++i)
         {
             position++;
         }
 
-        // 一个完整的 UTF-8 字符算一列
         column++;
-    }
-    else
-    {
-        position++;
     }
 
     if (position < input.size())
@@ -275,10 +276,19 @@ Token Lexer::read_identifier()
     size_t start = position;
     size_t token_line = line;
     size_t token_column = column;
+    
+    advance();
+    
     while (current_char.has_value())
     {
         char ch = current_char.value();
+        unsigned char uch = static_cast<unsigned char>(ch);
+        
         if (std::isalnum(ch) || ch == '_')
+        {
+            advance();
+        }
+        else if (uch >= 0x80)
         {
             advance();
         }
@@ -314,15 +324,7 @@ std::string Lexer::parse_unicode_escape(size_t digit_count)
         }
 
         hex_digits += ch;
-        position++;
-        if (position < input.size())
-        {
-            current_char = input[position];
-        }
-        else
-        {
-            current_char = std::nullopt;
-        }
+        advance();
     }
 
     unsigned int codepoint;
@@ -381,15 +383,7 @@ std::string Lexer::parse_hex_escape()
         }
 
         hex_digits += ch;
-        position++;
-        if (position < input.size())
-        {
-            current_char = input[position];
-        }
-        else
-        {
-            current_char = std::nullopt;
-        }
+        advance();
     }
 
     if (hex_digits.empty())
@@ -412,7 +406,7 @@ Token Lexer::read_string()
 {
     size_t token_line = line;
     size_t token_column = column;
-    advance();
+    advance(); // 跳过开头的 "
 
     std::string value;
     bool terminated = false;
@@ -436,14 +430,7 @@ Token Lexer::read_string()
 
         if (ch == '\\')
         {
-            position++;
-            if (position >= input.size())
-            {
-                current_char = std::nullopt;
-                throw UnterminatedStringError(token_line, token_column);
-            }
-            current_char = input[position];
-
+            advance(); // 跳过反斜杠
             if (!current_char.has_value())
             {
                 throw UnterminatedStringError(token_line, token_column);
@@ -492,15 +479,7 @@ Token Lexer::read_string()
                 if (current_char.has_value() && current_char.value() == '{')
                 {
                     // \u{XXXXXX} 格式
-                    position++;
-                    if (position < input.size())
-                    {
-                        current_char = input[position];
-                    }
-                    else
-                    {
-                        current_char = std::nullopt;
-                    }
+                    advance(); // 跳过 {
 
                     std::string hex_digits;
                     while (current_char.has_value() && current_char.value() != '}')
@@ -510,15 +489,7 @@ Token Lexer::read_string()
                             throw InvalidEscapeSequenceError('u', line, column);
                         }
                         hex_digits += current_char.value();
-                        position++;
-                        if (position < input.size())
-                        {
-                            current_char = input[position];
-                        }
-                        else
-                        {
-                            current_char = std::nullopt;
-                        }
+                        advance();
                     }
 
                     if (!current_char.has_value() || current_char.value() != '}')
@@ -526,7 +497,7 @@ Token Lexer::read_string()
                         throw InvalidEscapeSequenceError('u', line, column);
                     }
 
-                    position++; // 跳过 }
+                    advance(); // 跳过 }
 
                     if (hex_digits.empty() || hex_digits.length() > 6)
                     {
@@ -566,14 +537,6 @@ Token Lexer::read_string()
                         throw InvalidEscapeSequenceError('u', line, column);
                     }
 
-                    if (position < input.size())
-                    {
-                        current_char = input[position];
-                    }
-                    else
-                    {
-                        current_char = std::nullopt;
-                    }
                     continue;
                 }
                 else
@@ -588,16 +551,15 @@ Token Lexer::read_string()
         }
         else
         {
-            value += ch;
-            position++;
-            if (position < input.size())
+            unsigned char byte = static_cast<unsigned char>(ch);
+            size_t char_length = get_utf8_char_length(byte);
+            
+            for (size_t i = 0; i < char_length && position < input.size(); ++i)
             {
-                current_char = input[position];
+                value += input[position + i];
             }
-            else
-            {
-                current_char = std::nullopt;
-            }
+            
+            advance();
         }
     }
 
@@ -607,10 +569,7 @@ Token Lexer::read_string()
         throw UnterminatedStringError(token_line, token_column);
     }
 
-    if (current_char == '"')
-    {
-        advance();
-    }
+    advance(); // 跳过结尾的 "
 
     return Token(TokenType::String, value, token_line, token_column);
 }
@@ -645,7 +604,16 @@ Token Lexer::read_raw_string()
 
         // Raw string 中的所有字符都按字面值处理
         // 包括 \n, \t, \\, \" 等都不转义
-        value += ch;
+        // 需要读取完整的 UTF-8 字符
+        unsigned char byte = static_cast<unsigned char>(ch);
+        size_t char_length = get_utf8_char_length(byte);
+        
+        // 添加完整的 UTF-8 字符的所有字节
+        for (size_t i = 0; i < char_length && position < input.size(); ++i)
+        {
+            value += input[position + i];
+        }
+        
         advance();
     }
 
@@ -696,6 +664,7 @@ Token Lexer::next_token()
     }
 
     char ch = current_char.value();
+    unsigned char uch = static_cast<unsigned char>(ch);
     size_t token_line = line;
     size_t token_column = column;
 
@@ -704,9 +673,9 @@ Token Lexer::next_token()
         return read_number();
     }
 
-    if (std::isalpha(ch) || ch == '_')
+    if (std::isalpha(ch) || ch == '_' || uch >= 0x80)
     {
-        // 检查是否是 raw string (r"...")
+        // 检查是否是 raw string
         if (ch == 'r' && peek(1) == '"')
         {
             return read_raw_string();

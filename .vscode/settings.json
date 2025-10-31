@@ -2,6 +2,9 @@
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
         ".fantomasignore": "ignore",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "chrono": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp"
     }
 }
