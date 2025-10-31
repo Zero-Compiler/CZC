@@ -623,12 +623,12 @@ Token Lexer::read_raw_string()
     // 跳过 'r'
     advance();
 
-    \ if (!current_char.has_value() || current_char.value() != '"')
+    if (!current_char.has_value() || current_char.value() != '"')
     {
         throw InvalidCharacterError('r', token_line, token_column);
     }
 
-    \ advance();
+    advance();
 
     std::string value;
     bool terminated = false;
