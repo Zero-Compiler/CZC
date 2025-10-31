@@ -41,7 +41,7 @@ install(DIRECTORY include/czc
     DESTINATION include
 )
 
-# 测试（如果有的话）
+# 测试
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
     enable_testing()
