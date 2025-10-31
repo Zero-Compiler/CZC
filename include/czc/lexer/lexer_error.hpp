@@ -53,9 +53,10 @@ class InvalidNumberFormatError : public LexerError
 {
 private:
     std::string number_string;
+    std::string detail_message;
 
 public:
-    InvalidNumberFormatError(const std::string &num_str, size_t line, size_t column);
+    InvalidNumberFormatError(const std::string &num_str, size_t line, size_t column, const std::string &detail = "");
     std::string format_error() const override;
 };
 

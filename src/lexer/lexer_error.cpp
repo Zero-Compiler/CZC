@@ -58,8 +58,8 @@ std::string InvalidCharacterError::format_error() const
 }
 
 // InvalidNumberFormatError - 数字格式错误
-InvalidNumberFormatError::InvalidNumberFormatError(const std::string &num_str, size_t line, size_t column)
-    : LexerError("Invalid number format", line, column), number_string(num_str)
+InvalidNumberFormatError::InvalidNumberFormatError(const std::string &num_str, size_t line, size_t column, const std::string &detail)
+    : LexerError("Invalid number format", line, column), number_string(num_str), detail_message(detail)
 {
 }
 
@@ -68,5 +68,9 @@ std::string InvalidNumberFormatError::format_error() const
     std::ostringstream oss;
     oss << "Lexer error at line " << error_line << ", column " << error_column
         << ": Invalid number format '" << number_string << "'";
+    if (!detail_message.empty())
+    {
+        oss << " (" << detail_message << ")";
+    }
     return oss.str();
 }

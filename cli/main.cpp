@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iomanip>
 
 void print_usage(const char *program_name)
 {
@@ -19,6 +20,46 @@ void print_usage(const char *program_name)
     std::cout << "  " << program_name << " tokenize example.zero" << std::endl;
     std::cout << "  " << program_name << " tokenize file1.zero file2.zero" << std::endl;
     std::cout << "  " << program_name << " tokenize test_*.zero" << std::endl;
+}
+
+static std::string escape_for_output(const std::string &s)
+{
+    std::ostringstream oss;
+    for (unsigned char c : s)
+    {
+        switch (c)
+        {
+        case '\n':
+            oss << "\\n";
+            break;
+        case '\t':
+            oss << "\\t";
+            break;
+        case '\r':
+            oss << "\\r";
+            break;
+        case '\0':
+            oss << "\\0";
+            break;
+        case '\\':
+            oss << "\\\\";
+            break;
+        case '"':
+            oss << "\\\"";
+            break;
+        default:
+            if (c < 0x20)
+            {
+                oss << "\\x" << std::hex << std::setw(2) << std::setfill('0') << (int)c << std::dec;
+            }
+            else
+            {
+                oss << c;
+            }
+            break;
+        }
+    }
+    return oss.str();
 }
 
 bool tokenize_file(const std::string &input_path)
@@ -82,7 +123,7 @@ bool tokenize_file(const std::string &input_path)
             output_file << i << "\t"
                         << tokens[i].line << ":" << tokens[i].column << "\t"
                         << token_type_to_string(tokens[i].token_type) << "\t"
-                        << "\"" << tokens[i].value << "\"" << std::endl;
+                        << "\"" << escape_for_output(tokens[i].value) << "\"" << std::endl;
         }
 
         output_file.close();

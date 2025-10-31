@@ -98,7 +98,7 @@ Token Lexer::read_number()
     size_t start = position;
     size_t token_line = line;
     size_t token_column = column;
-    bool has_dot = false;
+    bool is_float = false;
 
     // 0x, 0b, 0o prefixes
     if (current_char == '0' && peek(1).has_value())
@@ -129,7 +129,7 @@ Token Lexer::read_number()
             // 检查是否至少有一个十六进制数字
             if (position == hex_start)
             {
-                throw InvalidNumberFormatError("0x", token_line, token_column);
+                throw InvalidNumberFormatError("0x", token_line, token_column, "missing hex digits");
             }
 
             std::string value(input.begin() + start, input.begin() + position);
@@ -160,7 +160,7 @@ Token Lexer::read_number()
             // 检查是否至少有一个二进制数字
             if (position == bin_start)
             {
-                throw InvalidNumberFormatError("0b", token_line, token_column);
+                throw InvalidNumberFormatError("0b", token_line, token_column, "missing binary digits");
             }
 
             std::string value(input.begin() + start, input.begin() + position);
@@ -191,7 +191,7 @@ Token Lexer::read_number()
             // 检查是否至少有一个八进制数字
             if (position == oct_start)
             {
-                throw InvalidNumberFormatError("0o", token_line, token_column);
+                throw InvalidNumberFormatError("0o", token_line, token_column, "missing octal digits");
             }
 
             std::string value(input.begin() + start, input.begin() + position);
@@ -206,12 +206,12 @@ Token Lexer::read_number()
         {
             advance();
         }
-        else if (ch == '.' && !has_dot)
+        else if (ch == '.' && !is_float)
         {
             auto next = peek(1);
             if (next.has_value() && std::isdigit(next.value()))
             {
-                has_dot = true;
+                is_float = true;
                 advance();
             }
             else
@@ -228,7 +228,7 @@ Token Lexer::read_number()
     // 检查科学计数法 (e 或 E)
     if (current_char.has_value() && (current_char.value() == 'e' || current_char.value() == 'E'))
     {
-        has_dot = true; // 科学计数法属于浮点数
+        is_float = true; // 科学计数法属于浮点数
         advance();
 
         // 可选的正负号
@@ -248,7 +248,7 @@ Token Lexer::read_number()
         if (position == exp_start)
         {
             std::string value(input.begin() + start, input.begin() + position);
-            throw InvalidNumberFormatError(value, token_line, token_column);
+            throw InvalidNumberFormatError(value, token_line, token_column, "missing exponent digits");
         }
     }
 
@@ -256,12 +256,13 @@ Token Lexer::read_number()
     if (current_char.has_value() && (std::isalpha(current_char.value()) || current_char.value() == '_'))
     {
         std::string value(input.begin() + start, input.begin() + position);
-        throw InvalidNumberFormatError(value + current_char.value(), token_line, token_column);
+        std::string bad = value + current_char.value();
+        throw InvalidNumberFormatError(bad, token_line, token_column, "invalid trailing character in number");
     }
 
     std::string value(input.begin() + start, input.begin() + position);
 
-    if (has_dot)
+    if (is_float)
     {
         return Token(TokenType::Float, value, token_line, token_column);
     }
