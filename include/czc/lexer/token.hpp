@@ -32,19 +32,24 @@ enum class TokenType
     Slash,   // /
     Percent, // %
 
-    // 比较运算符
+    // 赋值与比较运算符
     Equal,        // =
+    PlusEqual,    // +=
+    MinusEqual,   // -=
+    StarEqual,    // *=
+    PercentEqual, // %=
+    SlashEqual,   // /=
     EqualEqual,   // ==
-    Bang,         // !
     BangEqual,    // !=
     Less,         // <
-    LessEqual,    // <=
+    LessEqual,   // <=
     Greater,      // >
     GreaterEqual, // >=
 
     // 逻辑运算符
-    And, // &&
-    Or,  // ||
+    And,  // &&
+    Or,   // ||
+    Bang, // !
 
     // 分隔符
     LeftParen,    // (

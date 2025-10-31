@@ -79,6 +79,16 @@ std::string token_type_to_string(TokenType type)
         return "Percent";
     case TokenType::Equal:
         return "Equal";
+    case TokenType::PlusEqual:
+        return "PlusEqual";
+    case TokenType::MinusEqual:
+        return "MinusEqual";
+    case TokenType::StarEqual:
+        return "StarEqual";
+    case TokenType::PercentEqual:
+        return "PercentEqual";
+    case TokenType::SlashEqual:
+        return "SlashEqual";
     case TokenType::EqualEqual:
         return "EqualEqual";
     case TokenType::Bang:

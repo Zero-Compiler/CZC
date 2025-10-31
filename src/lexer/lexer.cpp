@@ -731,19 +731,59 @@ Token Lexer::next_token()
     switch (ch)
     {
     case '+':
-        token = Token(TokenType::Plus, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::PlusEqual, "+=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Plus, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '-':
-        token = Token(TokenType::Minus, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::MinusEqual, "-=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Minus, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '*':
-        token = Token(TokenType::Star, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::StarEqual, "*=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Star, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '/':
-        token = Token(TokenType::Slash, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::SlashEqual, "/=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Slash, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '%':
-        token = Token(TokenType::Percent, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::PercentEqual, "%=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Percent, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '=':
         if (peek(1) == '=')
