@@ -45,6 +45,8 @@ std::string token_type_to_string(TokenType type)
         return "String";
     case TokenType::Identifier:
         return "Identifier";
+    case TokenType::ScientificExponent:
+        return "ScientificExponent";
     case TokenType::Let:
         return "Let";
     case TokenType::Var:

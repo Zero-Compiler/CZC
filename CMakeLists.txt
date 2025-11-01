@@ -16,6 +16,7 @@ add_library(czc STATIC
     src/lexer/token.cpp
     src/lexer/lexer_error.cpp
     src/lexer/lexer.cpp
+    src/token_preprocessor/token_preprocessor.cpp
 )
 
 target_include_directories(czc PUBLIC

@@ -1,5 +1,6 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/lexer/lexer_error.hpp"
+#include "czc/token_preprocessor/token_preprocessor.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -101,6 +102,7 @@ bool tokenize_file(const std::string &input_path)
     {
         Lexer lexer(content);
         auto tokens = lexer.tokenize();
+        auto processed_tokens = TokenPreprocessor::process(tokens);
 
         std::filesystem::path input_fs_path(input_path);
         std::string output_path = input_path + ".tokens";
@@ -114,21 +116,21 @@ bool tokenize_file(const std::string &input_path)
 
         output_file << "# Tokenization Result" << std::endl;
         output_file << "# Source: " << input_path << std::endl;
-        output_file << "# Total tokens: " << tokens.size() << std::endl;
+        output_file << "# Total tokens: " << processed_tokens.size() << std::endl;
         output_file << "# Format: Index\tLine:Column\tType\tValue" << std::endl;
         output_file << std::endl;
 
-        for (size_t i = 0; i < tokens.size(); i++)
+        for (size_t i = 0; i < processed_tokens.size(); i++)
         {
             output_file << i << "\t"
-                        << tokens[i].line << ":" << tokens[i].column << "\t"
-                        << token_type_to_string(tokens[i].token_type) << "\t"
-                        << "\"" << escape_for_output(tokens[i].value) << "\"" << std::endl;
+                        << processed_tokens[i].line << ":" << processed_tokens[i].column << "\t"
+                        << token_type_to_string(processed_tokens[i].token_type) << "\t"
+                        << "\"" << escape_for_output(processed_tokens[i].value) << "\"" << std::endl;
         }
 
         output_file.close();
 
-        std::cout << "Successfully tokenized " << tokens.size() << " tokens" << std::endl;
+        std::cout << "Successfully tokenized " << processed_tokens.size() << " tokens" << std::endl;
         std::cout << "Output saved to: " << output_path << std::endl;
 
         return true;

@@ -99,6 +99,7 @@ Token Lexer::read_number()
     size_t token_line = line;
     size_t token_column = column;
     bool is_float = false;
+    bool is_scientific = false;
 
     // 0x, 0b, 0o prefixes
     if (current_char == '0' && peek(1).has_value())
@@ -225,10 +226,10 @@ Token Lexer::read_number()
         }
     }
 
-    // 检查科学计数法 (e 或 E)
+    // 检查科学计数法
     if (current_char.has_value() && (current_char.value() == 'e' || current_char.value() == 'E'))
     {
-        is_float = true; // 科学计数法属于浮点数
+        is_scientific = true; // 标记为科学计数法
         advance();
 
         // 可选的正负号
@@ -262,7 +263,11 @@ Token Lexer::read_number()
 
     std::string value(input.begin() + start, input.begin() + position);
 
-    if (is_float)
+    if (is_scientific)
+    {
+        return Token(TokenType::ScientificExponent, value, token_line, token_column);
+    }
+    else if (is_float)
     {
         return Token(TokenType::Float, value, token_line, token_column);
     }

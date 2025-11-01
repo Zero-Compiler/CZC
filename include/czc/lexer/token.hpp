@@ -11,6 +11,7 @@ enum class TokenType
     Float,
     String,
     Identifier,
+    ScientificExponent,
 
     // 关键字
     Let,
