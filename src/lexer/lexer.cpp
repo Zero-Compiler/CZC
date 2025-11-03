@@ -29,7 +29,7 @@ void Lexer::advance()
     }
 
     char ch = current_char.value();
-    
+
     // 处理换行符
     if (ch == '\n')
     {
@@ -133,8 +133,7 @@ Token Lexer::read_number()
                 throw InvalidNumberFormatError("0x", token_line, token_column, "missing hex digits");
             }
 
-            std::string value(input.begin() + start, input.begin() + position);
-            return Token(TokenType::Integer, value, token_line, token_column);
+            return Token(TokenType::Integer, std::string(&input[start], position - start), token_line, token_column);
         }
 
         // Binary: 0b
@@ -164,8 +163,7 @@ Token Lexer::read_number()
                 throw InvalidNumberFormatError("0b", token_line, token_column, "missing binary digits");
             }
 
-            std::string value(input.begin() + start, input.begin() + position);
-            return Token(TokenType::Integer, value, token_line, token_column);
+            return Token(TokenType::Integer, std::string(&input[start], position - start), token_line, token_column);
         }
 
         // Octal: 0o
@@ -195,8 +193,7 @@ Token Lexer::read_number()
                 throw InvalidNumberFormatError("0o", token_line, token_column, "missing octal digits");
             }
 
-            std::string value(input.begin() + start, input.begin() + position);
-            return Token(TokenType::Integer, value, token_line, token_column);
+            return Token(TokenType::Integer, std::string(&input[start], position - start), token_line, token_column);
         }
     }
 
@@ -248,20 +245,20 @@ Token Lexer::read_number()
         // 如果指数部分没有数字，则报错
         if (position == exp_start)
         {
-            std::string value(input.begin() + start, input.begin() + position);
-            throw InvalidNumberFormatError(value, token_line, token_column, "missing exponent digits");
+            throw InvalidNumberFormatError(
+                std::string(&input[start], position - start),
+                token_line, token_column, "missing exponent digits");
         }
     }
 
     // 检查数字后是否紧跟字母或下划线（无效）
     if (current_char.has_value() && (std::isalpha(current_char.value()) || current_char.value() == '_'))
     {
-        std::string value(input.begin() + start, input.begin() + position);
-        std::string bad = value + current_char.value();
+        std::string bad(&input[start], position - start + 1);
         throw InvalidNumberFormatError(bad, token_line, token_column, "invalid trailing character in number");
     }
 
-    std::string value(input.begin() + start, input.begin() + position);
+    std::string value(&input[start], position - start);
 
     if (is_scientific)
     {
@@ -282,14 +279,14 @@ Token Lexer::read_identifier()
     size_t start = position;
     size_t token_line = line;
     size_t token_column = column;
-    
+
     advance();
-    
+
     while (current_char.has_value())
     {
         char ch = current_char.value();
         unsigned char uch = static_cast<unsigned char>(ch);
-        
+
         if (std::isalnum(ch) || ch == '_')
         {
             advance();
@@ -304,7 +301,7 @@ Token Lexer::read_identifier()
         }
     }
 
-    std::string value(input.begin() + start, input.begin() + position);
+    std::string value(&input[start], position - start);
     auto keyword_type = get_keyword(value);
     TokenType token_type = keyword_type.value_or(TokenType::Identifier);
 
@@ -415,6 +412,7 @@ Token Lexer::read_string()
     advance(); // 跳过开头的 "
 
     std::string value;
+    value.reserve(64); // 预留空间，减少重新分配
     bool terminated = false;
 
     while (current_char.has_value())
@@ -559,12 +557,12 @@ Token Lexer::read_string()
         {
             unsigned char byte = static_cast<unsigned char>(ch);
             size_t char_length = get_utf8_char_length(byte);
-            
+
             for (size_t i = 0; i < char_length && position < input.size(); ++i)
             {
                 value += input[position + i];
             }
-            
+
             advance();
         }
     }
@@ -596,6 +594,7 @@ Token Lexer::read_raw_string()
     advance();
 
     std::string value;
+    value.reserve(64); // 预留空间，减少重新分配
     bool terminated = false;
 
     while (current_char.has_value())
@@ -613,13 +612,13 @@ Token Lexer::read_raw_string()
         // 需要读取完整的 UTF-8 字符
         unsigned char byte = static_cast<unsigned char>(ch);
         size_t char_length = get_utf8_char_length(byte);
-        
+
         // 添加完整的 UTF-8 字符的所有字节
         for (size_t i = 0; i < char_length && position < input.size(); ++i)
         {
             value += input[position + i];
         }
-        
+
         advance();
     }
 
@@ -634,11 +633,11 @@ Token Lexer::read_raw_string()
 }
 
 Lexer::Lexer(const std::string &input_str)
+    : input(input_str.begin(), input_str.end()),
+      position(0),
+      line(1),
+      column(1)
 {
-    input = std::vector<char>(input_str.begin(), input_str.end());
-    position = 0;
-    line = 1;
-    column = 1;
     if (!input.empty())
     {
         current_char = input[0];
