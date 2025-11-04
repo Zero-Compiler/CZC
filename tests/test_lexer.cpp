@@ -1,5 +1,10 @@
+/**
+ * @file test_lexer.cpp
+ * @brief 词法分析器测试套件
+ * @author BegoniaHe
+ */
+
 #include "czc/lexer/lexer.hpp"
-#include "czc/lexer/lexer_error.hpp"
 #include <iostream>
 #include <cassert>
 #include <vector>
@@ -301,52 +306,36 @@ void test_invalid_number_literals()
 {
     std::cout << "\n=== Test: Invalid Number Literals ===" << std::endl;
 
-    try
+    // Test 0x without digits
     {
-        Lexer lexer1("0x");
+        Lexer lexer1("0x", "<test>");
         auto tokens1 = lexer1.tokenize();
-        std::cerr << "Should have thrown error for '0x'" << std::endl;
-        assert(false);
-    }
-    catch (const LexerError &e)
-    {
-        std::cout << "Correctly caught error for '0x': " << e.what() << std::endl;
+        assert(lexer1.get_errors().has_errors() && "Should have reported error for '0x'");
+        std::cout << "Correctly reported error for '0x'" << std::endl;
     }
 
-    try
+    // Test 0b without digits
     {
-        Lexer lexer2("0b");
+        Lexer lexer2("0b", "<test>");
         auto tokens2 = lexer2.tokenize();
-        std::cerr << "Should have thrown error for '0b'" << std::endl;
-        assert(false);
-    }
-    catch (const LexerError &e)
-    {
-        std::cout << "Correctly caught error for '0b': " << e.what() << std::endl;
+        assert(lexer2.get_errors().has_errors() && "Should have reported error for '0b'");
+        std::cout << "Correctly reported error for '0b'" << std::endl;
     }
 
-    try
+    // Test 0o without digits
     {
-        Lexer lexer3("0o");
+        Lexer lexer3("0o", "<test>");
         auto tokens3 = lexer3.tokenize();
-        std::cerr << "Should have thrown error for '0o'" << std::endl;
-        assert(false);
-    }
-    catch (const LexerError &e)
-    {
-        std::cout << "Correctly caught error for '0o': " << e.what() << std::endl;
+        assert(lexer3.get_errors().has_errors() && "Should have reported error for '0o'");
+        std::cout << "Correctly reported error for '0o'" << std::endl;
     }
 
-    try
+    // Test number followed by letters
     {
-        Lexer lexer4("123abc");
+        Lexer lexer4("123abc", "<test>");
         auto tokens4 = lexer4.tokenize();
-        std::cerr << "Should have thrown error for '123abc'" << std::endl;
-        assert(false);
-    }
-    catch (const LexerError &e)
-    {
-        std::cout << "Correctly caught error for '123abc': " << e.what() << std::endl;
+        assert(lexer4.get_errors().has_errors() && "Should have reported error for '123abc'");
+        std::cout << "Correctly reported error for '123abc'" << std::endl;
     }
 
     std::cout << "Invalid number literals test passed" << std::endl;
@@ -356,17 +345,10 @@ void test_unterminated_string()
 {
     std::cout << "\n=== Test: Unterminated String ===" << std::endl;
 
-    try
-    {
-        Lexer lexer("let s = \"unterminated");
-        auto tokens = lexer.tokenize();
-        std::cerr << "Should have thrown error for unterminated string" << std::endl;
-        assert(false);
-    }
-    catch (const UnterminatedStringError &e)
-    {
-        std::cout << "Correctly caught unterminated string error: " << e.what() << std::endl;
-    }
+    Lexer lexer("let s = \"unterminated", "<test>");
+    auto tokens = lexer.tokenize();
+    assert(lexer.get_errors().has_errors() && "Should have reported error for unterminated string");
+    std::cout << "Correctly reported unterminated string error" << std::endl;
 
     std::cout << "Unterminated string test passed" << std::endl;
 }
@@ -375,17 +357,10 @@ void test_invalid_escape_sequence()
 {
     std::cout << "\n=== Test: Invalid Escape Sequence ===" << std::endl;
 
-    try
-    {
-        Lexer lexer("let s = \"test\\x\";");
-        auto tokens = lexer.tokenize();
-        std::cerr << "Should have thrown error for invalid escape sequence" << std::endl;
-        assert(false);
-    }
-    catch (const InvalidEscapeSequenceError &e)
-    {
-        std::cout << "Correctly caught invalid escape sequence error: " << e.what() << std::endl;
-    }
+    Lexer lexer("let s = \"test\\x\";", "<test>");
+    auto tokens = lexer.tokenize();
+    assert(lexer.get_errors().has_errors() && "Should have reported error for invalid escape sequence");
+    std::cout << "Correctly reported invalid escape sequence error" << std::endl;
 
     std::cout << "Invalid escape sequence test passed" << std::endl;
 }

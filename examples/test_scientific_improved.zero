@@ -1,0 +1,6 @@
+let int_sci = 1e10;
+let float_sci = 3.14e500000000000;
+let negative_exp = 2.5e-3;
+
+// let bad1 = 1e;
+// let bad2 = 1e+;

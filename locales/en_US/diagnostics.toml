@@ -1,0 +1,66 @@
+# CZC Compiler Diagnostic Messages - English (US)
+
+[L0001]
+message = "hexadecimal literal has no digits"
+help = "expected at least one hexadecimal digit after '0x'"
+source = "lexer"
+
+[L0002]
+message = "binary literal has no digits"
+help = "expected at least one binary digit after '0b'"
+source = "lexer"
+
+[L0003]
+message = "octal literal has no digits"
+help = "expected at least one octal digit after '0o'"
+source = "lexer"
+
+[L0004]
+message = "expected at least one digit in exponent"
+help = "scientific notation requires digits after 'e' or 'E'"
+source = "lexer"
+
+[L0005]
+message = "invalid suffix '{0}' on numeric literal"
+help = "numeric literals cannot be immediately followed by identifiers"
+source = "lexer"
+
+[L0006]
+message = "unknown escape sequence: '\\{0}'"
+help = "valid escape sequences are: \\n, \\t, \\r, \\\\, \\\", \\', \\0, \\xHH, \\uXXXX, \\u{{HHHHHH}}"
+source = "lexer"
+
+[L0007]
+message = "unterminated string literal"
+help = "add a closing quote '\"' to terminate the string"
+source = "lexer"
+
+[L0008]
+message = "invalid hexadecimal escape sequence"
+help = "expected 1-2 hexadecimal digits after '\\x'"
+source = "lexer"
+
+[L0009]
+message = "invalid unicode escape sequence"
+help = "expected 4 hexadecimal digits after '\\u' or use \\u{{...}} for longer sequences"
+source = "lexer"
+
+[L0010]
+message = "unexpected character '{0}'"
+help = "this character is not allowed here"
+source = "lexer"
+
+[L0011]
+message = "invalid UTF-8 sequence"
+help = "the source file contains invalid UTF-8 bytes"
+source = "lexer"
+
+[T0001]
+message = "scientific notation '{0}' results in integer overflow"
+help = "consider using floating-point representation or a smaller exponent"
+source = "token_preprocessor"
+
+[T0002]
+message = "scientific notation '{0}' has negative exponent"
+help = "this will be treated as floating-point; consider using explicit float syntax if intended"
+source = "token_preprocessor"

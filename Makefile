@@ -1,5 +1,19 @@
 .PHONY: all build clean test install help
 
+ifeq ($(OS),Windows_NT)
+    CMAKE_GENERATOR := -G "MinGW Makefiles"
+    RM := cmd /c del /f /q
+    RMDIR := cmd /c rmdir /s /q
+    PATH_SEP := \\
+    EXE_EXT := .exe
+else
+    CMAKE_GENERATOR :=
+    RM := rm -f
+    RMDIR := rm -rf
+    PATH_SEP := /
+    EXE_EXT :=
+endif
+
 # 默认目标
 all: build
 
@@ -8,7 +22,7 @@ build:
 	@echo "==================================="
 	@echo "Building CZC Compiler"
 	@echo "==================================="
-	@cmake -B build -DCMAKE_BUILD_TYPE=Release
+	@cmake -B build $(CMAKE_GENERATOR) -DCMAKE_BUILD_TYPE=Release
 	@cmake --build build
 	@echo ""
 	@echo "==================================="
@@ -16,15 +30,15 @@ build:
 	@echo "==================================="
 	@echo ""
 	@echo "Executables:"
-	@echo "  - CLI tool:        ./build/czc-cli"
-	@echo "  - Test suite:      ./build/tests/test_lexer"
-	@echo "  - Debug operators: ./build/tests/debug_operators"
+	@echo "  - CLI tool:        .$(PATH_SEP)build$(PATH_SEP)czc-cli$(EXE_EXT)"
+	@echo "  - Test suite:      .$(PATH_SEP)build$(PATH_SEP)tests$(PATH_SEP)test_lexer$(EXE_EXT)"
+	@echo "  - Debug operators: .$(PATH_SEP)build$(PATH_SEP)tests$(PATH_SEP)debug_operators$(EXE_EXT)"
 	@echo ""
 
 # Debug 模式构建
 debug:
 	@echo "Building in Debug mode..."
-	@cmake -B build -DCMAKE_BUILD_TYPE=Debug
+	@cmake -B build $(CMAKE_GENERATOR) -DCMAKE_BUILD_TYPE=Debug
 	@cmake --build build
 
 # 清理构建产物
@@ -32,18 +46,10 @@ clean:
 	@echo "==================================="
 	@echo "Cleaning CZC Project"
 	@echo "==================================="
-	@if [ -d "build" ]; then \
-		echo "Removing build directory..."; \
-		rm -rf build; \
-		echo "Build directory removed"; \
-	fi
-	@echo "Removing .tokens files..."
-	@find examples -name "*.tokens" -type f -delete 2>/dev/null || true
+	@cmake -E rm -rf build
+	@echo "Build directory removed"
+	@cmake -E rm -f examples/*.tokens
 	@echo ".tokens files removed"
-	@find . -name "*.o" -type f -delete 2>/dev/null || true
-	@find . -name "*.a" -type f -delete 2>/dev/null || true
-	@find . -name "*.so" -type f -delete 2>/dev/null || true
-	@find . -name "*.exe" -type f -delete 2>/dev/null || true
 	@echo ""
 	@echo "==================================="
 	@echo "Clean completed!"

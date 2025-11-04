@@ -11,3 +11,7 @@ let json = r"{"key": "value"}";
 
 // 测试空 raw string
 let empty = r"";
+
+let mixedemoji = r"微笑😀火箭🚀庆祝🎉";
+let chinese = r"汉字测试，包含标点符号！";
+let complex = r"\u4F60\u597D, \u{1F600}, \x41\x42\x43";

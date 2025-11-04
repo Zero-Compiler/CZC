@@ -1,0 +1,15 @@
+// Test compound assignment operators
+let x = 10
+x += 5
+x -= 3
+x *= 2
+x /= 4
+x %= 7
+
+// More complex expressions
+var a = 100
+a += b * 2
+a -= func()
+a *= (x + y)
+a /= count
+a %= 10

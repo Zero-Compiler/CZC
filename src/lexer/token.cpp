@@ -1,3 +1,9 @@
+/**
+ * @file token.cpp
+ * @brief Token 类实现
+ * @author BegoniaHe
+ */
+
 #include "czc/lexer/token.hpp"
 
 // Token constructor
@@ -45,6 +51,8 @@ std::string token_type_to_string(TokenType type)
         return "String";
     case TokenType::Identifier:
         return "Identifier";
+    case TokenType::ScientificExponent:
+        return "ScientificExponent";
     case TokenType::Let:
         return "Let";
     case TokenType::Var:
@@ -79,6 +87,16 @@ std::string token_type_to_string(TokenType type)
         return "Percent";
     case TokenType::Equal:
         return "Equal";
+    case TokenType::PlusEqual:
+        return "PlusEqual";
+    case TokenType::MinusEqual:
+        return "MinusEqual";
+    case TokenType::StarEqual:
+        return "StarEqual";
+    case TokenType::PercentEqual:
+        return "PercentEqual";
+    case TokenType::SlashEqual:
+        return "SlashEqual";
     case TokenType::EqualEqual:
         return "EqualEqual";
     case TokenType::Bang:

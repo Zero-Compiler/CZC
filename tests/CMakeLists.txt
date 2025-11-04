@@ -12,4 +12,11 @@ add_executable(debug_operators
 
 target_link_libraries(debug_operators PRIVATE czc)
 
+add_executable(test_token_preprocessor
+    test_token_preprocessor.cpp
+)
+
+target_link_libraries(test_token_preprocessor PRIVATE czc)
+
 add_test(NAME LexerTest COMMAND test_lexer)
+add_test(NAME TokenPreprocessorTest COMMAND test_token_preprocessor)

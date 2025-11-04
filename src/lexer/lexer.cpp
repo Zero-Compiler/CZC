@@ -1,57 +1,40 @@
+/**
+ * @file lexer.cpp
+ * @brief 词法分析器实现
+ * @author BegoniaHe
+ */
+
 #include "czc/lexer/lexer.hpp"
+#include "czc/lexer/utf8_handler.hpp"
 #include <cctype>
 #include <sstream>
 #include <iomanip>
 
-bool Lexer::is_utf8_continuation(unsigned char ch) const
+void Lexer::report_error(DiagnosticCode code,
+                         size_t error_line,
+                         size_t error_column,
+                         const std::vector<std::string> &args)
 {
-    return (ch & 0xC0) == 0x80;
-}
-
-size_t Lexer::get_utf8_char_length(unsigned char first_byte) const
-{
-    if ((first_byte & 0x80) == 0)
-        return 1; // ASCII
-    if ((first_byte & 0xE0) == 0xC0)
-        return 2; // 2-byte UTF-8
-    if ((first_byte & 0xF0) == 0xE0)
-        return 3; // 3-byte UTF-8
-    if ((first_byte & 0xF8) == 0xF0)
-        return 4; // 4-byte UTF-8
-    return 1;     // Invalid, treat as single byte
+    auto loc = SourceLocation(tracker.get_filename(), error_line, error_column, error_line, error_column);
+    error_collector.add(code, loc, args);
 }
 
 void Lexer::advance()
 {
-    if (current_char == '\n')
+    if (!current_char.has_value())
     {
-        line++;
-        column = 1;
-        position++;
-    }
-    else if (current_char.has_value())
-    {
-        // 获取当前字符的 UTF-8 字节长度
-        unsigned char byte = static_cast<unsigned char>(current_char.value());
-        size_t char_length = get_utf8_char_length(byte);
-
-        // 跳过整个 UTF-8 字符的所有字节
-        for (size_t i = 0; i < char_length && position < input.size(); ++i)
-        {
-            position++;
-        }
-
-        // 一个完整的 UTF-8 字符算一列
-        column++;
-    }
-    else
-    {
-        position++;
+        return;
     }
 
-    if (position < input.size())
+    char ch = current_char.value();
+    tracker.advance(ch);
+
+    size_t pos = tracker.get_position();
+    const auto &input = tracker.get_input();
+
+    if (pos < input.size())
     {
-        current_char = input[position];
+        current_char = input[pos];
     }
     else
     {
@@ -61,7 +44,8 @@ void Lexer::advance()
 
 std::optional<char> Lexer::peek(size_t offset) const
 {
-    size_t peek_pos = position + offset;
+    size_t peek_pos = tracker.get_position() + offset;
+    const auto &input = tracker.get_input();
     if (peek_pos < input.size())
     {
         return input[peek_pos];
@@ -92,109 +76,84 @@ void Lexer::skip_comment()
     }
 }
 
+Token Lexer::read_prefixed_number(const std::string &valid_chars,
+                                  const std::string &prefix_str,
+                                  DiagnosticCode error_code)
+{
+    size_t start = tracker.get_position();
+    size_t token_line = tracker.get_line();
+    size_t token_column = tracker.get_column();
+
+    // 跳过 0x/0b/0o
+    advance(); // '0'
+    advance(); // 'x'/'b'/'o'
+
+    size_t digit_start = tracker.get_position();
+
+    // 读取有效字符
+    while (current_char.has_value())
+    {
+        char ch = current_char.value();
+        if (valid_chars.find(ch) != std::string::npos)
+        {
+            advance();
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // 检查是否至少有一个数字
+    size_t current_pos = tracker.get_position();
+    if (current_pos == digit_start)
+    {
+        report_error(error_code, token_line, token_column, {prefix_str});
+        // 返回一个错误 token
+        const auto &input = tracker.get_input();
+        return Token(TokenType::Unknown,
+                     std::string(&input[start], current_pos - start),
+                     token_line, token_column);
+    }
+
+    const auto &input = tracker.get_input();
+    return Token(TokenType::Integer,
+                 std::string(&input[start], current_pos - start),
+                 token_line, token_column);
+}
+
 Token Lexer::read_number()
 {
-    size_t start = position;
-    size_t token_line = line;
-    size_t token_column = column;
-    bool has_dot = false;
+    size_t start = tracker.get_position();
+    size_t token_line = tracker.get_line();
+    size_t token_column = tracker.get_column();
+    bool is_float = false;
+    bool is_scientific = false;
 
-    // 0x, 0b, 0o prefixes
     if (current_char == '0' && peek(1).has_value())
     {
         char next_ch = peek(1).value();
 
-        // Hexadecimal: 0x
         if (next_ch == 'x' || next_ch == 'X')
         {
-            advance();
-            advance();
-
-            size_t hex_start = position;
-
-            while (current_char.has_value())
-            {
-                char ch = current_char.value();
-                if (std::isdigit(ch) || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'))
-                {
-                    advance();
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            // 检查是否至少有一个十六进制数字
-            if (position == hex_start)
-            {
-                throw InvalidNumberFormatError("0x", token_line, token_column);
-            }
-
-            std::string value(input.begin() + start, input.begin() + position);
-            return Token(TokenType::Integer, value, token_line, token_column);
+            return read_prefixed_number(
+                "0123456789abcdefABCDEF",
+                "0x",
+                DiagnosticCode::L0001_MissingHexDigits);
         }
-
-        // Binary: 0b
         else if (next_ch == 'b' || next_ch == 'B')
         {
-            advance();
-            advance();
-
-            size_t bin_start = position;
-
-            while (current_char.has_value())
-            {
-                char ch = current_char.value();
-                if (ch == '0' || ch == '1')
-                {
-                    advance();
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            // 检查是否至少有一个二进制数字
-            if (position == bin_start)
-            {
-                throw InvalidNumberFormatError("0b", token_line, token_column);
-            }
-
-            std::string value(input.begin() + start, input.begin() + position);
-            return Token(TokenType::Integer, value, token_line, token_column);
+            return read_prefixed_number(
+                "01",
+                "0b",
+                DiagnosticCode::L0002_MissingBinaryDigits);
         }
-
-        // Octal: 0o
         else if (next_ch == 'o' || next_ch == 'O')
         {
-            advance();
-            advance();
-
-            size_t oct_start = position;
-
-            while (current_char.has_value())
-            {
-                char ch = current_char.value();
-                if (ch >= '0' && ch <= '7')
-                {
-                    advance();
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            // 检查是否至少有一个八进制数字
-            if (position == oct_start)
-            {
-                throw InvalidNumberFormatError("0o", token_line, token_column);
-            }
-
-            std::string value(input.begin() + start, input.begin() + position);
-            return Token(TokenType::Integer, value, token_line, token_column);
+            return read_prefixed_number(
+                "01234567",
+                "0o",
+                DiagnosticCode::L0003_MissingOctalDigits);
         }
     }
 
@@ -205,12 +164,12 @@ Token Lexer::read_number()
         {
             advance();
         }
-        else if (ch == '.' && !has_dot)
+        else if (ch == '.' && !is_float)
         {
             auto next = peek(1);
             if (next.has_value() && std::isdigit(next.value()))
             {
-                has_dot = true;
+                is_float = true;
                 advance();
             }
             else
@@ -224,10 +183,10 @@ Token Lexer::read_number()
         }
     }
 
-    // 检查科学计数法 (e 或 E)
+    // 检查科学计数法
     if (current_char.has_value() && (current_char.value() == 'e' || current_char.value() == 'E'))
     {
-        has_dot = true; // 科学计数法属于浮点数
+        is_scientific = true;
         advance();
 
         // 可选的正负号
@@ -237,30 +196,50 @@ Token Lexer::read_number()
         }
 
         // 指数部分必须至少有一个数字
-        size_t exp_start = position;
+        size_t exp_start = tracker.get_position();
         while (current_char.has_value() && std::isdigit(current_char.value()))
         {
             advance();
         }
 
         // 如果指数部分没有数字，则报错
-        if (position == exp_start)
+        size_t current_pos = tracker.get_position();
+        if (current_pos == exp_start)
         {
-            std::string value(input.begin() + start, input.begin() + position);
-            throw InvalidNumberFormatError(value, token_line, token_column);
+            const auto &input = tracker.get_input();
+            report_error(DiagnosticCode::L0004_MissingExponentDigits,
+                         token_line, token_column,
+                         {std::string(&input[start], current_pos - start)});
+            return Token(TokenType::Unknown,
+                         std::string(&input[start], current_pos - start),
+                         token_line, token_column);
         }
     }
 
-    // 检查数字后是否紧跟字母或下划线（无效）
+    // 检查数字后是否紧跟字母或下划线
     if (current_char.has_value() && (std::isalpha(current_char.value()) || current_char.value() == '_'))
     {
-        std::string value(input.begin() + start, input.begin() + position);
-        throw InvalidNumberFormatError(value + current_char.value(), token_line, token_column);
+        std::string bad_suffix(1, current_char.value());
+        report_error(DiagnosticCode::L0005_InvalidTrailingChar,
+                     token_line, token_column,
+                     {bad_suffix});
+        advance();
+        size_t current_pos = tracker.get_position();
+        const auto &input = tracker.get_input();
+        return Token(TokenType::Unknown,
+                     std::string(&input[start], current_pos - start),
+                     token_line, token_column);
     }
 
-    std::string value(input.begin() + start, input.begin() + position);
+    size_t current_pos = tracker.get_position();
+    const auto &input = tracker.get_input();
+    std::string value(&input[start], current_pos - start);
 
-    if (has_dot)
+    if (is_scientific)
+    {
+        return Token(TokenType::ScientificExponent, value, token_line, token_column);
+    }
+    else if (is_float)
     {
         return Token(TokenType::Float, value, token_line, token_column);
     }
@@ -272,13 +251,22 @@ Token Lexer::read_number()
 
 Token Lexer::read_identifier()
 {
-    size_t start = position;
-    size_t token_line = line;
-    size_t token_column = column;
+    size_t start = tracker.get_position();
+    size_t token_line = tracker.get_line();
+    size_t token_column = tracker.get_column();
+
+    advance();
+
     while (current_char.has_value())
     {
         char ch = current_char.value();
+        unsigned char uch = static_cast<unsigned char>(ch);
+
         if (std::isalnum(ch) || ch == '_')
+        {
+            advance();
+        }
+        else if (uch >= 0x80)
         {
             advance();
         }
@@ -288,7 +276,9 @@ Token Lexer::read_identifier()
         }
     }
 
-    std::string value(input.begin() + start, input.begin() + position);
+    size_t current_pos = tracker.get_position();
+    const auto &input = tracker.get_input();
+    std::string value(&input[start], current_pos - start);
     auto keyword_type = get_keyword(value);
     TokenType token_type = keyword_type.value_or(TokenType::Identifier);
 
@@ -304,25 +294,21 @@ std::string Lexer::parse_unicode_escape(size_t digit_count)
     {
         if (!current_char.has_value())
         {
-            throw InvalidEscapeSequenceError('u', line, column);
+            report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
+                         tracker.get_line(), tracker.get_column(), {"u"});
+            return "";
         }
 
         char ch = current_char.value();
         if (!std::isxdigit(ch))
         {
-            throw InvalidEscapeSequenceError('u', line, column);
+            report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
+                         tracker.get_line(), tracker.get_column(), {"u"});
+            return "";
         }
 
         hex_digits += ch;
-        position++;
-        if (position < input.size())
-        {
-            current_char = input[position];
-        }
-        else
-        {
-            current_char = std::nullopt;
-        }
+        advance();
     }
 
     unsigned int codepoint;
@@ -330,35 +316,8 @@ std::string Lexer::parse_unicode_escape(size_t digit_count)
     ss << std::hex << hex_digits;
     ss >> codepoint;
 
-    std::string utf8_result;
-    if (codepoint <= 0x7F)
-    {
-        utf8_result += static_cast<char>(codepoint);
-    }
-    else if (codepoint <= 0x7FF)
-    {
-        utf8_result += static_cast<char>(0xC0 | (codepoint >> 6));
-        utf8_result += static_cast<char>(0x80 | (codepoint & 0x3F));
-    }
-    else if (codepoint <= 0xFFFF)
-    {
-        utf8_result += static_cast<char>(0xE0 | (codepoint >> 12));
-        utf8_result += static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-        utf8_result += static_cast<char>(0x80 | (codepoint & 0x3F));
-    }
-    else if (codepoint <= 0x10FFFF)
-    {
-        utf8_result += static_cast<char>(0xF0 | (codepoint >> 18));
-        utf8_result += static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
-        utf8_result += static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-        utf8_result += static_cast<char>(0x80 | (codepoint & 0x3F));
-    }
-    else
-    {
-        throw InvalidEscapeSequenceError('u', line, column);
-    }
-
-    return utf8_result;
+    // 使用 Utf8Handler 转换
+    return Utf8Handler::codepoint_to_utf8(codepoint);
 }
 
 // 解析十六进制转义序列 \xHH
@@ -381,20 +340,14 @@ std::string Lexer::parse_hex_escape()
         }
 
         hex_digits += ch;
-        position++;
-        if (position < input.size())
-        {
-            current_char = input[position];
-        }
-        else
-        {
-            current_char = std::nullopt;
-        }
+        advance();
     }
 
     if (hex_digits.empty())
     {
-        throw InvalidEscapeSequenceError('x', line, column);
+        report_error(DiagnosticCode::L0008_InvalidHexEscape,
+                     tracker.get_line(), tracker.get_column(), {"x"});
+        return ""; // 返回空字符串
     }
 
     // 将十六进制转换为字节
@@ -410,11 +363,12 @@ std::string Lexer::parse_hex_escape()
 
 Token Lexer::read_string()
 {
-    size_t token_line = line;
-    size_t token_column = column;
-    advance();
+    size_t token_line = tracker.get_line();
+    size_t token_column = tracker.get_column();
+    advance(); // 跳过开头的 "
 
     std::string value;
+    value.reserve(64); // 预留空间，减少重新分配
     bool terminated = false;
 
     while (current_char.has_value())
@@ -436,17 +390,13 @@ Token Lexer::read_string()
 
         if (ch == '\\')
         {
-            position++;
-            if (position >= input.size())
-            {
-                current_char = std::nullopt;
-                throw UnterminatedStringError(token_line, token_column);
-            }
-            current_char = input[position];
-
+            advance(); // 跳过反斜杠
             if (!current_char.has_value())
             {
-                throw UnterminatedStringError(token_line, token_column);
+                report_error(DiagnosticCode::L0007_UnterminatedString,
+                             token_line, token_column, {});
+                // 返回不完整的字符串 token
+                return Token(TokenType::String, value, token_line, token_column);
             }
 
             char escaped = current_char.value();
@@ -492,45 +442,40 @@ Token Lexer::read_string()
                 if (current_char.has_value() && current_char.value() == '{')
                 {
                     // \u{XXXXXX} 格式
-                    position++;
-                    if (position < input.size())
-                    {
-                        current_char = input[position];
-                    }
-                    else
-                    {
-                        current_char = std::nullopt;
-                    }
+                    advance(); // 跳过 {
 
                     std::string hex_digits;
                     while (current_char.has_value() && current_char.value() != '}')
                     {
                         if (!std::isxdigit(current_char.value()))
                         {
-                            throw InvalidEscapeSequenceError('u', line, column);
+                            report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
+                                         tracker.get_line(), tracker.get_column(), {"u"});
+                            // 跳过剩余内容直到 } 或字符串结束
+                            while (current_char.has_value() && current_char.value() != '}' && current_char.value() != '"')
+                            {
+                                advance();
+                            }
+                            break;
                         }
                         hex_digits += current_char.value();
-                        position++;
-                        if (position < input.size())
-                        {
-                            current_char = input[position];
-                        }
-                        else
-                        {
-                            current_char = std::nullopt;
-                        }
+                        advance();
                     }
 
                     if (!current_char.has_value() || current_char.value() != '}')
                     {
-                        throw InvalidEscapeSequenceError('u', line, column);
+                        report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
+                                     tracker.get_line(), tracker.get_column(), {"u"});
+                        continue;
                     }
 
-                    position++; // 跳过 }
+                    advance(); // 跳过 }
 
                     if (hex_digits.empty() || hex_digits.length() > 6)
                     {
-                        throw InvalidEscapeSequenceError('u', line, column);
+                        report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
+                                     tracker.get_line(), tracker.get_column(), {"u"});
+                        continue;
                     }
 
                     unsigned int codepoint;
@@ -538,42 +483,8 @@ Token Lexer::read_string()
                     ss << std::hex << hex_digits;
                     ss >> codepoint;
 
-                    // 将 Unicode 码点转换为 UTF-8
-                    if (codepoint <= 0x7F)
-                    {
-                        value += static_cast<char>(codepoint);
-                    }
-                    else if (codepoint <= 0x7FF)
-                    {
-                        value += static_cast<char>(0xC0 | (codepoint >> 6));
-                        value += static_cast<char>(0x80 | (codepoint & 0x3F));
-                    }
-                    else if (codepoint <= 0xFFFF)
-                    {
-                        value += static_cast<char>(0xE0 | (codepoint >> 12));
-                        value += static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-                        value += static_cast<char>(0x80 | (codepoint & 0x3F));
-                    }
-                    else if (codepoint <= 0x10FFFF)
-                    {
-                        value += static_cast<char>(0xF0 | (codepoint >> 18));
-                        value += static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
-                        value += static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-                        value += static_cast<char>(0x80 | (codepoint & 0x3F));
-                    }
-                    else
-                    {
-                        throw InvalidEscapeSequenceError('u', line, column);
-                    }
+                    value += Utf8Handler::codepoint_to_utf8(codepoint);
 
-                    if (position < input.size())
-                    {
-                        current_char = input[position];
-                    }
-                    else
-                    {
-                        current_char = std::nullopt;
-                    }
                     continue;
                 }
                 else
@@ -583,54 +494,67 @@ Token Lexer::read_string()
                     continue;
                 }
             default:
-                throw InvalidEscapeSequenceError(escaped, line, column);
+                report_error(DiagnosticCode::L0006_InvalidEscapeSequence,
+                             tracker.get_line(), tracker.get_column(), {std::string(1, escaped)});
+                // 跳过无效的转义字符,继续处理
+                value += escaped;
+                advance();
+                continue;
             }
         }
         else
         {
-            value += ch;
-            position++;
-            if (position < input.size())
+            // 读取 UTF-8 字符
+            if (!current_char.has_value())
+                break;
+
+            unsigned char byte = static_cast<unsigned char>(current_char.value());
+            size_t char_length = Utf8Handler::get_char_length(byte);
+            const auto &input = tracker.get_input();
+            size_t pos = tracker.get_position();
+
+            for (size_t i = 0; i < char_length && pos + i < input.size(); ++i)
             {
-                current_char = input[position];
+                value += input[pos + i];
             }
-            else
-            {
-                current_char = std::nullopt;
-            }
+            advance();
         }
     }
 
     if (!terminated)
     {
         // 到达文件末尾但字符串未闭合
-        throw UnterminatedStringError(token_line, token_column);
+        report_error(DiagnosticCode::L0007_UnterminatedString,
+                     token_line, token_column, {});
+        // 返回不完整的字符串 token
+        return Token(TokenType::String, value, token_line, token_column);
     }
 
-    if (current_char == '"')
-    {
-        advance();
-    }
+    advance(); // 跳过结尾的 "
 
     return Token(TokenType::String, value, token_line, token_column);
 }
 
 Token Lexer::read_raw_string()
 {
-    size_t token_line = line;
-    size_t token_column = column;
+    size_t token_line = tracker.get_line();
+    size_t token_column = tracker.get_column();
 
     // 跳过 'r'
     advance();
 
     if (!current_char.has_value() || current_char.value() != '"')
     {
-        throw InvalidCharacterError('r', token_line, token_column);
+        report_error(DiagnosticCode::L0010_InvalidCharacter,
+                     token_line, token_column, {"r"});
+        // 返回错误 token
+        return Token(TokenType::Unknown, "r", token_line, token_column);
     }
 
     advance();
 
     std::string value;
+    value.reserve(64); // 预留空间，减少重新分配
     bool terminated = false;
 
     while (current_char.has_value())
@@ -645,13 +569,25 @@ Token Lexer::read_raw_string()
 
         // Raw string 中的所有字符都按字面值处理
         // 包括 \n, \t, \\, \" 等都不转义
-        value += ch;
+        // 读取 UTF-8 字符
+        unsigned char byte = static_cast<unsigned char>(ch);
+        size_t char_length = Utf8Handler::get_char_length(byte);
+        const auto &input = tracker.get_input();
+        size_t pos = tracker.get_position();
+
+        for (size_t i = 0; i < char_length && pos + i < input.size(); ++i)
+        {
+            value += input[pos + i];
+        }
         advance();
     }
 
     if (!terminated)
     {
-        throw UnterminatedStringError(token_line, token_column);
+        report_error(DiagnosticCode::L0007_UnterminatedString,
+                     token_line, token_column, {});
+        // 返回不完整的原始字符串 token
+        return Token(TokenType::String, value, token_line, token_column);
     }
 
     advance();
@@ -659,12 +595,11 @@ Token Lexer::read_raw_string()
     return Token(TokenType::String, value, token_line, token_column);
 }
 
-Lexer::Lexer(const std::string &input_str)
+Lexer::Lexer(const std::string &input_str,
+             const std::string &fname)
+    : tracker(input_str, fname)
 {
-    input = std::vector<char>(input_str.begin(), input_str.end());
-    position = 0;
-    line = 1;
-    column = 1;
+    const auto &input = tracker.get_input();
     if (!input.empty())
     {
         current_char = input[0];
@@ -692,21 +627,21 @@ Token Lexer::next_token()
 
     if (!current_char.has_value())
     {
-        return Token(TokenType::EndOfFile, "", line, column);
+        return Token(TokenType::EndOfFile, "", tracker.get_line(), tracker.get_column());
     }
 
     char ch = current_char.value();
-    size_t token_line = line;
-    size_t token_column = column;
+    unsigned char uch = static_cast<unsigned char>(ch);
+    size_t token_line = tracker.get_line();
+    size_t token_column = tracker.get_column();
 
     if (std::isdigit(ch))
     {
         return read_number();
     }
 
-    if (std::isalpha(ch) || ch == '_')
+    if (std::isalpha(ch) || ch == '_' || uch >= 0x80)
     {
-        // 检查是否是 raw string (r"...")
         if (ch == 'r' && peek(1) == '"')
         {
             return read_raw_string();
@@ -731,19 +666,59 @@ Token Lexer::next_token()
     switch (ch)
     {
     case '+':
-        token = Token(TokenType::Plus, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::PlusEqual, "+=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Plus, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '-':
-        token = Token(TokenType::Minus, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::MinusEqual, "-=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Minus, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '*':
-        token = Token(TokenType::Star, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::StarEqual, "*=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Star, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '/':
-        token = Token(TokenType::Slash, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::SlashEqual, "/=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Slash, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '%':
-        token = Token(TokenType::Percent, std::string(1, ch), token_line, token_column);
+        if (peek(1) == '=')
+        {
+            advance();
+            token = Token(TokenType::PercentEqual, "%=", token_line, token_column);
+        }
+        else
+        {
+            token = Token(TokenType::Percent, std::string(1, ch), token_line, token_column);
+        }
         break;
     case '=':
         if (peek(1) == '=')

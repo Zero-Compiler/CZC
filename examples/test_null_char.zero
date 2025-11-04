@@ -1,0 +1,3 @@
+// 测试空字符 \0
+let str_with_null = "Hello\0World";
+let str_multiline = "Line1\nLine2\tTabbed";

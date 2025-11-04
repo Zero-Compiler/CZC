@@ -1,0 +1,4 @@
+let int_sci = 1e10;
+let float_sci = 3.14e15;
+let negative_exp = 2.5e-3;
+let large = 1e307;
