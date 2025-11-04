@@ -965,7 +965,6 @@ std::vector<Token> Lexer::tokenize()
     while (true)
     {
         Token token = next_token();
-        Token token = next_token();
         bool is_eof = (token.token_type == TokenType::EndOfFile);
         tokens.push_back(token);
 
