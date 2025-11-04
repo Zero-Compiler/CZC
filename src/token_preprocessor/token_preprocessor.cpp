@@ -16,14 +16,13 @@
 #include <sstream>
 #include <stdexcept>
 
-/**
- * @brief 分析科学计数法字面量
- * @param literal 字面量字符串
- * @param token 对应的 Token
- * @param context 分析上下文
- * @return 如果分析成功, 返回包含分析信息的 ScientificNotationInfo, 否则返回
- * std::nullopt
- */
+namespace czc {
+namespace token_preprocessor {
+
+using namespace czc::diagnostics;
+using namespace czc::lexer;
+using namespace czc::utils;
+
 std::optional<ScientificNotationInfo>
 ScientificNotationAnalyzer::analyze(const std::string &literal,
                                     const Token *token,
@@ -31,8 +30,8 @@ ScientificNotationAnalyzer::analyze(const std::string &literal,
   ScientificNotationInfo info;
   info.original_literal = literal;
 
-  // 1.
-  // 将字面量分解为尾数和指数部分。如果基本结构（如缺少'e'）都不满足，则分析失败。
+  // 1. 将字面量分解为尾数和指数部分。
+  //    如果基本结构（如缺少'e'）都不满足，则分析失败。
   if (!parse_components(literal, info.mantissa, info.exponent)) {
     return std::nullopt;
   }
@@ -52,13 +51,7 @@ ScientificNotationAnalyzer::analyze(const std::string &literal,
 
   return info;
 }
-/**
- * @brief 解析科学计数法的尾数和指数
- * @param literal 字面量字符串
- * @param mantissa 用于存储尾数的字符串
- * @param exponent 用于存储指数的整数
- * @return 如果解析成功返回 true, 否则返回 false
- */
+
 bool ScientificNotationAnalyzer::parse_components(const std::string &literal,
                                                   std::string &mantissa,
                                                   int64_t &exponent) {
@@ -68,20 +61,18 @@ bool ScientificNotationAnalyzer::parse_components(const std::string &literal,
     return false; // 如果没有 'e' 或 'E'，则不是有效的科学计数法表示。
   }
 
-  // 'e' 之前的部分是尾数。
   mantissa = literal.substr(0, e_pos);
   if (mantissa.empty()) {
     return false; // 尾数不能为空。
   }
 
-  // 'e' 之后的部分是指数。
   std::string exp_str = literal.substr(e_pos + 1);
   if (exp_str.empty()) {
     return false; // 指数不能为空。
   }
 
   // 使用 std::stoll 将指数字符串转换为64位整数。
-  // 使用 try-catch 块来处理转换失败的情况（例如，"1eabc" 或指数超出 int64
+  // 使用 try-catch 块来处理转换失败的情况（例如，"1e_abc" 或指数超出 int64
   // 范围）。
   try {
     exponent = std::stoll(exp_str);
@@ -94,61 +85,37 @@ bool ScientificNotationAnalyzer::parse_components(const std::string &literal,
   return true;
 }
 
-/**
- * @brief 去除小数部分末尾的零
- * @param decimal_part 小数部分的字符串
- * @return 去除末尾零后的字符串
- */
 std::string ScientificNotationAnalyzer::trim_trailing_zeros(
     const std::string &decimal_part) {
   if (decimal_part.empty()) {
     return decimal_part;
   }
-
-  size_t end = decimal_part.length();
-  // 从后向前遍历，找到第一个非零字符的位置。
-  while (end > 0 && decimal_part[end - 1] == '0') {
-    --end;
+  size_t end = decimal_part.find_last_not_of('0');
+  if (end == std::string::npos) {
+    return ""; // 字符串全为 '0'
   }
-
-  return decimal_part.substr(0, end);
+  return decimal_part.substr(0, end + 1);
 }
 
-/**
- * @brief 计算尾数的小数位数 (去除末尾零后)
- * @param mantissa 尾数字符串
- * @return 小数位数
- */
 size_t
 ScientificNotationAnalyzer::count_decimal_digits(const std::string &mantissa) {
-  // 如果尾数中没有小数点，则小数位数为0。
   size_t dot_pos = mantissa.find('.');
   if (dot_pos == std::string::npos) {
     return 0;
   }
 
-  // 提取小数点后的部分。
   std::string decimal_part = mantissa.substr(dot_pos + 1);
 
   // 去除尾随的零，因为它们不影响数值，但会影响小数位数的判断。
   // 例如，1.20e2 和 1.2e2 的值相同，都应该能推断为整数 120。
-  std::string trimmed = trim_trailing_zeros(decimal_part);
-
-  return trimmed.length();
+  return trim_trailing_zeros(decimal_part).length();
 }
 
-/**
- * @brief 推断科学计数法字面量的数值类型
- * @param info 科学计数法分析信息
- * @param token 对应的 Token
- * @param context 分析上下文
- * @return 推断出的数值类型 (INT64 或 FLOAT)
- */
 InferredNumericType
 ScientificNotationAnalyzer::infer_type(const ScientificNotationInfo &info,
                                        const Token *token,
                                        const AnalysisContext &context) {
-  // 类型推断的核心逻辑：
+  // --- 类型推断的核心逻辑 ---
   // 目标是尽可能将数值表示为整数（INT64），只有在必要时才使用浮点数（FLOAT）。
 
   // 1. 如果指数为负，数值必然是小数（除非尾数为0），因此推断为 FLOAT。
@@ -160,40 +127,25 @@ ScientificNotationAnalyzer::infer_type(const ScientificNotationInfo &info,
   // 2. 如果尾数没有小数点（例如 123e4），则其是否为整数仅取决于其最终值是否在
   // INT64 范围内。
   if (!info.has_decimal_point) {
-    if (fits_in_int64(info.mantissa, info.exponent, token, context)) {
-      return InferredNumericType::INT64;
-    } else {
-      // 如果计算出的值超出了 INT64 的范围，则必须使用 FLOAT。
-      return InferredNumericType::FLOAT;
-    }
+    return fits_in_int64(info.mantissa, info.exponent, token, context)
+               ? InferredNumericType::INT64
+               : InferredNumericType::FLOAT;
   }
 
   // 3. 如果尾数有小数点（例如 1.23e5），需要判断指数是否足以“消除”所有小数位。
-  //    - info.decimal_digits 是有效小数位数。
-  //    - info.exponent 是指数。
   //    如果指数小于小数位数，则最终结果必然是小数。
   if (info.decimal_digits > static_cast<size_t>(info.exponent)) {
     // 例如：1.23e1 -> 12.3，仍然是小数。
     return InferredNumericType::FLOAT;
-  } else {
-    // 如果指数足以或超过小数位数（例如 1.23e2 -> 123, 1.23e3 -> 1230），
-    // 则该数值在数学上是整数。接下来只需检查这个整数是否在 INT64 范围内。
-    if (fits_in_int64(info.mantissa, info.exponent, token, context)) {
-      return InferredNumericType::INT64;
-    } else {
-      return InferredNumericType::FLOAT;
-    }
   }
+
+  // 4. 如果指数足以或超过小数位数（例如 1.23e2 -> 123），
+  //    则该数值在数学上是整数。接下来只需检查这个整数是否在 INT64 范围内。
+  return fits_in_int64(info.mantissa, info.exponent, token, context)
+             ? InferredNumericType::INT64
+             : InferredNumericType::FLOAT;
 }
 
-/**
- * @brief 检查科学计数法表示的数值是否在 int64 范围内
- * @param mantissa 尾数
- * @param exponent 指数
- * @param token 对应的 Token
- * @param context 分析上下文
- * @return 如果在范围内返回 true, 否则返回 false
- */
 bool ScientificNotationAnalyzer::fits_in_int64(const std::string &mantissa,
                                                int64_t exponent,
                                                const Token *token,
@@ -211,19 +163,11 @@ bool ScientificNotationAnalyzer::fits_in_int64(const std::string &mantissa,
   return magnitude.value() <= MAX_I64_MAGNITUDE;
 }
 
-/**
- * @brief 计算数值的量级 (大致为10的多少次方)
- * @param mantissa 尾数
- * @param exponent 指数
- * @param token 对应的 Token
- * @param context 分析上下文
- * @return 如果计算成功, 返回量级, 否则返回 std::nullopt
- */
 std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
     const std::string &mantissa, int64_t exponent, const Token *token,
     const AnalysisContext &context) {
 
-  // 这个函数通过估算最终数值的位数来判断其量级。
+  // --- 通过估算最终数值的位数来判断其量级 ---
   // 例如，1.23e10 的量级大约是 2 + 10 - 1 = 11 (因为 123 * 10^8)。
 
   // 1. 从尾数中提取所有数字，忽略小数点。 "1.23" -> "123"
@@ -242,7 +186,6 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
   if (first_nonzero == std::string::npos) {
     return 0; // 如果尾数是0（例如 0.0e5），则量级为0。
   }
-
   significant_digits_str = significant_digits_str.substr(first_nonzero);
   int64_t num_significant_digits =
       static_cast<int64_t>(significant_digits_str.length());
@@ -261,16 +204,6 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
   //    量级 = (有效数字位数 - 1) + 实际指数。
   //    例如，123 * 10^8，有效数字是3位，所以量级是 (3-1) + 8 = 10。
   //    这表示该数在 10^10 到 10^11 之间。
-
-  // 在计算量级之前，先检查加法是否会溢出 int64_t。
-  if (actual_exponent > 0 &&
-      num_significant_digits >
-          std::numeric_limits<int64_t>::max() - actual_exponent) {
-    // 如果即将溢出，直接返回一个足够大的值，表示它肯定超出了 int64 和 float64
-    // 的范围。
-    return MAX_F64_MAGNITUDE + 1;
-  }
-
   int64_t magnitude = num_significant_digits + actual_exponent - 1;
 
   // 5. 检查计算出的量级是否超出了 float64 的表示范围。
@@ -283,20 +216,6 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
   return magnitude;
 }
 
-/**
- * @brief 报告整数溢出错误
- * @param token 对应的 Token
- * @param mantissa 尾数
- * @param exponent 指数
- * @param context 分析上下文
- */
-/**
- * @brief 报告错误到错误收集器
- * @param token Token 指针
- * @param mantissa 尾数字符串
- * @param exponent 指数
- * @param context 分析上下文
- */
 void ScientificNotationAnalyzer::report_overflow(
     const Token *token, const std::string &mantissa, int64_t exponent,
     const AnalysisContext &context) {
@@ -312,12 +231,6 @@ void ScientificNotationAnalyzer::report_overflow(
                                loc, {literal});
 }
 
-/**
- * @brief 报告错误
- * @param code 诊断代码
- * @param token Token 指针
- * @param args 消息参数列表
- */
 void TokenPreprocessor::report_error(DiagnosticCode code, const Token *token,
                                      const std::vector<std::string> &args) {
   if (!token) {
@@ -328,13 +241,6 @@ void TokenPreprocessor::report_error(DiagnosticCode code, const Token *token,
   error_collector.add(code, loc, args);
 }
 
-/**
- * @brief 预处理 Token 流, 主要处理科学计数法
- * @param tokens 原始 Token 流
- * @param filename 文件名
- * @param source_content 源码内容
- * @return 处理后的 Token 流
- */
 std::vector<Token>
 TokenPreprocessor::process(const std::vector<Token> &tokens,
                            const std::string &filename,
@@ -358,13 +264,6 @@ TokenPreprocessor::process(const std::vector<Token> &tokens,
   return processed_tokens;
 }
 
-/**
- * @brief 处理单个科学计数法 Token
- * @param token 待处理的 Token
- * @param filename 文件名
- * @param source_content 源码内容
- * @return 处理后的 Token
- */
 Token TokenPreprocessor::process_scientific_token(
     const Token &token, const std::string &filename,
     const std::string &source_content) {
@@ -385,28 +284,18 @@ Token TokenPreprocessor::process_scientific_token(
   return Token(new_type, token.value, token.line, token.column);
 }
 
-/**
- * @brief 将推断出的数值类型转换为 TokenType
- * @param type 推断出的数值类型
- * @return 对应的 TokenType
- */
 TokenType
 TokenPreprocessor::inferred_type_to_token_type(InferredNumericType type) {
   switch (type) {
   case InferredNumericType::INT64:
-    return TokenType::Integer; // int64
+    return TokenType::Integer;
   case InferredNumericType::FLOAT:
-    return TokenType::Float; // float64
+    return TokenType::Float;
   default:
     return TokenType::Unknown;
   }
 }
 
-/**
- * @brief 将推断出的数值类型转换为字符串
- * @param type 推断出的数值类型
- * @return 类型的字符串表示
- */
 std::string inferred_type_to_string(InferredNumericType type) {
   switch (type) {
   case InferredNumericType::INT64:
@@ -417,3 +306,6 @@ std::string inferred_type_to_string(InferredNumericType type) {
     return "Unknown";
   }
 }
+
+} // namespace token_preprocessor
+} // namespace czc

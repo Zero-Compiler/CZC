@@ -10,24 +10,26 @@
 
 #include <string>
 
-/**
- * @brief CZC 编译器命名空间
- */
 namespace czc {
-/**
- * @brief 诊断系统命名空间
- */
 namespace diagnostics {
+
 /**
- * @brief ANSI 颜色代码
+ * @brief 定义用于终端输出的 ANSI 颜色代码常量。
+ * @details 这些常量用于在诊断消息中高亮不同严重级别的文本，以增强可读性。
  */
 namespace Color {
-const std::string Reset = "\033[0m";   // 重置颜色
-const std::string Bold = "\033[1m";    // 粗体
-const std::string Red = "\033[31m";    // 红色
-const std::string Yellow = "\033[33m"; // 黄色
-const std::string Blue = "\033[34m";   // 蓝色
-const std::string Cyan = "\033[36m";   // 青色
+// 重置所有文本属性为默认值
+const std::string Reset = "\033[0m";
+// 设置文本为粗体
+const std::string Bold = "\033[1m";
+// 设置文本颜色为红色
+const std::string Red = "\033[31m";
+// 设置文本颜色为黄色
+const std::string Yellow = "\033[33m";
+// 设置文本颜色为蓝色
+const std::string Blue = "\033[34m";
+// 设置文本颜色为青色
+const std::string Cyan = "\033[36m";
 } // namespace Color
 } // namespace diagnostics
 } // namespace czc

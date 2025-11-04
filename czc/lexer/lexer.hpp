@@ -17,21 +17,24 @@
 #include <string>
 #include <vector>
 
+namespace czc {
+namespace lexer {
+
 /**
  * @brief 负责将源代码文本分解为一系列 Token 的词法分析器。
  * @details
  *   词法分析器（或扫描器）是编译器的第一阶段。它逐字符地读取源代码，
  *   并将其组合成有意义的单元，称为 Token（例如，标识符、数字、运算符）。
  *   此类还负责处理空白、注释和基本的词法错误。
- * @note 此类不是线程安全的。
+ * @property {线程安全} 非线程安全。此类是有状态的，不可在多线程间共享。
  */
 class Lexer {
 private:
-  /// @brief 管理源代码输入流和当前位置（行、列）。
-  SourceTracker tracker;
-  /// @brief 当前正在处理的字符。
+  // 管理源代码输入流和当前位置（行、列）。
+  utils::SourceTracker tracker;
+  // 当前正在处理的字符。
   std::optional<char> current_char;
-  /// @brief 用于收集在词法分析期间遇到的所有错误。
+  // 用于收集在词法分析期间遇到的所有错误。
   LexErrorCollector error_collector;
 
   /**
@@ -42,7 +45,7 @@ private:
   /**
    * @brief 向前查看输入流中的字符，而不消耗它。
    * @param[in] offset 从当前位置开始的偏移量。
-   * @return 如果位置有效，则返回该位置的字符；否则返回 std::nullopt。
+   * @return 如果位置有效，则返回该位置的字符；否则返回 `std::nullopt`。
    */
   std::optional<char> peek(size_t offset) const;
 
@@ -96,50 +99,54 @@ private:
   /**
    * @brief 读取并验证一个带特定前缀的数字（例如 0x, 0b, 0o）。
    * @param[in] valid_chars 允许出现在数字部分的字符集。
-   * @param[in] prefix_str 数字的前缀（例如 "0x"）。
-   * @param[in] error_code 如果缺少数字部分时要报告的错误代码。
+   * @param[in] prefix_str  数字的前缀（例如 "0x"）。
+   * @param[in] error_code  如果缺少数字部分时要报告的错误代码。
    * @return 返回一个表示该数字的 Token。
    */
   Token read_prefixed_number(const std::string &valid_chars,
                              const std::string &prefix_str,
-                             DiagnosticCode error_code);
+                             diagnostics::DiagnosticCode error_code);
 
   /**
    * @brief 辅助函数，用于在错误收集器中记录一个新错误。
-   * @param[in] code 错误的诊断代码。
-   * @param[in] error_line 错误发生的行号。
+   * @param[in] code         错误的诊断代码。
+   * @param[in] error_line   错误发生的行号。
    * @param[in] error_column 错误发生的列号。
-   * @param[in] args (可选) 格式化错误消息所需的参数。
+   * @param[in] args         (可选) 格式化错误消息所需的参数。
    */
-  void report_error(DiagnosticCode code, size_t error_line, size_t error_column,
+  void report_error(diagnostics::DiagnosticCode code, size_t error_line,
+                    size_t error_column,
                     const std::vector<std::string> &args = {});
 
 public:
   /**
    * @brief 构造一个新的词法分析器。
    * @param[in] input_str 要进行词法分析的源代码字符串。
-   * @param[in] fname (可选) 源代码的文件名，用于错误报告。默认为 "<stdin>"。
+   * @param[in] fname (可选) 源代码的文件名，用于错误报告。
    */
   Lexer(const std::string &input_str, const std::string &fname = "<stdin>");
 
   /**
    * @brief 从输入流中获取并返回下一个 Token。
-   * @return 返回解析出的下一个 Token。当到达输入末尾时，返回
-   * TokenType::EndOfFile。
+   * @return 返回解析出的下一个 Token。当到达输入末尾时，
+   *         将持续返回 `TokenType::EndOfFile` 类型的 Token。
    */
   Token next_token();
 
   /**
    * @brief 对整个输入字符串执行词法分析，并返回所有 Token 的列表。
-   * @return 包含所有解析出的 Token 的向量。
+   * @return 包含所有解析出的 Token 的向量，不包括 `EndOfFile` Token。
    */
   std::vector<Token> tokenize();
 
   /**
-   * @brief 获取对内部错误收集器的访问权限。
+   * @brief 获取对内部错误收集器的只读访问权限。
    * @return 对 LexErrorCollector 对象的常量引用。
    */
   const LexErrorCollector &get_errors() const { return error_collector; }
 };
+
+} // namespace lexer
+} // namespace czc
 
 #endif // CZC_LEXER_HPP

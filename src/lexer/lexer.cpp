@@ -11,25 +11,21 @@
 #include <iomanip>
 #include <sstream>
 
-/**
- * @brief 报告一个词法分析错误
- * @param code 诊断代码
- * @param error_line 错误发生的行号
- * @param error_column 错误发生的列号
- * @param args 格式化参数
- */
+namespace czc {
+namespace lexer {
+
+using namespace czc::diagnostics;
+using namespace czc::utils;
+
 void Lexer::report_error(DiagnosticCode code, size_t error_line,
                          size_t error_column,
                          const std::vector<std::string> &args) {
+  // 创建一个只包含错误发生点的 SourceLocation。
   auto loc = SourceLocation(tracker.get_filename(), error_line, error_column,
                             error_line, error_column);
   error_collector.add(code, loc, args);
 }
 
-/**
- * @brief 向前移动一个字符
- * @details 更新源码跟踪器的位置和当前字符
- */
 void Lexer::advance() {
   // 如果已经到达源码末尾，则无需再前进。
   if (!current_char.has_value()) {
@@ -44,7 +40,7 @@ void Lexer::advance() {
   const auto &input = tracker.get_input();
 
   // 更新 current_char 为 tracker 前进后的新位置上的字符。
-  // 如果到达末尾，则设置为 std::nullopt。
+  // 如果到达末尾，则设置为 std::nullopt，这将作为后续处理的终止信号。
   if (pos < input.size()) {
     current_char = input[pos];
   } else {
@@ -52,11 +48,6 @@ void Lexer::advance() {
   }
 }
 
-/**
- * @brief 查看未来位置的字符
- * @param offset 偏移量
- * @return 如果位置有效, 返回对应的字符, 否则返回 std::nullopt
- */
 std::optional<char> Lexer::peek(size_t offset) const {
   size_t peek_pos = tracker.get_position() + offset;
   const auto &input = tracker.get_input();
@@ -66,9 +57,6 @@ std::optional<char> Lexer::peek(size_t offset) const {
   return std::nullopt;
 }
 
-/**
- * @brief 跳过空白字符
- */
 void Lexer::skip_whitespace() {
   // 持续消耗字符，直到遇到非空白字符或源码结束。
   while (current_char.has_value() && std::isspace(current_char.value())) {
@@ -76,9 +64,6 @@ void Lexer::skip_whitespace() {
   }
 }
 
-/**
- * @brief 跳过单行注释
- */
 void Lexer::skip_comment() {
   // 检查是否是 `//` 开头的单行注释。
   if (current_char == '/' && peek(1) == '/') {
@@ -93,13 +78,6 @@ void Lexer::skip_comment() {
   }
 }
 
-/**
- * @brief 读取带前缀的数字 (例如 0x, 0b, 0o)
- * @param valid_chars 允许的数字字符
- * @param prefix_str 前缀字符串 (用于报错)
- * @param error_code 缺少数字时报告的错误码
- * @return 构造的 Token
- */
 Token Lexer::read_prefixed_number(const std::string &valid_chars,
                                   const std::string &prefix_str,
                                   DiagnosticCode error_code) {
@@ -114,7 +92,7 @@ Token Lexer::read_prefixed_number(const std::string &valid_chars,
   // 记录数字部分的起始位置，用于后续检查是否为空。
   size_t digit_start = tracker.get_position();
 
-  // 读取有效字符
+  // --- 读取有效数字字符 ---
   // 循环读取所有属于该数字进制的有效字符。
   while (current_char.has_value()) {
     char ch = current_char.value();
@@ -126,11 +104,10 @@ Token Lexer::read_prefixed_number(const std::string &valid_chars,
     }
   }
 
-  // 检查在前缀之后是否真的有数字。
+  // --- 验证前缀后是否有数字 ---
   // 例如，"0x" 是无效的，必须是 "0x1" 这样的形式。
   size_t current_pos = tracker.get_position();
   if (current_pos == digit_start) {
-    // 如果没有数字，则报告错误。
     report_error(error_code, token_line, token_column, {prefix_str});
     // 即使有错，也返回一个 Unknown 类型的 Token，包含了错误的文本，
     // 这样可以支持后续的错误恢复。
@@ -146,10 +123,6 @@ Token Lexer::read_prefixed_number(const std::string &valid_chars,
                token_column);
 }
 
-/**
- * @brief 读取数字 (整数, 浮点数, 科学计数法)
- * @return 构造的 Token
- */
 Token Lexer::read_number() {
   size_t start = tracker.get_position();
   size_t token_line = tracker.get_line();
@@ -157,29 +130,24 @@ Token Lexer::read_number() {
   bool is_float = false;
   bool is_scientific = false;
 
-  // 首先处理特殊数字前缀，如十六进制、二进制和八进制。
-  // 检查当前字符是否为 '0' 并且后面有跟随字符。
+  // --- 处理特殊数字前缀 (0x, 0b, 0o) ---
   if (current_char == '0' && peek(1).has_value()) {
     char next_ch = peek(1).value();
-
-    // 十六进制 (0x or 0X)
     if (next_ch == 'x' || next_ch == 'X') {
       return read_prefixed_number("0123456789abcdefABCDEF", "0x",
                                   DiagnosticCode::L0001_MissingHexDigits);
     }
-    // 二进制 (0b or 0B)
-    else if (next_ch == 'b' || next_ch == 'B') {
+    if (next_ch == 'b' || next_ch == 'B') {
       return read_prefixed_number("01", "0b",
                                   DiagnosticCode::L0002_MissingBinaryDigits);
     }
-    // 八进制 (0o or 0O)
-    else if (next_ch == 'o' || next_ch == 'O') {
+    if (next_ch == 'o' || next_ch == 'O') {
       return read_prefixed_number("01234567", "0o",
                                   DiagnosticCode::L0003_MissingOctalDigits);
     }
   }
 
-  // 读取十进制数字的整数和可选的小数部分。
+  // --- 读取十进制数字的整数和可选的小数部分 ---
   while (current_char.has_value()) {
     char ch = current_char.value();
     if (std::isdigit(ch)) {
@@ -187,8 +155,8 @@ Token Lexer::read_number() {
     }
     // 处理小数点。只允许一个小数点。
     else if (ch == '.' && !is_float) {
-      // 小数点后面必须跟一个数字，否则像 `1.` 这样的写法被视为整数 `1`
-      // 和一个点号 `.`。
+      // 小数点后面必须跟一个数字。像 `1.` 这样的写法被视为整数 `1`
+      // 和一个单独的点号 `.` Token。这是为了简化语法。
       auto next = peek(1);
       if (next.has_value() && std::isdigit(next.value())) {
         is_float = true;
@@ -202,7 +170,7 @@ Token Lexer::read_number() {
     }
   }
 
-  // 处理科学计数法部分 (e.g., e+10, E-5)。
+  // --- 处理科学计数法部分 (e.g., e+10, E-5) ---
   if (current_char.has_value() &&
       (current_char.value() == 'e' || current_char.value() == 'E')) {
     is_scientific = true;
@@ -233,14 +201,15 @@ Token Lexer::read_number() {
     }
   }
 
+  // --- 验证数字字面量后的字符 ---
   // 根据语言规范，数字字面量后面不能直接跟标识符字符（字母或下划线）。
-  // 例如 `123a` 是无效的。
+  // 例如 `123a` 是无效的，以避免歧义。
   if (current_char.has_value() &&
       (std::isalpha(current_char.value()) || current_char.value() == '_')) {
     std::string bad_suffix(1, current_char.value());
     report_error(DiagnosticCode::L0005_InvalidTrailingChar, token_line,
                  token_column, {bad_suffix});
-    // 消耗掉这个无效字符，以避免词法分析器卡住。
+    // 消耗掉这个无效字符，以避免词法分析器卡在同一个错误上。
     advance();
     size_t current_pos = tracker.get_position();
     const auto &input = tracker.get_input();
@@ -253,29 +222,25 @@ Token Lexer::read_number() {
   const auto &input = tracker.get_input();
   std::string value(&input[start], current_pos - start);
 
-  // 根据解析过程中设置的标志，确定最终的 Token 类型。
+  // --- 根据解析过程中设置的标志，确定最终的 Token 类型 ---
   if (is_scientific) {
-    // 科学计数法字面量需要后续处理（在 TokenPreprocessor
-    // 中）来确定是整数还是浮点数。
+    // 科学计数法字面量需要后续处理（在 TokenPreprocessor 中）
+    // 来确定其最终类型是整数还是浮点数，并检查溢出。
     return Token(TokenType::ScientificExponent, value, token_line,
                  token_column);
-  } else if (is_float) {
-    return Token(TokenType::Float, value, token_line, token_column);
-  } else {
-    return Token(TokenType::Integer, value, token_line, token_column);
   }
+  if (is_float) {
+    return Token(TokenType::Float, value, token_line, token_column);
+  }
+  return Token(TokenType::Integer, value, token_line, token_column);
 }
 
-/**
- * @brief 读取标识符或关键字
- * @return 构造的 Token
- */
 Token Lexer::read_identifier() {
   size_t start = tracker.get_position();
   size_t token_line = tracker.get_line();
   size_t token_column = tracker.get_column();
 
-  advance();
+  advance(); // 消耗第一个字符
 
   while (current_char.has_value()) {
     char ch = current_char.value();
@@ -286,7 +251,8 @@ Token Lexer::read_identifier() {
       advance();
     }
     // 简单的检查，所有非 ASCII 字符（高位为1）都被视为标识符的一部分。
-    // 更严格的检查（例如，只允许特定 Unicode 范围的字母）会更复杂。
+    // NOTE: 这是一个宽松的规则。更严格的实现可能需要检查 Unicode
+    // 属性，以只允许特定范围的字母或符号。
     else if (uch >= 0x80) {
       advance();
     } else {
@@ -297,6 +263,7 @@ Token Lexer::read_identifier() {
   size_t current_pos = tracker.get_position();
   const auto &input = tracker.get_input();
   std::string value(&input[start], current_pos - start);
+
   // 检查解析出的字符串是否是语言的关键字。
   auto keyword_type = get_keyword(value);
   // 如果是关键字，则使用关键字的 Token 类型；否则，它是一个普通的标识符。
@@ -305,30 +272,16 @@ Token Lexer::read_identifier() {
   return Token(token_type, value, token_line, token_column);
 }
 
-// 解析 Unicode 转义序列
-/**
- * @brief 解析 Unicode 转义序列
- * @param digit_count 需要解析的十六进制数字个数
- * @return 转换后的 UTF-8 字符串
- */
 std::string Lexer::parse_unicode_escape(size_t digit_count) {
   std::string hex_digits;
 
   for (size_t i = 0; i < digit_count; ++i) {
-    if (!current_char.has_value()) {
+    if (!current_char.has_value() || !std::isxdigit(current_char.value())) {
       report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
                    tracker.get_line(), tracker.get_column(), {"u"});
       return "";
     }
-
-    char ch = current_char.value();
-    if (!std::isxdigit(ch)) {
-      report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
-                   tracker.get_line(), tracker.get_column(), {"u"});
-      return "";
-    }
-
-    hex_digits += ch;
+    hex_digits += current_char.value();
     advance();
   }
 
@@ -341,33 +294,22 @@ std::string Lexer::parse_unicode_escape(size_t digit_count) {
   return Utf8Handler::codepoint_to_utf8(codepoint);
 }
 
-// 解析十六进制转义序列 \xHH
-/**
- * @brief 解析十六进制转义序列 (\\xHH)
- * @return 转换后的字节字符串
- */
 std::string Lexer::parse_hex_escape() {
   std::string hex_digits;
 
   // 读取最多 2 个十六进制数字
   for (size_t i = 0; i < 2; ++i) {
-    if (!current_char.has_value()) {
+    if (!current_char.has_value() || !std::isxdigit(current_char.value())) {
       break;
     }
-
-    char ch = current_char.value();
-    if (!std::isxdigit(ch)) {
-      break;
-    }
-
-    hex_digits += ch;
+    hex_digits += current_char.value();
     advance();
   }
 
   if (hex_digits.empty()) {
     report_error(DiagnosticCode::L0008_InvalidHexEscape, tracker.get_line(),
                  tracker.get_column(), {"x"});
-    return ""; // 返回空字符串
+    return "";
   }
 
   // 将十六进制字符串（例如 "FF"）转换为对应的字节值。
@@ -376,24 +318,17 @@ std::string Lexer::parse_hex_escape() {
   ss << std::hex << hex_digits;
   ss >> byte_value;
 
-  std::string result;
-  result += static_cast<char>(byte_value);
-  return result;
+  return std::string(1, static_cast<char>(byte_value));
 }
 
-/**
- * @brief 读取字符串字面量
- * @return 构造的 Token
- */
 Token Lexer::read_string() {
   size_t token_line = tracker.get_line();
   size_t token_column = tracker.get_column();
   advance(); // 跳过开头的 "
 
   std::string value;
-  // 为字符串值预分配一些空间，以减少在循环中因字符串增长而导致的内存重分配。
-  value.reserve(64);
-  bool terminated = false; // 标志位，用于检查字符串是否正常闭合。
+  value.reserve(64); // 预分配以提高性能
+  bool terminated = false;
 
   while (current_char.has_value()) {
     char ch = current_char.value();
@@ -403,20 +338,18 @@ Token Lexer::read_string() {
       break;
     }
 
-    if (ch == '\n') {
+    if (ch == '\n') { // 允许字符串跨行
       value += ch;
       advance();
       continue;
     }
 
     if (ch == '\\') {
-      // 处理转义序列。
-      advance(); // 消耗反斜杠 '\'。
+      // --- 处理转义序列 ---
+      advance(); // 消耗反斜杠 '\'
       if (!current_char.has_value()) {
-        // 如果反斜杠是字符串的最后一个字符，则字符串未闭合。
-        report_error(DiagnosticCode::L0007_UnterminatedString, token_line,
-                     token_column, {});
-        return Token(TokenType::String, value, token_line, token_column);
+        // 如果反斜杠是文件的最后一个字符，则字符串未闭合。
+        break;
       }
 
       char escaped = current_char.value();
@@ -424,54 +357,51 @@ Token Lexer::read_string() {
       case 'n':
         value += '\n';
         advance();
-        continue;
+        break;
       case 't':
         value += '\t';
         advance();
-        continue;
+        break;
       case 'r':
         value += '\r';
         advance();
-        continue;
+        break;
       case '\\':
         value += '\\';
         advance();
-        continue;
+        break;
       case '"':
         value += '"';
         advance();
-        continue;
+        break;
       case '\'':
         value += '\'';
         advance();
-        continue;
+        break;
       case '0':
         value += '\0';
         advance();
-        continue;
-      case 'x':
-        // 十六进制转义 \xHH
+        break;
+      case 'x': // 十六进制转义 \xHH
         advance();
         value += parse_hex_escape();
-        continue;
-      case 'u':
-        // Unicode 转义
+        break;
+      case 'u': // Unicode 转义 \uXXXX or \u{...}
         advance();
-
         if (current_char.has_value() && current_char.value() == '{') {
           // \u{XXXXXX} 格式
-          advance(); // 跳过 {
-
+          advance(); // 跳过 '{'
           std::string hex_digits;
           while (current_char.has_value() && current_char.value() != '}') {
             if (!std::isxdigit(current_char.value())) {
               report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
                            tracker.get_line(), tracker.get_column(), {"u"});
-              // 跳过剩余内容直到 } 或字符串结束
+              // 尝试恢复：跳过无效内容直到 '}' 或字符串结束
               while (current_char.has_value() && current_char.value() != '}' &&
                      current_char.value() != '"') {
                 advance();
               }
+              hex_digits.clear(); // 标记为失败
               break;
             }
             hex_digits += current_char.value();
@@ -481,66 +411,41 @@ Token Lexer::read_string() {
           if (!current_char.has_value() || current_char.value() != '}') {
             report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
                          tracker.get_line(), tracker.get_column(), {"u"});
-            continue;
+          } else {
+            advance(); // 跳过 '}'
+            if (!hex_digits.empty() && hex_digits.length() <= 6) {
+              unsigned int codepoint = std::stoul(hex_digits, nullptr, 16);
+              value += Utf8Handler::codepoint_to_utf8(codepoint);
+            } else {
+              report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
+                           tracker.get_line(), tracker.get_column(), {"u"});
+            }
           }
-
-          advance(); // 跳过 }
-
-          if (hex_digits.empty() || hex_digits.length() > 6) {
-            report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
-                         tracker.get_line(), tracker.get_column(), {"u"});
-            continue;
-          }
-
-          unsigned int codepoint;
-          std::stringstream ss;
-          ss << std::hex << hex_digits;
-          ss >> codepoint;
-
-          value += Utf8Handler::codepoint_to_utf8(codepoint);
-
-          continue;
         } else {
-          // \uXXXX
+          // \uXXXX 格式
           value += parse_unicode_escape(4);
-          continue;
         }
+        break;
       default:
         report_error(DiagnosticCode::L0006_InvalidEscapeSequence,
                      tracker.get_line(), tracker.get_column(),
                      {std::string(1, escaped)});
-        // 跳过无效的转义字符,继续处理
-        value += escaped;
+        value += escaped; // 将无效的转义字符本身添加到值中
         advance();
-        continue;
+        break;
       }
     } else {
-      // 处理非转义的普通字符，支持多字节的 UTF-8 字符。
-      if (!current_char.has_value())
-        break;
-
-      unsigned char byte = static_cast<unsigned char>(current_char.value());
-      // 获取当前 UTF-8 字符所需的字节数。
-      size_t char_length = Utf8Handler::get_char_length(byte);
-      const auto &input = tracker.get_input();
-      size_t pos = tracker.get_position();
-
-      // 将组成单个 UTF-8 字符的所有字节都添加到值中。
-      for (size_t i = 0; i < char_length && pos + i < input.size(); ++i) {
-        value += input[pos + i];
-      }
-      // advance() 只移动一个字节，但对于多字节字符，我们需要确保 tracker
-      // 的位置正确。
-      // 这里的逻辑依赖于一个简化的假设：循环的下一次迭代将处理下一个字节。
-      // 一个更健壮的实现会在这里一次性 advance `char_length` 次。
-      // (当前实现依赖于循环的下一次迭代继续处理多字节字符的剩余部分，这是错误的，需要修正)
-      // TODO(BegoniaHe): 修正此处对多字节字符的处理逻辑，应该一次性 advance
-      // char_length。
+      // --- 处理非转义的普通字符（可能为多字节 UTF-8） ---
+      // NOTE: 这里的 UTF-8 处理逻辑存在缺陷。它一次只 advance() 一个字节，
+      // 依赖于循环的下一次迭代来处理多字节字符的剩余部分。
+      // TODO(BegoniaHe): 修正此处的 UTF-8 处理逻辑。应该使用
+      // Utf8Handler::read_char 来完整读取一个字符，并一次性 advance
+      // 对应的字节数。
+      value += ch;
       advance();
     }
   }
 
-  // 如果循环结束时 `terminated` 标志仍为 false，说明字符串没有闭合引号。
   if (!terminated) {
     report_error(DiagnosticCode::L0007_UnterminatedString, token_line,
                  token_column, {});
@@ -548,32 +453,25 @@ Token Lexer::read_string() {
   }
 
   advance(); // 跳过结尾的 "
-
   return Token(TokenType::String, value, token_line, token_column);
 }
 
-/**
- * @brief 读取原始字符串字面量 (r"...")
- * @return 构造的 Token
- */
 Token Lexer::read_raw_string() {
   size_t token_line = tracker.get_line();
   size_t token_column = tracker.get_column();
 
-  // 跳过 'r'
-  advance();
+  advance(); // 跳过 'r'
 
   if (!current_char.has_value() || current_char.value() != '"') {
     report_error(DiagnosticCode::L0010_InvalidCharacter, token_line,
                  token_column, {"r"});
-    // 返回错误 token
     return Token(TokenType::Unknown, "r", token_line, token_column);
   }
 
-  advance();
+  advance(); // 跳过 '"'
 
   std::string value;
-  value.reserve(64); // 预留空间，减少重新分配
+  value.reserve(64);
   bool terminated = false;
 
   while (current_char.has_value()) {
@@ -585,37 +483,22 @@ Token Lexer::read_raw_string() {
     }
 
     // 在原始字符串中，所有字符（包括反斜杠）都按其字面意义处理，不进行任何转义。
-    // 这里的逻辑与普通字符串中的 UTF-8 处理相同。
-    unsigned char byte = static_cast<unsigned char>(ch);
-    size_t char_length = Utf8Handler::get_char_length(byte);
-    const auto &input = tracker.get_input();
-    size_t pos = tracker.get_position();
-
-    for (size_t i = 0; i < char_length && pos + i < input.size(); ++i) {
-      value += input[pos + i];
-    }
-    // TODO(BegoniaHe): 同 read_string, 此处的 advance()
-    // 逻辑需要修正为处理多字节。
+    // TODO(BegoniaHe): 同 read_string, 此处的 UTF-8 处理逻辑需要修正为
+    // 一次性处理多字节字符。
+    value += ch;
     advance();
   }
 
   if (!terminated) {
     report_error(DiagnosticCode::L0007_UnterminatedString, token_line,
                  token_column, {});
-    // 返回不完整的原始字符串 token
-    return Token(TokenType::String, value, token_line, token_column);
+  } else {
+    advance(); // 跳过结尾的 "
   }
-
-  advance();
 
   return Token(TokenType::String, value, token_line, token_column);
 }
 
-/**
- * @brief Lexer 构造函数
- * @param input_str 输入的源码字符串
- * @param fname 文件名
- */
 Lexer::Lexer(const std::string &input_str, const std::string &fname)
     : tracker(input_str, fname) {
   const auto &input = tracker.get_input();
@@ -626,14 +509,9 @@ Lexer::Lexer(const std::string &input_str, const std::string &fname)
   }
 }
 
-/**
- * @brief 获取下一个 Token
- * @return 下一个 Token
- */
 Token Lexer::next_token() {
-  // 主循环，用于跳过所有不产生 Token 的内容（空白和注释）。
-  // 这样可以确保每次进入后续的 Token 判断逻辑时，`current_char`
-  // 都是一个有意义的字符。
+  // --- 主循环：跳过空白和注释 ---
+  // 确保每次进入 Token 解析逻辑时，`current_char` 都是一个有意义的字符。
   while (true) {
     skip_whitespace();
 
@@ -645,7 +523,7 @@ Token Lexer::next_token() {
     break; // 如果既不是空白也不是注释，则退出循环，开始解析 Token。
   }
 
-  // 如果在跳过空白和注释后到达了文件末尾，则返回 EOF Token。
+  // 如果在跳过无关内容后到达了文件末尾，则返回 EOF Token。
   if (!current_char.has_value()) {
     return Token(TokenType::EndOfFile, "", tracker.get_line(),
                  tracker.get_column());
@@ -656,15 +534,13 @@ Token Lexer::next_token() {
   size_t token_line = tracker.get_line();
   size_t token_column = tracker.get_column();
 
-  // 根据当前字符的类型，分派到不同的处理函数。
+  // --- Token 解析分派 ---
   // 这是一个典型的词法分析器状态机分派逻辑。
 
-  // 如果是数字开头，则解析数字字面量。
   if (std::isdigit(ch)) {
     return read_number();
   }
 
-  // 如果是字母、下划线或非 ASCII 字符开头，则解析标识符或关键字。
   if (std::isalpha(ch) || ch == '_' || uch >= 0x80) {
     // 特殊情况：`r"` 前缀表示原始字符串。
     if (ch == 'r' && peek(1) == '"') {
@@ -673,113 +549,82 @@ Token Lexer::next_token() {
     return read_identifier();
   }
 
-  // 如果是双引号开头，则解析字符串字面量。
   if (ch == '"') {
     return read_string();
   }
 
   // 当前语言不支持单引号字符字面量，因此将其视为未知 Token。
   if (ch == '\'') {
-    Token token(TokenType::Unknown, std::string(1, ch), token_line,
-                token_column);
+    Token token(TokenType::Unknown, "'", token_line, token_column);
     advance();
     return token;
   }
 
   Token token(TokenType::Unknown, "", token_line, token_column);
 
-  // 处理各种单字符和双字符运算符及分隔符。
+  // --- 处理单字符和双字符运算符及分隔符 ---
   // 对于双字符运算符（如 `+=`, `==`），需要向前看（peek）一个字符来判断。
   switch (ch) {
   case '+':
-    if (peek(1) == '=') {
-      advance(); // 消耗 '='
-      token = Token(TokenType::PlusEqual, "+=", token_line, token_column);
-    } else {
-      token =
-          Token(TokenType::Plus, std::string(1, ch), token_line, token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(),
+                   Token(TokenType::PlusEqual, "+=", token_line, token_column))
+                : Token(TokenType::Plus, "+", token_line, token_column);
     break;
   case '-':
-    if (peek(1) == '=') {
-      advance();
-      token = Token(TokenType::MinusEqual, "-=", token_line, token_column);
-    } else {
-      token =
-          Token(TokenType::Minus, std::string(1, ch), token_line, token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(),
+                   Token(TokenType::MinusEqual, "-=", token_line, token_column))
+                : Token(TokenType::Minus, "-", token_line, token_column);
     break;
   case '*':
-    if (peek(1) == '=') {
-      advance();
-      token = Token(TokenType::StarEqual, "*=", token_line, token_column);
-    } else {
-      token =
-          Token(TokenType::Star, std::string(1, ch), token_line, token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(),
+                   Token(TokenType::StarEqual, "*=", token_line, token_column))
+                : Token(TokenType::Star, "*", token_line, token_column);
     break;
   case '/':
-    if (peek(1) == '=') {
-      advance();
-      token = Token(TokenType::SlashEqual, "/=", token_line, token_column);
-    } else {
-      token =
-          Token(TokenType::Slash, std::string(1, ch), token_line, token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(),
+                   Token(TokenType::SlashEqual, "/=", token_line, token_column))
+                : Token(TokenType::Slash, "/", token_line, token_column);
     break;
   case '%':
-    if (peek(1) == '=') {
-      advance();
-      token = Token(TokenType::PercentEqual, "%=", token_line, token_column);
-    } else {
-      token = Token(TokenType::Percent, std::string(1, ch), token_line,
-                    token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(), Token(TokenType::PercentEqual, "%=", token_line,
+                                    token_column))
+                : Token(TokenType::Percent, "%", token_line, token_column);
     break;
   case '=':
-    if (peek(1) == '=') {
-      advance();
-      token = Token(TokenType::EqualEqual, "==", token_line, token_column);
-    } else {
-      token =
-          Token(TokenType::Equal, std::string(1, ch), token_line, token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(),
+                   Token(TokenType::EqualEqual, "==", token_line, token_column))
+                : Token(TokenType::Equal, "=", token_line, token_column);
     break;
   case '!':
-    if (peek(1) == '=') {
-      advance();
-      token = Token(TokenType::BangEqual, "!=", token_line, token_column);
-    } else {
-      token =
-          Token(TokenType::Bang, std::string(1, ch), token_line, token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(),
+                   Token(TokenType::BangEqual, "!=", token_line, token_column))
+                : Token(TokenType::Bang, "!", token_line, token_column);
     break;
   case '<':
-    if (peek(1) == '=') {
-      advance();
-      token = Token(TokenType::LessEqual, "<=", token_line, token_column);
-    } else {
-      token =
-          Token(TokenType::Less, std::string(1, ch), token_line, token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(),
+                   Token(TokenType::LessEqual, "<=", token_line, token_column))
+                : Token(TokenType::Less, "<", token_line, token_column);
     break;
   case '>':
-    if (peek(1) == '=') {
-      advance();
-      token = Token(TokenType::GreaterEqual, ">=", token_line, token_column);
-    } else {
-      token = Token(TokenType::Greater, std::string(1, ch), token_line,
-                    token_column);
-    }
+    token = peek(1) == '='
+                ? (advance(), Token(TokenType::GreaterEqual, ">=", token_line,
+                                    token_column))
+                : Token(TokenType::Greater, ">", token_line, token_column);
     break;
   case '&':
     if (peek(1) == '&') {
       advance();
       token = Token(TokenType::And, "&&", token_line, token_column);
     } else {
-      // 单个 '&' 不是一个有效的运算符。
-      token = Token(TokenType::Unknown, std::string(1, ch), token_line,
-                    token_column);
+      token = Token(TokenType::Unknown, "&", token_line, token_column);
     }
     break;
   case '|':
@@ -787,54 +632,42 @@ Token Lexer::next_token() {
       advance();
       token = Token(TokenType::Or, "||", token_line, token_column);
     } else {
-      // 单个 '|' 不是一个有效的运算符。
-      token = Token(TokenType::Unknown, std::string(1, ch), token_line,
-                    token_column);
+      token = Token(TokenType::Unknown, "|", token_line, token_column);
     }
     break;
   case '(':
-    token = Token(TokenType::LeftParen, std::string(1, ch), token_line,
-                  token_column);
+    token = Token(TokenType::LeftParen, "(", token_line, token_column);
     break;
   case ')':
-    token = Token(TokenType::RightParen, std::string(1, ch), token_line,
-                  token_column);
+    token = Token(TokenType::RightParen, ")", token_line, token_column);
     break;
   case '{':
-    token = Token(TokenType::LeftBrace, std::string(1, ch), token_line,
-                  token_column);
+    token = Token(TokenType::LeftBrace, "{", token_line, token_column);
     break;
   case '}':
-    token = Token(TokenType::RightBrace, std::string(1, ch), token_line,
-                  token_column);
+    token = Token(TokenType::RightBrace, "}", token_line, token_column);
     break;
   case '[':
-    token = Token(TokenType::LeftBracket, std::string(1, ch), token_line,
-                  token_column);
+    token = Token(TokenType::LeftBracket, "[", token_line, token_column);
     break;
   case ']':
-    token = Token(TokenType::RightBracket, std::string(1, ch), token_line,
-                  token_column);
+    token = Token(TokenType::RightBracket, "]", token_line, token_column);
     break;
   case ',':
-    token =
-        Token(TokenType::Comma, std::string(1, ch), token_line, token_column);
+    token = Token(TokenType::Comma, ",", token_line, token_column);
     break;
   case ';':
-    token = Token(TokenType::Semicolon, std::string(1, ch), token_line,
-                  token_column);
+    token = Token(TokenType::Semicolon, ";", token_line, token_column);
     break;
   case ':':
-    token =
-        Token(TokenType::Colon, std::string(1, ch), token_line, token_column);
+    token = Token(TokenType::Colon, ":", token_line, token_column);
     break;
   case '.':
     if (peek(1) == '.') {
       advance();
       token = Token(TokenType::DotDot, "..", token_line, token_column);
     } else {
-      token =
-          Token(TokenType::Dot, std::string(1, ch), token_line, token_column);
+      token = Token(TokenType::Dot, ".", token_line, token_column);
     }
     break;
   default:
@@ -849,19 +682,15 @@ Token Lexer::next_token() {
   return token;
 }
 
-/**
- * @brief 将整个输入源 tokenize
- * @return Token 向量
- */
 std::vector<Token> Lexer::tokenize() {
   std::vector<Token> tokens;
+  tokens.reserve(256); // 预分配以提高性能
 
   while (true) {
     Token token = next_token();
     bool is_eof = (token.token_type == TokenType::EndOfFile);
     tokens.push_back(token);
 
-    // 持续获取 Token 直到文件结束。
     if (is_eof) {
       break;
     }
@@ -869,3 +698,6 @@ std::vector<Token> Lexer::tokenize() {
 
   return tokens;
 }
+
+} // namespace lexer
+} // namespace czc

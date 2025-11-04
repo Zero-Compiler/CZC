@@ -13,6 +13,9 @@
 #include <string>
 #include <vector>
 
+namespace czc {
+namespace token_preprocessor {
+
 /**
  * @brief 代表一个在 Token 预处理阶段检测到的错误。
  * @details
@@ -20,20 +23,20 @@
  *   字面量时发生的溢出错误。
  */
 struct TPError {
-  /// @brief 标识错误类型的唯一代码。
-  DiagnosticCode code;
-  /// @brief 错误在源代码中的位置。
-  SourceLocation location;
-  /// @brief (可选) 用于生成详细错误消息的参数。
+  // 标识错误类型的唯一代码。
+  diagnostics::DiagnosticCode code;
+  // 错误在源代码中的位置。
+  utils::SourceLocation location;
+  // (可选) 用于生成详细错误消息的参数。
   std::vector<std::string> args;
 
   /**
    * @brief 构造一个新的预处理错误记录。
-   * @param[in] c 诊断代码。
-   * @param[in] loc 源码位置。
+   * @param[in] c         诊断代码。
+   * @param[in] loc       源码位置。
    * @param[in] arguments (可选) 消息参数列表。
    */
-  TPError(DiagnosticCode c, const SourceLocation &loc,
+  TPError(diagnostics::DiagnosticCode c, const utils::SourceLocation &loc,
           const std::vector<std::string> &arguments = {})
       : code(c), location(loc), args(arguments) {}
 };
@@ -44,21 +47,21 @@ struct TPError {
  *   此类为 TokenPreprocessor 提供了一个统一的错误记录机制。
  *   当检测到如数值溢出等问题时，预处理器会使用此类来记录错误，
  *   而不是中断处理流程。
- * @note 此类不是线程安全的。
+ * @property {线程安全} 非线程安全。
  */
 class TPErrorCollector {
 private:
-  /// @brief 存储所有已报告的预处理错误的列表。
+  // 存储所有已报告的预处理错误的列表。
   std::vector<TPError> errors;
 
 public:
   /**
    * @brief 向收集中添加一个新的预处理错误。
    * @param[in] code 错误的诊断代码。
-   * @param[in] loc 错误在源代码中的位置。
+   * @param[in] loc  错误在源代码中的位置。
    * @param[in] args (可选) 用于格式化错误消息的参数。
    */
-  void add(DiagnosticCode code, const SourceLocation &loc,
+  void add(diagnostics::DiagnosticCode code, const utils::SourceLocation &loc,
            const std::vector<std::string> &args = {});
 
   /**
@@ -69,7 +72,7 @@ public:
 
   /**
    * @brief 检查是否收集到了任何错误。
-   * @return 如果错误列表不为空，则返回 true。
+   * @return 如果错误列表不为空，则返回 `true`。
    */
   bool has_errors() const { return !errors.empty(); }
 
@@ -84,5 +87,8 @@ public:
    */
   size_t count() const { return errors.size(); }
 };
+
+} // namespace token_preprocessor
+} // namespace czc
 
 #endif // CZC_TP_ERROR_COLLECTOR_HPP
