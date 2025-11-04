@@ -2,6 +2,7 @@
  * @file diagnostic_code.hpp
  * @brief 诊断代码和级别定义
  * @author BegoniaHe
+ * @date 2025-11-04
  */
 
 #ifndef CZC_DIAGNOSTIC_CODE_HPP
@@ -15,9 +16,9 @@
  */
 enum class DiagnosticLevel
 {
-    Warning, ///< 警告
-    Error,   ///< 错误
-    Fatal    ///< 致命错误
+    Warning, // 警告
+    Error,   // 错误
+    Fatal    // 致命错误
 };
 
 /**

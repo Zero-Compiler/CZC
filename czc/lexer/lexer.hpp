@@ -2,6 +2,7 @@
  * @file lexer.hpp
  * @brief 词法分析器类定义
  * @author BegoniaHe
+ * @date 2025-11-04
  */
 
 #ifndef CZC_LEXER_HPP
@@ -17,121 +18,129 @@
 #include <memory>
 
 /**
- * @brief 词法分析器类
+ * @brief 负责将源代码文本分解为一系列 Token 的词法分析器。
+ * @details
+ *   词法分析器（或扫描器）是编译器的第一阶段。它逐字符地读取源代码，
+ *   并将其组合成有意义的单元，称为 Token（例如，标识符、数字、运算符）。
+ *   此类还负责处理空白、注释和基本的词法错误。
+ * @note 此类不是线程安全的。
  */
 class Lexer
 {
-private:
-    SourceTracker tracker;            ///< 源码跟踪器
-    std::optional<char> current_char; ///< 当前字符
-    LexErrorCollector error_collector;   ///< 错误收集器
+  private:
+    /// @brief 管理源代码输入流和当前位置（行、列）。
+    SourceTracker tracker;
+    /// @brief 当前正在处理的字符。
+    std::optional<char> current_char;
+    /// @brief 用于收集在词法分析期间遇到的所有错误。
+    LexErrorCollector error_collector;
 
     /**
-     * @brief 前进到下一个字符
+     * @brief 将 `current_char` 更新为输入流中的下一个字符。
      */
     void advance();
 
     /**
-     * @brief 向前查看指定偏移量的字符
-     * @param offset 偏移量
-     * @return 字符的可选值
+     * @brief 向前查看输入流中的字符，而不消耗它。
+     * @param[in] offset 从当前位置开始的偏移量。
+     * @return 如果位置有效，则返回该位置的字符；否则返回 std::nullopt。
      */
     std::optional<char> peek(size_t offset) const;
 
     /**
-     * @brief 跳过空白字符
+     * @brief 消耗并忽略所有连续的空白字符（空格、制表符、换行符等）。
      */
     void skip_whitespace();
 
     /**
-     * @brief 跳过注释
+     * @brief 消耗并忽略单行或多行注释。
      */
     void skip_comment();
 
     /**
-     * @brief 读取数字字面量
-     * @return Token 对象
+     * @brief 从当前位置解析一个数字字面量（整数、浮点数或科学计数法）。
+     * @return 返回一个表示该数字的 Token。
      */
     Token read_number();
 
     /**
-     * @brief 读取标识符
-     * @return Token 对象
+     * @brief 从当前位置解析一个标识符或关键字。
+     * @return 返回一个表示标识符或关键字的 Token。
      */
     Token read_identifier();
 
     /**
-     * @brief 读取字符串字面量
-     * @return Token 对象
+     * @brief 从当前位置解析一个字符串字面量，处理转义序列。
+     * @return 返回一个表示该字符串的 Token。
      */
     Token read_string();
 
     /**
-     * @brief 读取原始字符串字面量
-     * @return Token 对象
+     * @brief 从当前位置解析一个原始字符串字面量。
+     * @return 返回一个表示该原始字符串的 Token。
      */
     Token read_raw_string();
 
     /**
-     * @brief 解析 Unicode 转义序列
-     * @param digit_count 十六进制数字的数量
-     * @return UTF-8 编码的字符串
+     * @brief 解析一个 `\u` 或 `\U` 形式的 Unicode 转义序列。
+     * @param[in] digit_count 期望的十六进制数字位数（4 或 8）。
+     * @return 返回转义序列对应的 UTF-8 编码字符串。
      */
     std::string parse_unicode_escape(size_t digit_count);
 
     /**
-     * @brief 解析十六进制转义序列
-     * @return UTF-8 编码的字符串
+     * @brief 解析一个 `\x` 形式的十六进制转义序列。
+     * @return 返回转义序列对应的 UTF-8 编码字符串。
      */
     std::string parse_hex_escape();
 
     /**
-     * @brief 读取带前缀的数字（十六进制、二进制、八进制）
-     * @param valid_chars 有效字符集合
-     * @param prefix_str 前缀字符串
-     * @param error_code 错误代码
-     * @return Token 对象
+     * @brief 读取并验证一个带特定前缀的数字（例如 0x, 0b, 0o）。
+     * @param[in] valid_chars 允许出现在数字部分的字符集。
+     * @param[in] prefix_str 数字的前缀（例如 "0x"）。
+     * @param[in] error_code 如果缺少数字部分时要报告的错误代码。
+     * @return 返回一个表示该数字的 Token。
      */
     Token read_prefixed_number(const std::string &valid_chars,
                                const std::string &prefix_str,
                                DiagnosticCode error_code);
 
     /**
-     * @brief 报告错误
-     * @param code 诊断代码
-     * @param error_line 错误行号
-     * @param error_column 错误列号
-     * @param args 消息参数列表
+     * @brief 辅助函数，用于在错误收集器中记录一个新错误。
+     * @param[in] code 错误的诊断代码。
+     * @param[in] error_line 错误发生的行号。
+     * @param[in] error_column 错误发生的列号。
+     * @param[in] args (可选) 格式化错误消息所需的参数。
      */
     void report_error(DiagnosticCode code,
                       size_t error_line,
                       size_t error_column,
                       const std::vector<std::string> &args = {});
 
-public:
+  public:
     /**
-     * @brief 构造函数
-     * @param input_str 输入源码字符串
-     * @param fname 文件名，默认为 "<stdin>"
+     * @brief 构造一个新的词法分析器。
+     * @param[in] input_str 要进行词法分析的源代码字符串。
+     * @param[in] fname (可选) 源代码的文件名，用于错误报告。默认为 "<stdin>"。
      */
     Lexer(const std::string &input_str,
           const std::string &fname = "<stdin>");
 
     /**
-     * @brief 获取下一个 Token
-     * @return Token 对象
+     * @brief 从输入流中获取并返回下一个 Token。
+     * @return 返回解析出的下一个 Token。当到达输入末尾时，返回 TokenType::EndOfFile。
      */
     Token next_token();
 
     /**
-     * @brief 对整个输入进行词法分析
-     * @return Token 列表
+     * @brief 对整个输入字符串执行词法分析，并返回所有 Token 的列表。
+     * @return 包含所有解析出的 Token 的向量。
      */
     std::vector<Token> tokenize();
 
     /**
-     * @brief 获取错误收集器
-     * @return 错误收集器的常量引用
+     * @brief 获取对内部错误收集器的访问权限。
+     * @return 对 LexErrorCollector 对象的常量引用。
      */
     const LexErrorCollector &get_errors() const { return error_collector; }
 };

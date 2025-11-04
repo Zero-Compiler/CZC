@@ -2,6 +2,7 @@
  * @file token_preprocessor.hpp
  * @brief Token 预处理器类定义
  * @author BegoniaHe
+ * @date 2025-11-04
  */
 
 #ifndef CZC_TOKEN_PREPROCESSOR_HPP
@@ -15,16 +16,16 @@
 #include <optional>
 #include <cstdint>
 
-constexpr int MAX_I64_MAGNITUDE = 18;  ///< int64 最大位数 (约 10^18)
-constexpr int MAX_F64_MAGNITUDE = 308; ///< float64 最大位数 (约 10^308)
+constexpr int MAX_I64_MAGNITUDE = 18;  // int64 最大位数 (约 10^18)
+constexpr int MAX_F64_MAGNITUDE = 308; // float64 最大位数 (约 10^308)
 
 /**
  * @brief 推断的数值类型枚举
  */
 enum class InferredNumericType
 {
-    INT64, ///< 64位整数
-    FLOAT  ///< 64位浮点数
+    INT64, // 64位整数
+    FLOAT  // 64位浮点数
 };
 
 /**
@@ -32,13 +33,13 @@ enum class InferredNumericType
  */
 struct ScientificNotationInfo
 {
-    std::string original_literal;      ///< 原始字符串 (如 "1.5e10")
-    std::string mantissa;              ///< 尾数部分 (如 "1.5")
-    int64_t exponent;                  ///< 指数部分 (如 10)
-    bool has_decimal_point;            ///< 是否包含小数点
-    size_t decimal_digits;             ///< 小数点后的有效位数（去除尾随0后）
-    InferredNumericType inferred_type; ///< 推断的类型
-    std::string normalized_value;      ///< 规范化后的值（用于后续计算）
+    std::string original_literal;      // 原始字符串 (如 "1.5e10")
+    std::string mantissa;              // 尾数部分 (如 "1.5")
+    int64_t exponent;                  // 指数部分 (如 10)
+    bool has_decimal_point;            // 是否包含小数点
+    size_t decimal_digits;             // 小数点后的有效位数（去除尾随0后）
+    InferredNumericType inferred_type; // 推断的类型
+    std::string normalized_value;      // 规范化后的值（用于后续计算）
 };
 
 /**
@@ -46,9 +47,9 @@ struct ScientificNotationInfo
  */
 struct AnalysisContext
 {
-    const std::string &filename;       ///< 文件名
-    const std::string &source_content; ///< 源码内容
-    TPErrorCollector *error_collector; ///< 错误收集器
+    const std::string &filename;       // 文件名
+    const std::string &source_content; // 源码内容
+    TPErrorCollector *error_collector; // 错误收集器
 
     /**
      * @brief 构造函数
@@ -159,62 +160,77 @@ private:
 };
 
 /**
- * @brief Token 预处理器类
+ * @brief 在语法分析前对 Token 流进行分析和转换。
+ * @details
+ *   此预处理器目前专注于处理科学计数法字面量。词法分析器会将所有
+ *   科学计数法形式的数字（例如 `1.23e10`）识别为 `ScientificExponent` 类型。
+ *   TokenPreprocessor 则会进一步分析这些字面量，根据其值和形式推断
+ *   它们应该是整数（`INT64`）还是浮点数（`FLOAT`），并相应地更新 Token 的类型。
+ *   它还会检查数值溢出等问题。
+ * @note 此类不是线程安全的。
  */
 class TokenPreprocessor
 {
-private:
-    TPErrorCollector error_collector; ///< 错误收集器
+  private:
+    /// @brief 用于收集在预处理期间遇到的所有错误。
+    TPErrorCollector error_collector;
 
     /**
-     * @brief 报告错误
-     * @param code 诊断代码
-     * @param token Token 指针
-     * @param args 消息参数列表
+     * @brief 辅助函数，用于在错误收集器中记录一个新错误。
+     * @param[in] code 错误的诊断代码。
+     * @param[in] token 发生错误的 Token。
+     * @param[in] args (可选) 格式化错误消息所需的参数。
      */
     void report_error(DiagnosticCode code,
                       const Token *token,
                       const std::vector<std::string> &args = {});
 
-public:
+  public:
     /**
-     * @brief 构造函数
+     * @brief 默认构造函数。
      */
     TokenPreprocessor() = default;
 
     /**
-     * @brief 处理 Token 流，对科学计数法 Token 进行类型推断
-     * @param tokens Token 列表
-     * @param filename 文件名
-     * @param source_content 源码内容
-     * @return 处理后的 Token 列表
+     * @brief 处理一个完整的 Token 列表。
+     * @details
+     *   遍历输入的 Token 向量，当遇到 `ScientificExponent` 类型的 Token 时，
+     *   调用 `process_scientific_token` 对其进行处理和转换，然后返回新的 Token 列表。
+     * @param[in] tokens 从词法分析器获得的原始 Token 列表。
+     * @param[in] filename 源代码的文件名。
+     * @param[in] source_content 完整的源代码内容。
+     * @return 返回经过处理和类型调整的 Token 列表。
      */
     std::vector<Token> process(const std::vector<Token> &tokens,
                                const std::string &filename,
                                const std::string &source_content);
 
     /**
-     * @brief 处理单个科学计数法 Token
-     * @param token Token 对象
-     * @param filename 文件名
-     * @param source_content 源码内容
-     * @return 处理后的 Token 对象
+     * @brief 分析并转换单个科学计数法 Token。
+     * @details
+     *   使用 ScientificNotationAnalyzer 对 Token 的值进行分析，推断其类型
+     *   （INT64 或 FLOAT），并检查是否存在溢出。
+     *   返回一个更新了类型和值的新 Token。
+     * @param[in] token 一个类型为 `ScientificExponent` 的 Token。
+     * @param[in] filename 源代码的文件名。
+     * @param[in] source_content 完整的源代码内容。
+     * @return 返回类型被更新为 `Integer` 或 `Float` 的新 Token。
      */
     Token process_scientific_token(const Token &token,
                                    const std::string &filename,
                                    const std::string &source_content);
 
     /**
-     * @brief 获取错误收集器
-     * @return 错误收集器的常量引用
+     * @brief 获取对内部错误收集器的访问权限。
+     * @return 对 TPErrorCollector 对象的常量引用。
      */
     const TPErrorCollector &get_errors() const { return error_collector; }
 
-private:
+  private:
     /**
-     * @brief 将推断类型转换为 TokenType
-     * @param type 推断的数值类型
-     * @return TokenType
+     * @brief 将内部的 InferredNumericType 映射到词法分析器的 TokenType。
+     * @param[in] type 推断出的数值类型。
+     * @return 对应的 TokenType (`Integer` 或 `Float`)。
      */
     static TokenType inferred_type_to_token_type(InferredNumericType type);
 };

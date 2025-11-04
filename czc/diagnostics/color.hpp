@@ -2,6 +2,7 @@
  * @file color.hpp
  * @brief ANSI 颜色代码定义
  * @author BegoniaHe
+ * @date 2025-11-04
  */
 
 #ifndef CZC_COLOR_HPP
@@ -24,12 +25,12 @@ namespace czc
          */
         namespace Color
         {
-            const std::string Reset = "\033[0m";   ///< 重置颜色
-            const std::string Bold = "\033[1m";    ///< 粗体
-            const std::string Red = "\033[31m";    ///< 红色
-            const std::string Yellow = "\033[33m"; ///< 黄色
-            const std::string Blue = "\033[34m";   ///< 蓝色
-            const std::string Cyan = "\033[36m";   ///< 青色
+            const std::string Reset = "\033[0m";   // 重置颜色
+            const std::string Bold = "\033[1m";    // 粗体
+            const std::string Red = "\033[31m";    // 红色
+            const std::string Yellow = "\033[33m"; // 黄色
+            const std::string Blue = "\033[34m";   // 蓝色
+            const std::string Cyan = "\033[36m";   // 青色
         }
     }
 }
