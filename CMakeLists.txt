@@ -14,24 +14,27 @@ endif()
 # 核心库：libczc
 add_library(czc STATIC
     src/lexer/token.cpp
-    src/lexer/lexer_error.cpp
     src/lexer/lexer.cpp
+    src/lexer/utf8_handler.cpp
+    src/lexer/source_tracker.cpp
+    src/lexer/error_collector.cpp
     src/token_preprocessor/token_preprocessor.cpp
+    src/diagnostics/diagnostic_code.cpp
+    src/diagnostics/diagnostic.cpp
+    src/utils/file_collector.cpp
 )
 
 target_include_directories(czc PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
-# CLI 工具
 add_executable(czc-cli
     cli/main.cpp
 )
 
 target_link_libraries(czc-cli PRIVATE czc)
 
-# 安装规则
 install(TARGETS czc czc-cli
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib

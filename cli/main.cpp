@@ -1,6 +1,14 @@
+/**
+ * @file main.cpp
+ * @brief CZC 编译器命令行工具入口
+ * @author BegoniaHe
+ */
+
 #include "czc/lexer/lexer.hpp"
-#include "czc/lexer/lexer_error.hpp"
+#include "czc/lexer/source_tracker.hpp"
 #include "czc/token_preprocessor/token_preprocessor.hpp"
+#include "czc/diagnostics/diagnostic.hpp"
+#include "czc/utils/file_collector.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -10,19 +18,32 @@
 #include <algorithm>
 #include <iomanip>
 
+/**
+ * @brief 打印使用说明
+ * @param program_name 程序名称
+ */
 void print_usage(const char *program_name)
 {
-    std::cout << "Usage: " << program_name << " <command> <file>..." << std::endl;
+    std::cout << "Usage: " << program_name << " [options] <command> <file>..." << std::endl;
+    std::cout << "\nOptions:" << std::endl;
+    std::cout << "  --locale <locale>         Set the locale for diagnostic messages (default: en_US)" << std::endl;
+    std::cout << "                            Available: en_US, zh_CN, ne_KO" << std::endl;
     std::cout << "\nCommands:" << std::endl;
     std::cout << "  tokenize <input_file>...  Tokenize one or more input files" << std::endl;
     std::cout << "                            Output will be saved as <input_file>.tokens" << std::endl;
     std::cout << "                            Supports multiple files and wildcards" << std::endl;
     std::cout << "\nExamples:" << std::endl;
     std::cout << "  " << program_name << " tokenize example.zero" << std::endl;
+    std::cout << "  " << program_name << " --locale zh_CN tokenize example.zero" << std::endl;
     std::cout << "  " << program_name << " tokenize file1.zero file2.zero" << std::endl;
     std::cout << "  " << program_name << " tokenize test_*.zero" << std::endl;
 }
 
+/**
+ * @brief 转义字符串用于输出
+ * @param s 待转义的字符串
+ * @return 转义后的字符串
+ */
 static std::string escape_for_output(const std::string &s)
 {
     std::ostringstream oss;
@@ -63,7 +84,13 @@ static std::string escape_for_output(const std::string &s)
     return oss.str();
 }
 
-bool tokenize_file(const std::string &input_path)
+/**
+ * @brief 对单个文件进行词法分析
+ * @param input_path 输入文件路径
+ * @param locale 语言环境代码
+ * @return 成功返回 true，失败返回 false
+ */
+bool tokenize_file(const std::string &input_path, const std::string &locale)
 {
     if (input_path.empty())
     {
@@ -95,56 +122,78 @@ bool tokenize_file(const std::string &input_path)
     std::string content = buffer.str();
     input_file.close();
 
-    // Tokenize
     std::cout << "Tokenizing file: " << input_path << std::endl;
 
-    try
+    DiagnosticEngine diagnostics(locale);
+
+    Lexer lexer(content, input_path);
+    auto tokens = lexer.tokenize();
+
+    if (lexer.get_errors().has_errors())
     {
-        Lexer lexer(content);
-        auto tokens = lexer.tokenize();
-        auto processed_tokens = TokenPreprocessor::process(tokens);
-
-        std::filesystem::path input_fs_path(input_path);
-        std::string output_path = input_path + ".tokens";
-
-        std::ofstream output_file(output_path, std::ios::binary);
-        if (!output_file.is_open())
+        for (const auto &error : lexer.get_errors().get_errors())
         {
-            std::cerr << "Error: Cannot create output file '" << output_path << "'" << std::endl;
-            return false;
+            auto diag = std::make_shared<Diagnostic>(
+                DiagnosticLevel::Error,
+                error.code,
+                error.location,
+                error.args);
+
+            // 使用 SourceTracker 提取源码行
+            SourceTracker temp_tracker(content, input_path);
+            diag->set_source_line(temp_tracker.get_source_line(error.location.line));
+            diagnostics.report(diag);
         }
-
-        output_file << "# Tokenization Result" << std::endl;
-        output_file << "# Source: " << input_path << std::endl;
-        output_file << "# Total tokens: " << processed_tokens.size() << std::endl;
-        output_file << "# Format: Index\tLine:Column\tType\tValue" << std::endl;
-        output_file << std::endl;
-
-        for (size_t i = 0; i < processed_tokens.size(); i++)
-        {
-            output_file << i << "\t"
-                        << processed_tokens[i].line << ":" << processed_tokens[i].column << "\t"
-                        << token_type_to_string(processed_tokens[i].token_type) << "\t"
-                        << "\"" << escape_for_output(processed_tokens[i].value) << "\"" << std::endl;
-        }
-
-        output_file.close();
-
-        std::cout << "Successfully tokenized " << processed_tokens.size() << " tokens" << std::endl;
-        std::cout << "Output saved to: " << output_path << std::endl;
-
-        return true;
     }
-    catch (const LexerError &e)
+
+    if (diagnostics.has_errors())
     {
-        std::cerr << e.format_error() << std::endl;
+        std::cerr << "\nErrors found during lexical analysis:\n"
+                  << std::endl;
+        diagnostics.print_all(true);
         return false;
     }
-    catch (const std::exception &e)
+
+    auto processed_tokens = TokenPreprocessor::process(tokens, input_path, content, &diagnostics);
+
+    if (diagnostics.has_errors())
     {
-        std::cerr << "Error during tokenization: " << e.what() << std::endl;
+        std::cerr << "\nErrors found during token preprocessing:\n"
+                  << std::endl;
+        diagnostics.print_all(true);
         return false;
     }
+
+    std::filesystem::path input_fs_path(input_path);
+    std::string output_path = input_path + ".tokens";
+
+    std::ofstream output_file(output_path, std::ios::binary);
+    if (!output_file.is_open())
+    {
+        std::cerr << "Error: Cannot create output file '" << output_path << "'" << std::endl;
+        return false;
+    }
+
+    output_file << "# Tokenization Result" << std::endl;
+    output_file << "# Source: " << input_path << std::endl;
+    output_file << "# Total tokens: " << processed_tokens.size() << std::endl;
+    output_file << "# Format: Index\tLine:Column\tType\tValue" << std::endl;
+    output_file << std::endl;
+
+    for (size_t i = 0; i < processed_tokens.size(); i++)
+    {
+        output_file << i << "\t"
+                    << processed_tokens[i].line << ":" << processed_tokens[i].column << "\t"
+                    << token_type_to_string(processed_tokens[i].token_type) << "\t"
+                    << "\"" << escape_for_output(processed_tokens[i].value) << "\"" << std::endl;
+    }
+
+    output_file.close();
+
+    std::cout << "Successfully tokenized " << processed_tokens.size() << " tokens" << std::endl;
+    std::cout << "Output saved to: " << output_path << std::endl;
+
+    return true;
 }
 
 int main(int argc, char *argv[])
@@ -155,95 +204,61 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    std::string command = argv[1];
+    // Parse global options
+    std::string locale = "en_US"; // Default locale
+    int arg_offset = 1;
+
+    // Check for --locale option
+    while (arg_offset < argc && argv[arg_offset][0] == '-')
+    {
+        std::string option = argv[arg_offset];
+
+        if (option == "--locale")
+        {
+            if (arg_offset + 1 >= argc)
+            {
+                std::cerr << "Error: --locale requires an argument" << std::endl;
+                print_usage(argv[0]);
+                return 1;
+            }
+            locale = argv[arg_offset + 1];
+            arg_offset += 2;
+        }
+        else
+        {
+            std::cerr << "Error: Unknown option '" << option << "'" << std::endl;
+            print_usage(argv[0]);
+            return 1;
+        }
+    }
+
+    if (arg_offset >= argc)
+    {
+        std::cerr << "Error: Missing command" << std::endl;
+        print_usage(argv[0]);
+        return 1;
+    }
+
+    std::string command = argv[arg_offset];
 
     if (command == "tokenize")
     {
-        if (argc < 3)
+        if (arg_offset + 1 >= argc)
         {
             std::cerr << "Error: Missing input file argument" << std::endl;
             print_usage(argv[0]);
             return 1;
         }
 
-        // collect all files to process
-        std::vector<std::string> files_to_process;
-
-        for (int i = 2; i < argc; i++)
+        // 收集所有要处理的文件模式
+        std::vector<std::string> patterns;
+        for (int i = arg_offset + 1; i < argc; i++)
         {
-            std::string arg = argv[i];
-
-            // Check for wildcard characters
-            if (arg.find('*') != std::string::npos || arg.find('?') != std::string::npos)
-            {
-                std::filesystem::path pattern_path(arg);
-                std::filesystem::path parent_path = pattern_path.parent_path();
-                std::string pattern = pattern_path.filename().string();
-
-                if (parent_path.empty())
-                {
-                    parent_path = ".";
-                }
-
-                if (std::filesystem::exists(parent_path) && std::filesystem::is_directory(parent_path))
-                {
-                    for (const auto &entry : std::filesystem::directory_iterator(parent_path))
-                    {
-                        if (entry.is_regular_file())
-                        {
-                            std::string filename = entry.path().filename().string();
-
-                            bool match = true;
-                            size_t pattern_idx = 0;
-                            size_t filename_idx = 0;
-
-                            while (pattern_idx < pattern.length() && filename_idx < filename.length())
-                            {
-                                if (pattern[pattern_idx] == '*')
-                                {
-                                    // Handle * wildcard
-                                    if (pattern_idx == pattern.length() - 1)
-                                    {
-                                        break;
-                                    }
-                                    pattern_idx++;
-                                    while (filename_idx < filename.length() && filename[filename_idx] != pattern[pattern_idx])
-                                    {
-                                        filename_idx++;
-                                    }
-                                }
-                                else if (pattern[pattern_idx] == '?')
-                                {
-                                    pattern_idx++;
-                                    filename_idx++;
-                                }
-                                else if (pattern[pattern_idx] == filename[filename_idx])
-                                {
-                                    pattern_idx++;
-                                    filename_idx++;
-                                }
-                                else
-                                {
-                                    match = false;
-                                    break;
-                                }
-                            }
-
-                            if (match && pattern_idx == pattern.length() && filename_idx == filename.length())
-                            {
-                                files_to_process.push_back(entry.path().string());
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                files_to_process.push_back(arg);
-            }
+            patterns.push_back(argv[i]);
         }
 
-        std::sort(files_to_process.begin(), files_to_process.end());
+        // 使用 FileCollector 收集文件
+        auto files_to_process = FileCollector::collect_files(patterns);
 
         if (files_to_process.empty())
         {
@@ -262,7 +277,7 @@ int main(int argc, char *argv[])
                 std::cout << "[" << (i + 1) << "/" << total_files << "] ";
             }
 
-            if (tokenize_file(files_to_process[i]))
+            if (tokenize_file(files_to_process[i], locale))
             {
                 success_count++;
             }

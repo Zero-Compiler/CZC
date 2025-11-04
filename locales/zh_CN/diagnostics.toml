@@ -1,0 +1,66 @@
+# CZC 编译器诊断信息 - 简体中文
+
+[L0001]
+message = "十六进制字面量缺少数字"
+help = "在 '0x' 后需要至少一个十六进制数字"
+source = "lexer"
+
+[L0002]
+message = "二进制字面量缺少数字"
+help = "在 '0b' 后需要至少一个二进制数字"
+source = "lexer"
+
+[L0003]
+message = "八进制字面量缺少数字"
+help = "在 '0o' 后需要至少一个八进制数字"
+source = "lexer"
+
+[L0004]
+message = "指数部分缺少数字"
+help = "科学计数法要求在 'e' 或 'E' 后至少有一个数字"
+source = "lexer"
+
+[L0005]
+message = "数字字面量后的无效后缀 '{0}'"
+help = "数字字面量后不能直接跟标识符"
+source = "lexer"
+
+[L0006]
+message = "未知的转义序列：'\\{0}'"
+help = "有效的转义序列包括：\\n, \\t, \\r, \\\\, \\\", \\', \\0, \\xHH, \\uXXXX, \\u{{HHHHHH}}"
+source = "lexer"
+
+[L0007]
+message = "未闭合的字符串字面量"
+help = "添加结束引号 '\"' 来闭合字符串"
+source = "lexer"
+
+[L0008]
+message = "无效的十六进制转义序列"
+help = "在 '\\x' 后需要 1-2 个十六进制数字"
+source = "lexer"
+
+[L0009]
+message = "无效的 Unicode 转义序列"
+help = "在 '\\u' 后需要 4 个十六进制数字，或使用 \\u{{...}} 表示更长的序列"
+source = "lexer"
+
+[L0010]
+message = "意外的字符 '{0}'"
+help = "此处不允许使用该字符"
+source = "lexer"
+
+[L0011]
+message = "无效的 UTF-8 序列"
+help = "源文件包含无效的 UTF-8 字节"
+source = "lexer"
+
+[T0001]
+message = "科学计数法 '{0}' 导致整数溢出"
+help = "考虑使用浮点数表示或使用更小的指数"
+source = "token_preprocessor"
+
+[T0002]
+message = "科学计数法 '{0}' 的指数为负数"
+help = "这将被视为浮点数；如果是有意为之，建议使用明确的浮点数语法"
+source = "token_preprocessor"

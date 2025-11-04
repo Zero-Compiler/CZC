@@ -1,36 +1,43 @@
+/**
+ * @file token_preprocessor.cpp
+ * @brief Token 预处理器实现
+ * @author BegoniaHe
+ */
+
 #include "czc/token_preprocessor/token_preprocessor.hpp"
+#include "czc/diagnostics/diagnostic_code.hpp"
+#include "czc/diagnostics/diagnostic.hpp"
+#include "czc/lexer/source_tracker.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 
-std::optional<ScientificNotationInfo> ScientificNotationAnalyzer::analyze(const std::string &literal)
+std::optional<ScientificNotationInfo> ScientificNotationAnalyzer::analyze(
+    const std::string &literal,
+    const Token *token,
+    const AnalysisContext &context)
 {
     ScientificNotationInfo info;
     info.original_literal = literal;
 
-    // 解析尾数和指数
     if (!parse_components(literal, info.mantissa, info.exponent))
     {
         return std::nullopt;
     }
 
-    // 检查是否有小数点
     info.has_decimal_point = (info.mantissa.find('.') != std::string::npos);
 
-    // 计算小数位数（去除尾随零后）
     info.decimal_digits = count_decimal_digits(info.mantissa);
 
-    // 推断类型
-    info.inferred_type = infer_type(info);
+    info.inferred_type = infer_type(info, token, context);
 
-    // 生成规范化值
     info.normalized_value = info.mantissa + "e" + std::to_string(info.exponent);
 
     return info;
 }
-
 bool ScientificNotationAnalyzer::parse_components(const std::string &literal, std::string &mantissa, int64_t &exponent)
 {
     // 查找 'e' 或 'E'
@@ -59,7 +66,11 @@ bool ScientificNotationAnalyzer::parse_components(const std::string &literal, st
     {
         exponent = std::stoll(exp_str);
     }
-    catch (...)
+    catch (const std::invalid_argument &)
+    {
+        return false;
+    }
+    catch (const std::out_of_range &)
     {
         return false;
     }
@@ -98,19 +109,22 @@ size_t ScientificNotationAnalyzer::count_decimal_digits(const std::string &manti
     return trimmed.length();
 }
 
-InferredNumericType ScientificNotationAnalyzer::infer_type(const ScientificNotationInfo &info)
+InferredNumericType ScientificNotationAnalyzer::infer_type(
+    const ScientificNotationInfo &info,
+    const Token *token,
+    const AnalysisContext &context)
 {
-    // 规则1: 如果指数为负数，直接推为 FLOAT
+    // 如果指数为负数，直接推为 FLOAT
     if (info.exponent < 0)
     {
         return InferredNumericType::FLOAT;
     }
 
-    // 规则2: 如果没有小数点（纯整数形式）
+    // 如果没有小数点
     if (!info.has_decimal_point)
     {
         // 根据指数范围决定是否能表示为 INT64
-        if (fits_in_int64(info.mantissa, info.exponent))
+        if (fits_in_int64(info.mantissa, info.exponent, token, context))
         {
             return InferredNumericType::INT64;
         }
@@ -130,7 +144,7 @@ InferredNumericType ScientificNotationAnalyzer::infer_type(const ScientificNotat
     {
         // 小数位数 <= 指数，可能转为整数
         // 检查是否在 INT64 范围内
-        if (fits_in_int64(info.mantissa, info.exponent))
+        if (fits_in_int64(info.mantissa, info.exponent, token, context))
         {
             return InferredNumericType::INT64;
         }
@@ -141,22 +155,30 @@ InferredNumericType ScientificNotationAnalyzer::infer_type(const ScientificNotat
     }
 }
 
-bool ScientificNotationAnalyzer::fits_in_int64(const std::string &mantissa, int64_t exponent)
+bool ScientificNotationAnalyzer::fits_in_int64(
+    const std::string &mantissa,
+    int64_t exponent,
+    const Token *token,
+    const AnalysisContext &context)
 {
-    // 计算实际数值的数量级
-    auto magnitude = calculate_magnitude(mantissa, exponent);
+    auto magnitude = calculate_magnitude(mantissa, exponent, token, context);
     if (!magnitude.has_value())
     {
-        return false; // 无法计算，保守地返回 false
+        return false;
     }
 
-    // INT64 的最大数量级为 18
-    return magnitude.value() <= 18;
+    return magnitude.value() <= MAX_I64_MAGNITUDE;
 }
 
-std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(const std::string &mantissa, int64_t exponent)
+std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
+    const std::string &mantissa,
+    int64_t exponent,
+    const Token *token,
+    const AnalysisContext &context)
 {
-    std::string digits_only;
+
+    // 提取有效数字
+    std::string significant_digits_str;
     size_t dot_pos = mantissa.find('.');
     bool has_dot = (dot_pos != std::string::npos);
 
@@ -164,39 +186,83 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(const std
     {
         if (std::isdigit(ch))
         {
-            digits_only += ch;
+            significant_digits_str += ch;
         }
     }
 
     // 去除前导零
-    size_t first_nonzero = digits_only.find_first_not_of('0');
+    size_t first_nonzero = significant_digits_str.find_first_not_of('0');
     if (first_nonzero == std::string::npos)
     {
-        // 全是零，数量级为 0
-        return 0;
+        return 0; // 零的特殊情况
     }
 
-    digits_only = digits_only.substr(first_nonzero);
-    int64_t significant_digits = static_cast<int64_t>(digits_only.length());
+    significant_digits_str = significant_digits_str.substr(first_nonzero);
+    int64_t num_significant_digits = static_cast<int64_t>(significant_digits_str.length());
 
-    // 如果有小数点，需要调整指数
+    // 计算实际指数
     int64_t actual_exponent = exponent;
     if (has_dot)
     {
-        // 小数点后的位数
         size_t decimal_places = mantissa.length() - dot_pos - 1;
         actual_exponent -= static_cast<int64_t>(decimal_places);
     }
 
-    // 总的数量级 = 有效数字位数 + 实际指数 - 1
-    int64_t magnitude = significant_digits + actual_exponent - 1;
+    // 检查加法溢出
+    if (actual_exponent > 0 &&
+        num_significant_digits > std::numeric_limits<int64_t>::max() - actual_exponent)
+    {
+        report_overflow(token, mantissa, exponent, context);
+        return std::nullopt;
+    }
+
+    int64_t magnitude = num_significant_digits + actual_exponent - 1;
+
+    // 只需要检查是否超过 int64 范围
+    if (magnitude > MAX_I64_MAGNITUDE)
+    {
+        report_overflow(token, mantissa, exponent, context);
+        return std::nullopt;
+    }
 
     return magnitude;
 }
 
-// ==================== TokenPreprocessor 实现 ====================
+void ScientificNotationAnalyzer::report_overflow(
+    const Token *token,
+    const std::string &mantissa,
+    int64_t exponent,
+    const AnalysisContext &context)
+{
+    if (!context.reporter || !token)
+    {
+        return;
+    }
 
-std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens)
+    std::string literal = mantissa + "e" + std::to_string(exponent);
+    auto loc = SourceLocation(
+        context.filename,
+        token->line,
+        token->column,
+        token->line,
+        token->column + token->value.length());
+
+    auto diag = std::make_shared<Diagnostic>(
+        DiagnosticLevel::Error,
+        DiagnosticCode::T0001_ScientificIntOverflow,
+        loc,
+        std::vector<std::string>{literal});
+
+    // 使用 SourceTracker 提取源码行
+    SourceTracker temp_tracker(context.source_content, context.filename);
+    diag->set_source_line(temp_tracker.get_source_line(token->line));
+    context.reporter->report(diag);
+}
+
+std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens,
+                                              const std::string &filename,
+                                              const std::string &source_content,
+                                              IDiagnosticReporter *reporter)
 {
     std::vector<Token> processed_tokens;
     processed_tokens.reserve(tokens.size());
@@ -205,7 +271,7 @@ std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens)
     {
         if (token.token_type == TokenType::ScientificExponent)
         {
-            processed_tokens.push_back(process_scientific_token(token));
+            processed_tokens.push_back(process_scientific_token(token, filename, source_content, reporter));
         }
         else
         {
@@ -216,13 +282,18 @@ std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens)
     return processed_tokens;
 }
 
-Token TokenPreprocessor::process_scientific_token(const Token &token)
+Token TokenPreprocessor::process_scientific_token(const Token &token,
+                                                  const std::string &filename,
+                                                  const std::string &source_content,
+                                                  IDiagnosticReporter *reporter)
 {
-    auto info = ScientificNotationAnalyzer::analyze(token.value);
+    AnalysisContext context(filename, source_content, reporter);
+    auto info = ScientificNotationAnalyzer::analyze(token.value, &token, context);
 
     if (!info.has_value())
     {
-        return token;
+        // 分析失败，返回 Unknown token
+        return Token(TokenType::Unknown, token.value, token.line, token.column);
     }
 
     TokenType new_type = inferred_type_to_token_type(info->inferred_type);
@@ -235,9 +306,9 @@ TokenType TokenPreprocessor::inferred_type_to_token_type(InferredNumericType typ
     switch (type)
     {
     case InferredNumericType::INT64:
-        return TokenType::Integer;
+        return TokenType::Integer; // int64
     case InferredNumericType::FLOAT:
-        return TokenType::Float;
+        return TokenType::Float; // float64
     default:
         return TokenType::Unknown;
     }
@@ -247,11 +318,11 @@ std::string inferred_type_to_string(InferredNumericType type)
 {
     switch (type)
     {
-        case InferredNumericType::INT64:
-            return "INT64";
-        case InferredNumericType::FLOAT:
-            return "FLOAT";
-        default:
-            return "Unknown";
+    case InferredNumericType::INT64:
+        return "INT64";
+    case InferredNumericType::FLOAT:
+        return "FLOAT";
+    default:
+        return "Unknown";
     }
 }

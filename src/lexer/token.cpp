@@ -1,3 +1,9 @@
+/**
+ * @file token.cpp
+ * @brief Token 类实现
+ * @author BegoniaHe
+ */
+
 #include "czc/lexer/token.hpp"
 
 // Token constructor

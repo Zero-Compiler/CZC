@@ -5,6 +5,17 @@
         "iostream": "cpp",
         "chrono": "cpp",
         "optional": "cpp",
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "ios": "cpp",
+        "istream": "cpp",
+        "locale": "cpp",
+        "typeinfo": "cpp",
+        "variant": "cpp",
+        "iomanip": "cpp",
+        "*.bak": "cpp",
+        "__split_buffer": "cpp",
+        "unordered_map": "cpp"
     }
 }

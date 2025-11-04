@@ -1,3 +1,9 @@
+/**
+ * @file debug_operators.cpp
+ * @brief 调试运算符词法分析
+ * @author BegoniaHe
+ */
+
 #include "czc/lexer/lexer.hpp"
 #include <iostream>
 
