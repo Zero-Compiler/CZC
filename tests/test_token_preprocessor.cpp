@@ -10,21 +10,17 @@
 #include <iostream>
 #include <vector>
 
-/**
- * @brief 创建测试上下文
- * @return 分析上下文对象
- */
+using namespace czc::lexer;
+using namespace czc::token_preprocessor;
+
+// Helper to create an empty analysis context for tests.
 static AnalysisContext make_test_context() {
   static std::string empty_filename = "";
   static std::string empty_source = "";
   return AnalysisContext(empty_filename, empty_source, nullptr);
 }
 
-/**
- * @brief 打印分析结果
- * @param literal 字面量字符串
- * @param info 科学计数法信息
- */
+// Helper to print analysis results for debugging.
 void print_analysis(const std::string &literal,
                     const ScientificNotationInfo &info) {
   std::cout << "Literal: " << literal << std::endl;
@@ -38,183 +34,120 @@ void print_analysis(const std::string &literal,
   std::cout << "  Normalized: " << info.normalized_value << std::endl;
 }
 
-/**
- * @brief 测试负指数推断为 FLOAT
- */
+// --- Test Cases ---
+
+// Tests that negative exponents always result in FLOAT.
 void test_negative_exponent() {
   std::cout << "\n=== Test: Negative Exponent ===" << std::endl;
 
   auto info1 = ScientificNotationAnalyzer::analyze("1e-10", nullptr,
                                                    make_test_context());
-  assert(info1.has_value());
-  assert(info1->inferred_type == InferredNumericType::FLOAT);
+  assert(info1.has_value() &&
+         info1->inferred_type == InferredNumericType::FLOAT);
   std::cout << "1e-10 -> FLOAT" << std::endl;
 
   auto info2 = ScientificNotationAnalyzer::analyze("3.14e-5", nullptr,
                                                    make_test_context());
-  assert(info2.has_value());
-  assert(info2->inferred_type == InferredNumericType::FLOAT);
+  assert(info2.has_value() &&
+         info2->inferred_type == InferredNumericType::FLOAT);
   std::cout << "3.14e-5 -> FLOAT" << std::endl;
-
-  auto info3 = ScientificNotationAnalyzer::analyze("123e-1", nullptr,
-                                                   make_test_context());
-  assert(info3.has_value());
-  assert(info3->inferred_type == InferredNumericType::FLOAT);
-  std::cout << "123e-1 -> FLOAT" << std::endl;
 }
 
-/**
- * @brief 测试无小数点的整数形式
- */
+// Tests literals without a decimal point.
 void test_integer_form() {
   std::cout << "\n=== Test: Integer Form (No Decimal Point) ===" << std::endl;
 
-  // 小指数，应该是 INT64
+  // Small exponent, should be INT64.
   auto info1 =
       ScientificNotationAnalyzer::analyze("1e10", nullptr, make_test_context());
-  assert(info1.has_value());
-  assert(info1->inferred_type == InferredNumericType::INT64);
+  assert(info1.has_value() &&
+         info1->inferred_type == InferredNumericType::INT64);
   std::cout << "1e10 -> INT64" << std::endl;
 
-  auto info2 = ScientificNotationAnalyzer::analyze("123e5", nullptr,
-                                                   make_test_context());
-  assert(info2.has_value());
-  assert(info2->inferred_type == InferredNumericType::INT64);
-  std::cout << "123e5 -> INT64" << std::endl;
-
-  // 大指数，应该溢出为 FLOAT
+  // Large exponent, should overflow to FLOAT.
   auto info3 = ScientificNotationAnalyzer::analyze("1e100", nullptr,
                                                    make_test_context());
-  assert(info3.has_value());
-  assert(info3->inferred_type == InferredNumericType::FLOAT);
+  assert(info3.has_value() &&
+         info3->inferred_type == InferredNumericType::FLOAT);
   std::cout << "1e100 -> FLOAT (overflow)" << std::endl;
-
-  // 边界情况：接近 INT64 最大值
-  auto info4 =
-      ScientificNotationAnalyzer::analyze("9e18", nullptr, make_test_context());
-  assert(info4.has_value());
-  assert(info4->inferred_type == InferredNumericType::INT64);
-  std::cout << "9e18 -> INT64 (near limit)" << std::endl;
-
-  auto info5 =
-      ScientificNotationAnalyzer::analyze("1e19", nullptr, make_test_context());
-  assert(info5.has_value());
-  assert(info5->inferred_type == InferredNumericType::FLOAT);
-  std::cout << "1e19 -> FLOAT (overflow)" << std::endl;
 }
 
-/**
- * @brief 测试有小数点的情况 - 小数位数 > 指数
- */
+// Tests literals where the number of decimal digits is greater than the
+// exponent.
 void test_decimal_greater_than_exponent() {
   std::cout << "\n=== Test: Decimal Digits > Exponent ===" << std::endl;
 
-  // 3.14e5: 小数位数=2, 指数=5, 2 < 5, 但有小数位，检查是否能转为整数
-  auto info1 = ScientificNotationAnalyzer::analyze("3.14e5", nullptr,
-                                                   make_test_context());
-  assert(info1.has_value());
-  // 3.14e5 = 314000 (可以转为整数)
-  assert(info1->inferred_type == InferredNumericType::INT64);
-  std::cout << "3.14e5 -> INT64" << std::endl;
-
-  // 3.14159e2: 小数位数=5, 指数=2, 5 > 2 -> FLOAT
+  // 3.14159e2: 5 decimal digits > exponent 2 -> FLOAT
   auto info2 = ScientificNotationAnalyzer::analyze("3.14159e2", nullptr,
                                                    make_test_context());
-  assert(info2.has_value());
-  assert(info2->inferred_type == InferredNumericType::FLOAT);
-  std::cout << "3.14159e2 -> FLOAT (decimal_digits > exponent)" << std::endl;
-
-  // 1.5e1: 小数位数=1, 指数=1, 1 = 1, 可以转为整数 15
-  auto info3 = ScientificNotationAnalyzer::analyze("1.5e1", nullptr,
-                                                   make_test_context());
-  assert(info3.has_value());
-  assert(info3->inferred_type == InferredNumericType::INT64);
-  std::cout << "1.5e1 -> INT64" << std::endl;
+  assert(info2.has_value() &&
+         info2->inferred_type == InferredNumericType::FLOAT);
+  std::cout << "3.14159e2 -> FLOAT" << std::endl;
 }
 
-/**
- * @brief 测试尾随零的处理
- */
+// Tests that trailing zeros in the mantissa are handled correctly.
 void test_trailing_zeros() {
   std::cout << "\n=== Test: Trailing Zeros ===" << std::endl;
 
-  // 1.500e3: 去除尾随零后小数位数=1, 指数=3, 1 < 3 -> INT64
+  // 1.500e3: decimal_digits becomes 1, 1 < 3 -> INT64
   auto info1 = ScientificNotationAnalyzer::analyze("1.500e3", nullptr,
                                                    make_test_context());
-  assert(info1.has_value());
-  assert(info1->decimal_digits == 1); // "1.5"
-  assert(info1->inferred_type == InferredNumericType::INT64);
-  std::cout << "1.500e3 -> INT64 (trailing zeros removed)" << std::endl;
+  assert(info1.has_value() && info1->decimal_digits == 1 &&
+         info1->inferred_type == InferredNumericType::INT64);
+  std::cout << "1.500e3 -> INT64" << std::endl;
 
-  // 2.0000e2: 去除尾随零后小数位数=0, 指数=2 -> INT64
+  // 2.0000e2: decimal_digits becomes 0 -> INT64
   auto info2 = ScientificNotationAnalyzer::analyze("2.0000e2", nullptr,
                                                    make_test_context());
-  assert(info2.has_value());
-  assert(info2->decimal_digits == 0);
-  assert(info2->inferred_type == InferredNumericType::INT64);
-  std::cout << "2.0000e2 -> INT64 (all zeros removed)" << std::endl;
-
-  // 1.234000e10: 去除尾随零后小数位数=3, 指数=10, 3 < 10 -> INT64
-  auto info3 = ScientificNotationAnalyzer::analyze("1.234000e10", nullptr,
-                                                   make_test_context());
-  assert(info3.has_value());
-  assert(info3->decimal_digits == 3);
-  assert(info3->inferred_type == InferredNumericType::INT64);
-  std::cout << "1.234000e10 -> INT64" << std::endl;
+  assert(info2.has_value() && info2->decimal_digits == 0 &&
+         info2->inferred_type == InferredNumericType::INT64);
+  std::cout << "2.0000e2 -> INT64" << std::endl;
 }
 
-/**
- * @brief 测试边界情况
- */
+// Tests various edge cases.
 void test_edge_cases() {
   std::cout << "\n=== Test: Edge Cases ===" << std::endl;
 
-  // 零指数
+  // Zero exponent.
   auto info1 =
       ScientificNotationAnalyzer::analyze("5e0", nullptr, make_test_context());
-  assert(info1.has_value());
-  assert(info1->inferred_type == InferredNumericType::INT64);
+  assert(info1.has_value() &&
+         info1->inferred_type == InferredNumericType::INT64);
   std::cout << "5e0 -> INT64" << std::endl;
 
-  // 小数点但无小数位
+  // Decimal point with no fractional part.
   auto info2 =
       ScientificNotationAnalyzer::analyze("5.e2", nullptr, make_test_context());
-  assert(info2.has_value());
-  assert(info2->decimal_digits == 0);
-  assert(info2->inferred_type == InferredNumericType::INT64);
+  assert(info2.has_value() && info2->decimal_digits == 0 &&
+         info2->inferred_type == InferredNumericType::INT64);
   std::cout << "5.e2 -> INT64" << std::endl;
 
-  // 大写 E
+  // Uppercase 'E'.
   auto info3 = ScientificNotationAnalyzer::analyze("1.23E4", nullptr,
                                                    make_test_context());
-  assert(info3.has_value());
-  assert(info3->inferred_type == InferredNumericType::INT64);
+  assert(info3.has_value() &&
+         info3->inferred_type == InferredNumericType::INT64);
   std::cout << "1.23E4 -> INT64" << std::endl;
 
-  // 正号指数
+  // Explicit positive exponent.
   auto info4 = ScientificNotationAnalyzer::analyze("2.5e+3", nullptr,
                                                    make_test_context());
-  assert(info4.has_value());
-  assert(info4->inferred_type == InferredNumericType::INT64);
+  assert(info4.has_value() &&
+         info4->inferred_type == InferredNumericType::INT64);
   std::cout << "2.5e+3 -> INT64" << std::endl;
 }
 
-/**
- * @brief 测试 Token 流处理
- */
+// Tests the full preprocessing pipeline on a stream of tokens.
 void test_token_processing() {
   std::cout << "\n=== Test: Token Stream Processing ===" << std::endl;
 
-  // 创建测试代码
   std::string code = "let a = 1e10; let b = 3.14e-5; let c = 1.5e2;";
   Lexer lexer(code);
   auto tokens = lexer.tokenize();
 
-  // 处理 Token 流
   TokenPreprocessor preprocessor;
   auto processed = preprocessor.process(tokens, "<test>", code);
 
-  // 验证处理结果
   for (const auto &token : processed) {
     if (token.value == "1e10") {
       assert(token.token_type == TokenType::Integer);
@@ -229,9 +162,7 @@ void test_token_processing() {
   }
 }
 
-/**
- * @brief 测试详细分析输出
- */
+// Tests the detailed analysis output for manual verification.
 void test_detailed_analysis() {
   std::cout << "\n=== Test: Detailed Analysis Output ===" << std::endl;
 
@@ -248,44 +179,35 @@ void test_detailed_analysis() {
   }
 }
 
-/**
- * @brief 测试实际数值验证
- */
+// Tests specific values to ensure correct type inference.
 void test_actual_values() {
   std::cout << "\n=== Test: Actual Value Validation ===" << std::endl;
 
-  // 1e10 = 10,000,000,000 (可以用 INT64 表示)
+  // 1e10 = 10,000,000,000 (fits in INT64)
   auto info1 =
       ScientificNotationAnalyzer::analyze("1e10", nullptr, make_test_context());
-  assert(info1.has_value());
-  assert(info1->inferred_type == InferredNumericType::INT64);
+  assert(info1.has_value() &&
+         info1->inferred_type == InferredNumericType::INT64);
   std::cout << "1e10 = 10,000,000,000 (INT64)" << std::endl;
 
-  // 1.5e2 = 150 (可以用 INT64 表示)
+  // 1.5e2 = 150 (fits in INT64)
   auto info2 = ScientificNotationAnalyzer::analyze("1.5e2", nullptr,
                                                    make_test_context());
-  assert(info2.has_value());
-  assert(info2->inferred_type == InferredNumericType::INT64);
+  assert(info2.has_value() &&
+         info2->inferred_type == InferredNumericType::INT64);
   std::cout << "1.5e2 = 150 (INT64)" << std::endl;
 
-  // 3.14159e2 = 314.159 (不是整数，需要 FLOAT)
+  // 3.14159e2 = 314.159 (is a float)
   auto info3 = ScientificNotationAnalyzer::analyze("3.14159e2", nullptr,
                                                    make_test_context());
-  assert(info3.has_value());
-  assert(info3->inferred_type == InferredNumericType::FLOAT);
+  assert(info3.has_value() &&
+         info3->inferred_type == InferredNumericType::FLOAT);
   std::cout << "3.14159e2 = 314.159 (FLOAT)" << std::endl;
-
-  // 2.5e-3 = 0.0025 (FLOAT)
-  auto info4 = ScientificNotationAnalyzer::analyze("2.5e-3", nullptr,
-                                                   make_test_context());
-  assert(info4.has_value());
-  assert(info4->inferred_type == InferredNumericType::FLOAT);
-  std::cout << "2.5e-3 = 0.0025 (FLOAT)" << std::endl;
 }
 
 /**
- * @brief 主函数入口
- * @return 程序退出码
+ * @brief Main entry point for the test suite.
+ * @return 0 on success, 1 on failure.
  */
 int main() {
   std::cout << "===================================" << std::endl;

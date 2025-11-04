@@ -7,69 +7,60 @@
 
 #include "czc/lexer/utf8_handler.hpp"
 
-/**
- * @brief 检查字节是否为 UTF-8 连续字节
- * @param ch 待检查的字节
- * @return 如果是连续字节返回 true, 否则返回 false
- */
+namespace czc {
+namespace lexer {
+
 bool Utf8Handler::is_continuation(unsigned char ch) {
-  // UTF-8 的续字节（Continuation Byte）的二进制格式总是以 "10" 开头。
-  // 因此，我们可以通过检查高两位是否为 `10` 来判断。
-  // `(ch & 0xC0)` 会屏蔽掉除了高两位之外的所有位，`0xC0` 的二进制是
-  // `11000000`。 `0x80` 的二进制是 `10000000`。
+  // UTF-8 的续字节 (Continuation Byte) 的二进制格式总是以 "10" 开头。
+  // 掩码 0xC0 (二进制 11000000) 用于提取高两位。
+  // 结果与 0x80 (二进制 10000000) 比较，以判断是否匹配 "10" 前缀。
   return (ch & 0xC0) == 0x80;
 }
 
-/**
- * @brief 获取 UTF-8 字符的字节长度
- * @param first_byte 字符的第一个字节
- * @return 字符的字节长度, 如果无效则返回 0
- */
 size_t Utf8Handler::get_char_length(unsigned char first_byte) {
-  // 根据 UTF-8 编码规则，字符的第一个字节决定了整个字符序列的长度。
-  // 0xxxxxxx: 1字节 (ASCII)
-  if ((first_byte & 0x80) == 0)
+  // --- 根据 UTF-8 编码规则，通过第一个字节确定字符序列的总长度 ---
+  // 0xxxxxxx -> 1-byte character (ASCII)
+  if ((first_byte & 0x80) == 0) { // 检查最高位是否为 0
     return 1;
-  // 110xxxxx: 2字节
-  if ((first_byte & 0xE0) == 0xC0)
+  }
+  // 110xxxxx -> 2-byte character
+  if ((first_byte & 0xE0) == 0xC0) { // 检查高三位是否为 110
     return 2;
-  // 1110xxxx: 3字节
-  if ((first_byte & 0xF0) == 0xE0)
+  }
+  // 1110xxxx -> 3-byte character
+  if ((first_byte & 0xF0) == 0xE0) { // 检查高四位是否为 1110
     return 3;
-  // 11110xxx: 4字节
-  if ((first_byte & 0xF8) == 0xF0)
+  }
+  // 11110xxx -> 4-byte character
+  if ((first_byte & 0xF8) == 0xF0) { // 检查高五位是否为 11110
     return 4;
+  }
   // 如果不匹配以上任何模式，则它不是一个有效的 UTF-8 起始字节。
   return 0;
 }
 
-/**
- * @brief 将 Unicode 码点转换为 UTF-8 编码字符串
- * @param codepoint Unicode 码点
- * @return 转换后的 UTF-8 字符串
- */
 std::string Utf8Handler::codepoint_to_utf8(unsigned int codepoint) {
   std::string result;
 
-  // 此函数实现了将 Unicode 码点转换为 UTF-8 字节序列的标准算法。
-  // 根据码点的大小，决定需要1、2、3还是4个字节来表示。
+  // --- Unicode 码点到 UTF-8 字节序列的转换算法 ---
+  // 根据码点的大小，决定需要 1、2、3 还是 4 个字节来表示。
 
-  // ASCII 范围，直接转换。
+  // 1-byte sequence (ASCII)
   if (codepoint <= 0x7F) {
     result.push_back(static_cast<char>(codepoint));
   }
-  // 2字节序列，格式为 110xxxxx 10xxxxxx
+  // 2-byte sequence: 110xxxxx 10xxxxxx
   else if (codepoint <= 0x7FF) {
     result.push_back(static_cast<char>(0xC0 | ((codepoint >> 6) & 0x1F)));
     result.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
   }
-  // 3字节序列，格式为 1110xxxx 10xxxxxx 10xxxxxx
+  // 3-byte sequence: 1110xxxx 10xxxxxx 10xxxxxx
   else if (codepoint <= 0xFFFF) {
     result.push_back(static_cast<char>(0xE0 | ((codepoint >> 12) & 0x0F)));
     result.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
     result.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
   }
-  // 4字节序列，格式为 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+  // 4-byte sequence: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
   else if (codepoint <= 0x10FFFF) {
     result.push_back(static_cast<char>(0xF0 | ((codepoint >> 18) & 0x07)));
     result.push_back(static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F)));
@@ -80,13 +71,6 @@ std::string Utf8Handler::codepoint_to_utf8(unsigned int codepoint) {
   return result;
 }
 
-/**
- * @brief 从输入字符串中读取一个完整的 UTF-8 字符
- * @param input 输入字符串
- * @param pos 当前位置 (将被更新)
- * @param dest 存储读取字符的目标字符串
- * @return 如果成功读取返回 true, 否则返回 false
- */
 bool Utf8Handler::read_char(const std::string &input, size_t &pos,
                             std::string &dest) {
   if (pos >= input.size()) {
@@ -118,3 +102,6 @@ bool Utf8Handler::read_char(const std::string &input, size_t &pos,
 
   return true;
 }
+
+} // namespace lexer
+} // namespace czc

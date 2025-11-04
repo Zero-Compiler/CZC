@@ -7,15 +7,18 @@
 
 #include "czc/token_preprocessor/error_collector.hpp"
 
-/**
- * @brief 添加一个诊断错误
- * @param code 诊断代码
- * @param loc 源码位置
- * @param args 格式化参数
- */
+namespace czc {
+namespace token_preprocessor {
+
+using namespace czc::diagnostics;
+using namespace czc::utils;
+
 void TPErrorCollector::add(DiagnosticCode code, const SourceLocation &loc,
                            const std::vector<std::string> &args) {
-  // 使用 emplace_back 直接在 vector 中构造 TPError 对象，
-  // 这样比先创建临时对象再 push_back 更高效。
+  // 使用 emplace_back 直接在 vector 的末尾构造 TPError 对象，
+  // 避免了创建临时对象再进行拷贝或移动，从而提高效率。
   errors.emplace_back(code, loc, args);
 }
+
+} // namespace token_preprocessor
+} // namespace czc
