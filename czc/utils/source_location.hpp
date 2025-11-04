@@ -17,8 +17,7 @@
  *   它包含了文件名、起始和结束的行号与列号，是实现精确错误报告和
  *   与源代码进行交互（例如在 IDE 中高亮显示）的基础。
  */
-struct SourceLocation
-{
+struct SourceLocation {
   /// @brief 关联的源文件名。
   std::string filename;
   /// @brief 区域开始的行号（从 1 开始）。
@@ -38,13 +37,9 @@ struct SourceLocation
    * @param[in] end_ln (可选) 结束行号。如果为 0 或未提供，则默认为起始行号。
    * @param[in] end_col (可选) 结束列号。如果为 0 或未提供，则默认为起始列号。
    */
-  SourceLocation(const std::string &file = "<stdin>",
-                 size_t ln = 1,
-                 size_t col = 1,
-                 size_t end_ln = 0,
-                 size_t end_col = 0)
-      : filename(file), line(ln), column(col),
-        end_line(end_ln ? end_ln : ln),
+  SourceLocation(const std::string &file = "<stdin>", size_t ln = 1,
+                 size_t col = 1, size_t end_ln = 0, size_t end_col = 0)
+      : filename(file), line(ln), column(col), end_line(end_ln ? end_ln : ln),
         end_column(end_col ? end_col : col) {}
 };
 

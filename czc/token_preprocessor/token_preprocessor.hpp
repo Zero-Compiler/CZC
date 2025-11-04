@@ -8,13 +8,13 @@
 #ifndef CZC_TOKEN_PREPROCESSOR_HPP
 #define CZC_TOKEN_PREPROCESSOR_HPP
 
+#include "czc/diagnostics/diagnostic_reporter.hpp"
 #include "czc/lexer/token.hpp"
 #include "error_collector.hpp"
-#include "czc/diagnostics/diagnostic_reporter.hpp"
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
-#include <cstdint>
 
 constexpr int MAX_I64_MAGNITUDE = 18;  // int64 最大位数 (约 10^18)
 constexpr int MAX_F64_MAGNITUDE = 308; // float64 最大位数 (约 10^308)
@@ -22,141 +22,127 @@ constexpr int MAX_F64_MAGNITUDE = 308; // float64 最大位数 (约 10^308)
 /**
  * @brief 推断的数值类型枚举
  */
-enum class InferredNumericType
-{
-    INT64, // 64位整数
-    FLOAT  // 64位浮点数
+enum class InferredNumericType {
+  INT64, // 64位整数
+  FLOAT  // 64位浮点数
 };
 
 /**
  * @brief 科学计数法信息结构
  */
-struct ScientificNotationInfo
-{
-    std::string original_literal;      // 原始字符串 (如 "1.5e10")
-    std::string mantissa;              // 尾数部分 (如 "1.5")
-    int64_t exponent;                  // 指数部分 (如 10)
-    bool has_decimal_point;            // 是否包含小数点
-    size_t decimal_digits;             // 小数点后的有效位数（去除尾随0后）
-    InferredNumericType inferred_type; // 推断的类型
-    std::string normalized_value;      // 规范化后的值（用于后续计算）
+struct ScientificNotationInfo {
+  std::string original_literal;      // 原始字符串 (如 "1.5e10")
+  std::string mantissa;              // 尾数部分 (如 "1.5")
+  int64_t exponent;                  // 指数部分 (如 10)
+  bool has_decimal_point;            // 是否包含小数点
+  size_t decimal_digits;             // 小数点后的有效位数（去除尾随0后）
+  InferredNumericType inferred_type; // 推断的类型
+  std::string normalized_value;      // 规范化后的值（用于后续计算）
 };
 
 /**
  * @brief 分析上下文结构
  */
-struct AnalysisContext
-{
-    const std::string &filename;       // 文件名
-    const std::string &source_content; // 源码内容
-    TPErrorCollector *error_collector; // 错误收集器
+struct AnalysisContext {
+  const std::string &filename;       // 文件名
+  const std::string &source_content; // 源码内容
+  TPErrorCollector *error_collector; // 错误收集器
 
-    /**
-     * @brief 构造函数
-     * @param fname 文件名
-     * @param source 源码内容
-     * @param collector 错误收集器指针，默认为 nullptr
-     */
-    AnalysisContext(const std::string &fname,
-                    const std::string &source,
-                    TPErrorCollector *collector = nullptr)
-        : filename(fname), source_content(source), error_collector(collector) {}
+  /**
+   * @brief 构造函数
+   * @param fname 文件名
+   * @param source 源码内容
+   * @param collector 错误收集器指针，默认为 nullptr
+   */
+  AnalysisContext(const std::string &fname, const std::string &source,
+                  TPErrorCollector *collector = nullptr)
+      : filename(fname), source_content(source), error_collector(collector) {}
 };
 
 /**
  * @brief 科学计数法分析器类
  */
-class ScientificNotationAnalyzer
-{
+class ScientificNotationAnalyzer {
 public:
-    /**
-     * @brief 解析科学计数法字面量
-     * @param literal 字面量字符串
-     * @param token Token 指针
-     * @param context 分析上下文
-     * @return 科学计数法信息的可选值
-     */
-    static std::optional<ScientificNotationInfo> analyze(
-        const std::string &literal,
-        const Token *token,
-        const AnalysisContext &context);
+  /**
+   * @brief 解析科学计数法字面量
+   * @param literal 字面量字符串
+   * @param token Token 指针
+   * @param context 分析上下文
+   * @return 科学计数法信息的可选值
+   */
+  static std::optional<ScientificNotationInfo>
+  analyze(const std::string &literal, const Token *token,
+          const AnalysisContext &context);
 
 private:
-    /**
-     * @brief 解析尾数和指数
-     * @param literal 字面量字符串
-     * @param mantissa 尾数（输出参数）
-     * @param exponent 指数（输出参数）
-     * @return 解析是否成功
-     */
-    static bool parse_components(const std::string &literal, std::string &mantissa, int64_t &exponent);
+  /**
+   * @brief 解析尾数和指数
+   * @param literal 字面量字符串
+   * @param mantissa 尾数（输出参数）
+   * @param exponent 指数（输出参数）
+   * @return 解析是否成功
+   */
+  static bool parse_components(const std::string &literal,
+                               std::string &mantissa, int64_t &exponent);
 
-    /**
-     * @brief 去除小数部分的尾随零
-     * @param decimal_part 小数部分字符串
-     * @return 去除尾随零后的字符串
-     */
-    static std::string trim_trailing_zeros(const std::string &decimal_part);
+  /**
+   * @brief 去除小数部分的尾随零
+   * @param decimal_part 小数部分字符串
+   * @return 去除尾随零后的字符串
+   */
+  static std::string trim_trailing_zeros(const std::string &decimal_part);
 
-    /**
-     * @brief 计算去除尾随零后的小数位数
-     * @param mantissa 尾数字符串
-     * @return 小数位数
-     */
-    static size_t count_decimal_digits(const std::string &mantissa);
+  /**
+   * @brief 计算去除尾随零后的小数位数
+   * @param mantissa 尾数字符串
+   * @return 小数位数
+   */
+  static size_t count_decimal_digits(const std::string &mantissa);
 
-    /**
-     * @brief 根据规则推断类型
-     * @param info 科学计数法信息
-     * @param token Token 指针
-     * @param context 分析上下文
-     * @return 推断的数值类型
-     */
-    static InferredNumericType infer_type(
-        const ScientificNotationInfo &info,
-        const Token *token,
-        const AnalysisContext &context);
+  /**
+   * @brief 根据规则推断类型
+   * @param info 科学计数法信息
+   * @param token Token 指针
+   * @param context 分析上下文
+   * @return 推断的数值类型
+   */
+  static InferredNumericType infer_type(const ScientificNotationInfo &info,
+                                        const Token *token,
+                                        const AnalysisContext &context);
 
-    /**
-     * @brief 检查整数是否在 INT64 范围内
-     * @param mantissa 尾数字符串
-     * @param exponent 指数
-     * @param token Token 指针
-     * @param context 分析上下文
-     * @return 是否在范围内
-     */
-    static bool fits_in_int64(
-        const std::string &mantissa,
-        int64_t exponent,
-        const Token *token,
-        const AnalysisContext &context);
+  /**
+   * @brief 检查整数是否在 INT64 范围内
+   * @param mantissa 尾数字符串
+   * @param exponent 指数
+   * @param token Token 指针
+   * @param context 分析上下文
+   * @return 是否在范围内
+   */
+  static bool fits_in_int64(const std::string &mantissa, int64_t exponent,
+                            const Token *token, const AnalysisContext &context);
 
-    /**
-     * @brief 计算实际数值的位数
-     * @param mantissa 尾数字符串
-     * @param exponent 指数
-     * @param token Token 指针
-     * @param context 分析上下文
-     * @return 位数的可选值
-     */
-    static std::optional<int64_t> calculate_magnitude(
-        const std::string &mantissa,
-        int64_t exponent,
-        const Token *token,
-        const AnalysisContext &context);
+  /**
+   * @brief 计算实际数值的位数
+   * @param mantissa 尾数字符串
+   * @param exponent 指数
+   * @param token Token 指针
+   * @param context 分析上下文
+   * @return 位数的可选值
+   */
+  static std::optional<int64_t>
+  calculate_magnitude(const std::string &mantissa, int64_t exponent,
+                      const Token *token, const AnalysisContext &context);
 
-    /**
-     * @brief 报告溢出错误
-     * @param token Token 指针
-     * @param mantissa 尾数字符串
-     * @param exponent 指数
-     * @param context 分析上下文
-     */
-    static void report_overflow(
-        const Token *token,
-        const std::string &mantissa,
-        int64_t exponent,
-        const AnalysisContext &context);
+  /**
+   * @brief 报告溢出错误
+   * @param token Token 指针
+   * @param mantissa 尾数字符串
+   * @param exponent 指数
+   * @param context 分析上下文
+   */
+  static void report_overflow(const Token *token, const std::string &mantissa,
+                              int64_t exponent, const AnalysisContext &context);
 };
 
 /**
@@ -169,70 +155,69 @@ private:
  *   它还会检查数值溢出等问题。
  * @note 此类不是线程安全的。
  */
-class TokenPreprocessor
-{
+class TokenPreprocessor {
 private:
-    /// @brief 用于收集在预处理期间遇到的所有错误。
-    TPErrorCollector error_collector;
+  /// @brief 用于收集在预处理期间遇到的所有错误。
+  TPErrorCollector error_collector;
 
-    /**
-     * @brief 辅助函数，用于在错误收集器中记录一个新错误。
-     * @param[in] code 错误的诊断代码。
-     * @param[in] token 发生错误的 Token。
-     * @param[in] args (可选) 格式化错误消息所需的参数。
-     */
-    void report_error(DiagnosticCode code,
-                      const Token *token,
-                      const std::vector<std::string> &args = {});
+  /**
+   * @brief 辅助函数，用于在错误收集器中记录一个新错误。
+   * @param[in] code 错误的诊断代码。
+   * @param[in] token 发生错误的 Token。
+   * @param[in] args (可选) 格式化错误消息所需的参数。
+   */
+  void report_error(DiagnosticCode code, const Token *token,
+                    const std::vector<std::string> &args = {});
 
 public:
-    /**
-     * @brief 默认构造函数。
-     */
-    TokenPreprocessor() = default;
+  /**
+   * @brief 默认构造函数。
+   */
+  TokenPreprocessor() = default;
 
-    /**
-     * @brief 处理一个完整的 Token 列表。
-     * @details
-     *   遍历输入的 Token 向量，当遇到 `ScientificExponent` 类型的 Token 时，
-     *   调用 `process_scientific_token` 对其进行处理和转换，然后返回新的 Token 列表。
-     * @param[in] tokens 从词法分析器获得的原始 Token 列表。
-     * @param[in] filename 源代码的文件名。
-     * @param[in] source_content 完整的源代码内容。
-     * @return 返回经过处理和类型调整的 Token 列表。
-     */
-    std::vector<Token> process(const std::vector<Token> &tokens,
-                               const std::string &filename,
-                               const std::string &source_content);
+  /**
+   * @brief 处理一个完整的 Token 列表。
+   * @details
+   *   遍历输入的 Token 向量，当遇到 `ScientificExponent` 类型的 Token 时，
+   *   调用 `process_scientific_token` 对其进行处理和转换，然后返回新的 Token
+   * 列表。
+   * @param[in] tokens 从词法分析器获得的原始 Token 列表。
+   * @param[in] filename 源代码的文件名。
+   * @param[in] source_content 完整的源代码内容。
+   * @return 返回经过处理和类型调整的 Token 列表。
+   */
+  std::vector<Token> process(const std::vector<Token> &tokens,
+                             const std::string &filename,
+                             const std::string &source_content);
 
-    /**
-     * @brief 分析并转换单个科学计数法 Token。
-     * @details
-     *   使用 ScientificNotationAnalyzer 对 Token 的值进行分析，推断其类型
-     *   （INT64 或 FLOAT），并检查是否存在溢出。
-     *   返回一个更新了类型和值的新 Token。
-     * @param[in] token 一个类型为 `ScientificExponent` 的 Token。
-     * @param[in] filename 源代码的文件名。
-     * @param[in] source_content 完整的源代码内容。
-     * @return 返回类型被更新为 `Integer` 或 `Float` 的新 Token。
-     */
-    Token process_scientific_token(const Token &token,
-                                   const std::string &filename,
-                                   const std::string &source_content);
+  /**
+   * @brief 分析并转换单个科学计数法 Token。
+   * @details
+   *   使用 ScientificNotationAnalyzer 对 Token 的值进行分析，推断其类型
+   *   （INT64 或 FLOAT），并检查是否存在溢出。
+   *   返回一个更新了类型和值的新 Token。
+   * @param[in] token 一个类型为 `ScientificExponent` 的 Token。
+   * @param[in] filename 源代码的文件名。
+   * @param[in] source_content 完整的源代码内容。
+   * @return 返回类型被更新为 `Integer` 或 `Float` 的新 Token。
+   */
+  Token process_scientific_token(const Token &token,
+                                 const std::string &filename,
+                                 const std::string &source_content);
 
-    /**
-     * @brief 获取对内部错误收集器的访问权限。
-     * @return 对 TPErrorCollector 对象的常量引用。
-     */
-    const TPErrorCollector &get_errors() const { return error_collector; }
+  /**
+   * @brief 获取对内部错误收集器的访问权限。
+   * @return 对 TPErrorCollector 对象的常量引用。
+   */
+  const TPErrorCollector &get_errors() const { return error_collector; }
 
 private:
-    /**
-     * @brief 将内部的 InferredNumericType 映射到词法分析器的 TokenType。
-     * @param[in] type 推断出的数值类型。
-     * @return 对应的 TokenType (`Integer` 或 `Float`)。
-     */
-    static TokenType inferred_type_to_token_type(InferredNumericType type);
+  /**
+   * @brief 将内部的 InferredNumericType 映射到词法分析器的 TokenType。
+   * @param[in] type 推断出的数值类型。
+   * @return 对应的 TokenType (`Integer` 或 `Float`)。
+   */
+  static TokenType inferred_type_to_token_type(InferredNumericType type);
 };
 
 /**

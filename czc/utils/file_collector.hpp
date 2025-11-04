@@ -18,8 +18,7 @@
  *   可能包含通配符（如 `*` 和 `?`）。它将这些模式扩展为匹配的
  *   具体文件列表。
  */
-class FileCollector
-{
+class FileCollector {
 public:
   /**
    * @brief 根据一组文件路径或通配符模式收集所有匹配的文件。
@@ -28,7 +27,8 @@ public:
    *   模式可以包含 `*`（匹配任意数量的字符）和 `?`（匹配单个字符）。
    * @return 返回一个包含所有匹配的、唯一的、按字母顺序排序的文件路径的向量。
    */
-  static std::vector<std::string> collect_files(const std::vector<std::string> &patterns);
+  static std::vector<std::string>
+  collect_files(const std::vector<std::string> &patterns);
 
 private:
   /**
@@ -37,7 +37,8 @@ private:
    * @param[in] pattern 包含 `*` 和/或 `?` 的通配符模式。
    * @return 如果文件名与模式匹配，则返回 true。
    */
-  static bool matches_pattern(const std::string &filename, const std::string &pattern);
+  static bool matches_pattern(const std::string &filename,
+                              const std::string &pattern);
 };
 
 #endif // CZC_FILE_COLLECTOR_HPP

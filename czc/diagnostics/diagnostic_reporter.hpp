@@ -19,8 +19,7 @@ class Diagnostic;
  *   它提供了一种解耦机制，使得编译器组件（如词法分析器、解析器）
  *   可以报告诊断，而无需了解其最终如何被存储或显示。
  */
-class IDiagnosticReporter
-{
+class IDiagnosticReporter {
 public:
   /**
    * @brief 虚析构函数。

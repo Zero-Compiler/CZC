@@ -21,8 +21,7 @@
  *   精确的 SourceLocation 对象。
  * @note 此类不是线程安全的。
  */
-class SourceTracker
-{
+class SourceTracker {
 private:
   /// @brief 正在处理的源文件的名称。
   std::string filename;
@@ -41,7 +40,8 @@ public:
    * @param[in] source 要跟踪的源代码字符串。
    * @param[in] fname (可选) 源代码的文件名，用于创建 SourceLocation。
    */
-  SourceTracker(const std::string &source, const std::string &fname = "<stdin>");
+  SourceTracker(const std::string &source,
+                const std::string &fname = "<stdin>");
 
   /**
    * @brief 向前移动一个字符，并更新行号和列号。

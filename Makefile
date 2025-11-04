@@ -1,4 +1,4 @@
-.PHONY: all build clean test install help
+.PHONY: all build clean test install help fmt
 
 ifeq ($(OS),Windows_NT)
     CMAKE_GENERATOR := -G "MinGW Makefiles"
@@ -75,6 +75,34 @@ example: build
 	@echo ""
 	@echo "Output saved to examples/hello.zero.tokens"
 
+# 格式化代码
+fmt:
+	@echo "==================================="
+	@echo "Formatting C/C++ Source Files"
+	@echo "==================================="
+	@if command -v clang-format >/dev/null 2>&1; then \
+		echo "Formatting header files..."; \
+		find czc -type f \( -name "*.hpp" -o -name "*.h" \) -exec clang-format -i {} + ; \
+		echo "Formatting source files..."; \
+		find src -type f \( -name "*.cpp" -o -name "*.c" \) -exec clang-format -i {} + ; \
+		find cli -type f \( -name "*.cpp" -o -name "*.c" \) -exec clang-format -i {} + ; \
+		find tests -type f \( -name "*.cpp" -o -name "*.c" \) -exec clang-format -i {} + ; \
+		echo ""; \
+		echo "===================================";\
+		echo "Formatting completed!";\
+		echo "===================================";\
+	else \
+		echo "Error: clang-format not found!"; \
+		echo "Please install clang-format first."; \
+		echo ""; \
+		echo "Installation:"; \
+		echo "  macOS:   brew install clang-format"; \
+		echo "  Ubuntu:  sudo apt-get install clang-format"; \
+		echo "  Fedora:  sudo dnf install clang-tools-extra"; \
+		echo "===================================";\
+		exit 1; \
+	fi
+
 # 帮助信息
 help:
 	@echo "CZC Compiler - Makefile Commands"
@@ -89,5 +117,6 @@ help:
 	@echo "  make install  - Install the compiler"
 	@echo "  make rebuild  - Clean and rebuild"
 	@echo "  make example  - Run example tokenization"
+	@echo "  make fmt      - Format C/C++ source files with clang-format"
 	@echo "  make help     - Show this help message"
 	@echo ""
