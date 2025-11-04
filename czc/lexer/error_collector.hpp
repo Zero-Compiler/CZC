@@ -42,18 +42,18 @@ struct LexerError
 /**
  * @brief 收集并管理在词法分析过程中产生的所有错误。
  * @details
- *   此类提供了一个中心化的机制来记录词法分析器遇到的所有问题。
+ *   此类提供了一个中心化的机制Í来记录词法分析器遇到的所有问题。
  *   词法分析器在检测到错误时，会调用 `add` 方法来记录错误，而不是立即中止。
  *   这允许词法分析过程继续进行，从而一次性报告多个错误。
  * @note 此类不是线程安全的。
  */
 class LexErrorCollector
 {
-  private:
+private:
     /// @brief 存储所有已报告的词法错误的列表。
     std::vector<LexerError> errors;
 
-  public:
+public:
     /**
      * @brief 向收集中添加一个新的词法错误。
      * @param[in] code 错误的诊断代码。

@@ -21,23 +21,23 @@ class Diagnostic;
  */
 class IDiagnosticReporter
 {
-  public:
-    /**
-     * @brief 虚析构函数。
-     */
-    virtual ~IDiagnosticReporter() = default;
+public:
+  /**
+   * @brief 虚析构函数。
+   */
+  virtual ~IDiagnosticReporter() = default;
 
-    /**
-     * @brief 提交一个诊断事件以供处理。
-     * @param[in] diag 一个包含诊断详细信息的共享指针。
-     */
-    virtual void report(std::shared_ptr<Diagnostic> diag) = 0;
+  /**
+   * @brief 提交一个诊断事件以供处理。
+   * @param[in] diag 一个包含诊断详细信息的共享指针。
+   */
+  virtual void report(std::shared_ptr<Diagnostic> diag) = 0;
 
-    /**
-     * @brief 查询报告器是否已接收到任何错误级别的诊断。
-     * @return 如果至少报告了一个错误，则返回 true；否则返回 false。
-     */
-    virtual bool has_errors() const = 0;
+  /**
+   * @brief 查询报告器是否已接收到任何错误级别的诊断。
+   * @return 如果至少报告了一个错误，则返回 true；否则返回 false。
+   */
+  virtual bool has_errors() const = 0;
 };
 
 #endif // CZC_DIAGNOSTIC_REPORTER_HPP

@@ -19,33 +19,33 @@
  */
 struct SourceLocation
 {
-    /// @brief 关联的源文件名。
-    std::string filename;
-    /// @brief 区域开始的行号（从 1 开始）。
-    size_t line;
-    /// @brief 区域开始的列号（从 1 开始）。
-    size_t column;
-    /// @brief 区域结束的行号（从 1 开始）。
-    size_t end_line;
-    /// @brief 区域结束的列号（从 1 开始）。
-    size_t end_column;
+  /// @brief 关联的源文件名。
+  std::string filename;
+  /// @brief 区域开始的行号（从 1 开始）。
+  size_t line;
+  /// @brief 区域开始的列号（从 1 开始）。
+  size_t column;
+  /// @brief 区域结束的行号（从 1 开始）。
+  size_t end_line;
+  /// @brief 区域结束的列号（从 1 开始）。
+  size_t end_column;
 
-    /**
-     * @brief 构造一个新的 SourceLocation 对象。
-     * @param[in] file 文件名。默认为 "<stdin>"。
-     * @param[in] ln 起始行号。默认为 1。
-     * @param[in] col 起始列号。默认为 1。
-     * @param[in] end_ln (可选) 结束行号。如果为 0 或未提供，则默认为起始行号。
-     * @param[in] end_col (可选) 结束列号。如果为 0 或未提供，则默认为起始列号。
-     */
-    SourceLocation(const std::string &file = "<stdin>",
-                   size_t ln = 1,
-                   size_t col = 1,
-                   size_t end_ln = 0,
-                   size_t end_col = 0)
-        : filename(file), line(ln), column(col),
-          end_line(end_ln ? end_ln : ln),
-          end_column(end_col ? end_col : col) {}
+  /**
+   * @brief 构造一个新的 SourceLocation 对象。
+   * @param[in] file 文件名。默认为 "<stdin>"。
+   * @param[in] ln 起始行号。默认为 1。
+   * @param[in] col 起始列号。默认为 1。
+   * @param[in] end_ln (可选) 结束行号。如果为 0 或未提供，则默认为起始行号。
+   * @param[in] end_col (可选) 结束列号。如果为 0 或未提供，则默认为起始列号。
+   */
+  SourceLocation(const std::string &file = "<stdin>",
+                 size_t ln = 1,
+                 size_t col = 1,
+                 size_t end_ln = 0,
+                 size_t end_col = 0)
+      : filename(file), line(ln), column(col),
+        end_line(end_ln ? end_ln : ln),
+        end_column(end_col ? end_col : col) {}
 };
 
 #endif // CZC_SOURCE_LOCATION_HPP

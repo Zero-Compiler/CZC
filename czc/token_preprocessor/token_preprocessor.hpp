@@ -171,7 +171,7 @@ private:
  */
 class TokenPreprocessor
 {
-  private:
+private:
     /// @brief 用于收集在预处理期间遇到的所有错误。
     TPErrorCollector error_collector;
 
@@ -185,7 +185,7 @@ class TokenPreprocessor
                       const Token *token,
                       const std::vector<std::string> &args = {});
 
-  public:
+public:
     /**
      * @brief 默认构造函数。
      */
@@ -226,7 +226,7 @@ class TokenPreprocessor
      */
     const TPErrorCollector &get_errors() const { return error_collector; }
 
-  private:
+private:
     /**
      * @brief 将内部的 InferredNumericType 映射到词法分析器的 TokenType。
      * @param[in] type 推断出的数值类型。

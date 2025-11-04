@@ -49,11 +49,11 @@ struct TPError
  */
 class TPErrorCollector
 {
-  private:
+private:
     /// @brief 存储所有已报告的预处理错误的列表。
     std::vector<TPError> errors;
 
-  public:
+public:
     /**
      * @brief 向收集中添加一个新的预处理错误。
      * @param[in] code 错误的诊断代码。

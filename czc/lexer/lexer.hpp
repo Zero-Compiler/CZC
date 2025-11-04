@@ -27,7 +27,7 @@
  */
 class Lexer
 {
-  private:
+private:
     /// @brief 管理源代码输入流和当前位置（行、列）。
     SourceTracker tracker;
     /// @brief 当前正在处理的字符。
@@ -117,7 +117,7 @@ class Lexer
                       size_t error_column,
                       const std::vector<std::string> &args = {});
 
-  public:
+public:
     /**
      * @brief 构造一个新的词法分析器。
      * @param[in] input_str 要进行词法分析的源代码字符串。
