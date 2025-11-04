@@ -198,7 +198,8 @@ void test_token_processing()
     auto tokens = lexer.tokenize();
 
     // 处理 Token 流
-    auto processed = TokenPreprocessor::process(tokens, "<test>", code, nullptr);
+    TokenPreprocessor preprocessor;
+    auto processed = preprocessor.process(tokens, "<test>", code);
 
     // 验证处理结果
     for (const auto &token : processed)

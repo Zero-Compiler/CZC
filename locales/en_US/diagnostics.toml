@@ -61,6 +61,6 @@ help = "consider using floating-point representation or a smaller exponent"
 source = "token_preprocessor"
 
 [T0002]
-message = "scientific notation '{0}' has negative exponent"
-help = "this will be treated as floating-point; consider using explicit float syntax if intended"
+message = "scientific notation '{0}' exceeds float64 range"
+help = "the value is too large to represent as a 64-bit floating-point number"
 source = "token_preprocessor"

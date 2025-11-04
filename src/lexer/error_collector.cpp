@@ -1,6 +1,6 @@
 /**
  * @file error_collector.cpp
- * @brief 错误收集器实现
+ * @brief 词法分析错误收集器实现
  * @author BegoniaHe
  */
 
@@ -12,7 +12,7 @@
  * @param loc 源码位置
  * @param args 格式化参数
  */
-void ErrorCollector::add(DiagnosticCode code, const SourceLocation &loc,
+void LexErrorCollector::add(DiagnosticCode code, const SourceLocation &loc,
                          const std::vector<std::string> &args)
 {
     errors.emplace_back(code, loc, args);

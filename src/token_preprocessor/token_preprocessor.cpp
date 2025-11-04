@@ -7,7 +7,7 @@
 #include "czc/token_preprocessor/token_preprocessor.hpp"
 #include "czc/diagnostics/diagnostic_code.hpp"
 #include "czc/diagnostics/diagnostic.hpp"
-#include "czc/lexer/source_tracker.hpp"
+#include "czc/utils/source_tracker.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -161,6 +161,7 @@ InferredNumericType ScientificNotationAnalyzer::infer_type(
         }
         else
         {
+            // 超过 INT64 范围，推为 FLOAT
             return InferredNumericType::FLOAT;
         }
     }
@@ -181,6 +182,7 @@ InferredNumericType ScientificNotationAnalyzer::infer_type(
         }
         else
         {
+            // 超过 INT64 范围，推为 FLOAT
             return InferredNumericType::FLOAT;
         }
     }
@@ -259,15 +261,16 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
     if (actual_exponent > 0 &&
         num_significant_digits > std::numeric_limits<int64_t>::max() - actual_exponent)
     {
-        report_overflow(token, mantissa, exponent, context);
-        return std::nullopt;
+        // 溢出，返回一个大于 MAX_I64_MAGNITUDE 的值，让上层判断
+        return MAX_I64_MAGNITUDE + 1;
     }
 
     int64_t magnitude = num_significant_digits + actual_exponent - 1;
 
-    // 只需要检查是否超过 int64 范围
-    if (magnitude > MAX_I64_MAGNITUDE)
+    // 检查是否超过 float64 的范围
+    if (magnitude > MAX_F64_MAGNITUDE)
     {
+        // 超过 float64 范围，报告溢出错误
         report_overflow(token, mantissa, exponent, context);
         return std::nullopt;
     }
@@ -282,13 +285,20 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
  * @param exponent 指数
  * @param context 分析上下文
  */
+/**
+ * @brief 报告错误到错误收集器
+ * @param token Token 指针
+ * @param mantissa 尾数字符串
+ * @param exponent 指数
+ * @param context 分析上下文
+ */
 void ScientificNotationAnalyzer::report_overflow(
     const Token *token,
     const std::string &mantissa,
     int64_t exponent,
     const AnalysisContext &context)
 {
-    if (!context.reporter || !token)
+    if (!context.error_collector || !token)
     {
         return;
     }
@@ -301,16 +311,30 @@ void ScientificNotationAnalyzer::report_overflow(
         token->line,
         token->column + token->value.length());
 
-    auto diag = std::make_shared<Diagnostic>(
-        DiagnosticLevel::Error,
-        DiagnosticCode::T0001_ScientificIntOverflow,
-        loc,
-        std::vector<std::string>{literal});
+    context.error_collector->add(DiagnosticCode::T0002_ScientificFloatOverflow, loc, {literal});
+}
 
-    // 使用 SourceTracker 提取源码行
-    SourceTracker temp_tracker(context.source_content, context.filename);
-    diag->set_source_line(temp_tracker.get_source_line(token->line));
-    context.reporter->report(diag);
+/**
+ * @brief 报告错误
+ * @param code 诊断代码
+ * @param token Token 指针
+ * @param args 消息参数列表
+ */
+void TokenPreprocessor::report_error(DiagnosticCode code,
+                                     const Token *token,
+                                     const std::vector<std::string> &args)
+{
+    if (!token)
+    {
+        return;
+    }
+    auto loc = SourceLocation(
+        "<unknown>",
+        token->line,
+        token->column,
+        token->line,
+        token->column + token->value.length());
+    error_collector.add(code, loc, args);
 }
 
 /**
@@ -318,13 +342,11 @@ void ScientificNotationAnalyzer::report_overflow(
  * @param tokens 原始 Token 流
  * @param filename 文件名
  * @param source_content 源码内容
- * @param reporter 诊断报告器
  * @return 处理后的 Token 流
  */
 std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens,
                                               const std::string &filename,
-                                              const std::string &source_content,
-                                              IDiagnosticReporter *reporter)
+                                              const std::string &source_content)
 {
     std::vector<Token> processed_tokens;
     processed_tokens.reserve(tokens.size());
@@ -333,7 +355,7 @@ std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens,
     {
         if (token.token_type == TokenType::ScientificExponent)
         {
-            processed_tokens.push_back(process_scientific_token(token, filename, source_content, reporter));
+            processed_tokens.push_back(process_scientific_token(token, filename, source_content));
         }
         else
         {
@@ -349,15 +371,13 @@ std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens,
  * @param token 待处理的 Token
  * @param filename 文件名
  * @param source_content 源码内容
- * @param reporter 诊断报告器
  * @return 处理后的 Token
  */
 Token TokenPreprocessor::process_scientific_token(const Token &token,
                                                   const std::string &filename,
-                                                  const std::string &source_content,
-                                                  IDiagnosticReporter *reporter)
+                                                  const std::string &source_content)
 {
-    AnalysisContext context(filename, source_content, reporter);
+    AnalysisContext context(filename, source_content, &error_collector);
     auto info = ScientificNotationAnalyzer::analyze(token.value, &token, context);
 
     if (!info.has_value())

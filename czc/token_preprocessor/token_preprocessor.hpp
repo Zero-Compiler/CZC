@@ -8,13 +8,15 @@
 #define CZC_TOKEN_PREPROCESSOR_HPP
 
 #include "czc/lexer/token.hpp"
+#include "error_collector.hpp"
 #include "czc/diagnostics/diagnostic_reporter.hpp"
 #include <string>
 #include <vector>
 #include <optional>
 #include <cstdint>
 
-constexpr int MAX_I64_MAGNITUDE = 18; ///< int64 最大位数
+constexpr int MAX_I64_MAGNITUDE = 18;  ///< int64 最大位数 (约 10^18)
+constexpr int MAX_F64_MAGNITUDE = 308; ///< float64 最大位数 (约 10^308)
 
 /**
  * @brief 推断的数值类型枚举
@@ -46,18 +48,18 @@ struct AnalysisContext
 {
     const std::string &filename;       ///< 文件名
     const std::string &source_content; ///< 源码内容
-    IDiagnosticReporter *reporter;     ///< 诊断报告器
+    TPErrorCollector *error_collector; ///< 错误收集器
 
     /**
      * @brief 构造函数
      * @param fname 文件名
      * @param source 源码内容
-     * @param rep 诊断报告器指针，默认为 nullptr
+     * @param collector 错误收集器指针，默认为 nullptr
      */
     AnalysisContext(const std::string &fname,
                     const std::string &source,
-                    IDiagnosticReporter *rep = nullptr)
-        : filename(fname), source_content(source), reporter(rep) {}
+                    TPErrorCollector *collector = nullptr)
+        : filename(fname), source_content(source), error_collector(collector) {}
 };
 
 /**
@@ -161,32 +163,52 @@ private:
  */
 class TokenPreprocessor
 {
+private:
+    TPErrorCollector error_collector; ///< 错误收集器
+
+    /**
+     * @brief 报告错误
+     * @param code 诊断代码
+     * @param token Token 指针
+     * @param args 消息参数列表
+     */
+    void report_error(DiagnosticCode code,
+                      const Token *token,
+                      const std::vector<std::string> &args = {});
+
 public:
+    /**
+     * @brief 构造函数
+     */
+    TokenPreprocessor() = default;
+
     /**
      * @brief 处理 Token 流，对科学计数法 Token 进行类型推断
      * @param tokens Token 列表
      * @param filename 文件名
      * @param source_content 源码内容
-     * @param reporter 诊断报告器指针，默认为 nullptr
      * @return 处理后的 Token 列表
      */
-    static std::vector<Token> process(const std::vector<Token> &tokens,
-                                      const std::string &filename,
-                                      const std::string &source_content,
-                                      IDiagnosticReporter *reporter = nullptr);
+    std::vector<Token> process(const std::vector<Token> &tokens,
+                               const std::string &filename,
+                               const std::string &source_content);
 
     /**
      * @brief 处理单个科学计数法 Token
      * @param token Token 对象
      * @param filename 文件名
      * @param source_content 源码内容
-     * @param reporter 诊断报告器指针，默认为 nullptr
      * @return 处理后的 Token 对象
      */
-    static Token process_scientific_token(const Token &token,
-                                          const std::string &filename,
-                                          const std::string &source_content,
-                                          IDiagnosticReporter *reporter = nullptr);
+    Token process_scientific_token(const Token &token,
+                                   const std::string &filename,
+                                   const std::string &source_content);
+
+    /**
+     * @brief 获取错误收集器
+     * @return 错误收集器的常量引用
+     */
+    const TPErrorCollector &get_errors() const { return error_collector; }
 
 private:
     /**

@@ -16,11 +16,12 @@ add_library(czc STATIC
     src/lexer/token.cpp
     src/lexer/lexer.cpp
     src/lexer/utf8_handler.cpp
-    src/lexer/source_tracker.cpp
     src/lexer/error_collector.cpp
     src/token_preprocessor/token_preprocessor.cpp
+    src/token_preprocessor/error_collector.cpp
     src/diagnostics/diagnostic_code.cpp
     src/diagnostics/diagnostic.cpp
+    src/utils/source_tracker.cpp
     src/utils/file_collector.cpp
 )
 

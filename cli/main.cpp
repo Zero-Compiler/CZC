@@ -5,7 +5,7 @@
  */
 
 #include "czc/lexer/lexer.hpp"
-#include "czc/lexer/source_tracker.hpp"
+#include "czc/utils/source_tracker.hpp"
 #include "czc/token_preprocessor/token_preprocessor.hpp"
 #include "czc/diagnostics/diagnostic.hpp"
 #include "czc/utils/file_collector.hpp"
@@ -154,7 +154,26 @@ bool tokenize_file(const std::string &input_path, const std::string &locale)
         return false;
     }
 
-    auto processed_tokens = TokenPreprocessor::process(tokens, input_path, content, &diagnostics);
+    TokenPreprocessor preprocessor;
+    auto processed_tokens = preprocessor.process(tokens, input_path, content);
+
+    // 报告 token 预处理错误
+    if (preprocessor.get_errors().has_errors())
+    {
+        for (const auto &error : preprocessor.get_errors().get_errors())
+        {
+            auto diag = std::make_shared<Diagnostic>(
+                DiagnosticLevel::Error,
+                error.code,
+                error.location,
+                error.args);
+
+            // 使用 SourceTracker 提取源码行
+            SourceTracker temp_tracker(content, input_path);
+            diag->set_source_line(temp_tracker.get_source_line(error.location.line));
+            diagnostics.report(diag);
+        }
+    }
 
     if (diagnostics.has_errors())
     {

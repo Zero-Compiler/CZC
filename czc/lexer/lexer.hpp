@@ -8,7 +8,7 @@
 #define CZC_LEXER_HPP
 
 #include "token.hpp"
-#include "source_tracker.hpp"
+#include "czc/utils/source_tracker.hpp"
 #include "error_collector.hpp"
 #include "czc/diagnostics/diagnostic_code.hpp"
 #include <vector>
@@ -24,7 +24,7 @@ class Lexer
 private:
     SourceTracker tracker;            ///< 源码跟踪器
     std::optional<char> current_char; ///< 当前字符
-    ErrorCollector error_collector;   ///< 错误收集器
+    LexErrorCollector error_collector;   ///< 错误收集器
 
     /**
      * @brief 前进到下一个字符
@@ -133,7 +133,7 @@ public:
      * @brief 获取错误收集器
      * @return 错误收集器的常量引用
      */
-    const ErrorCollector &get_errors() const { return error_collector; }
+    const LexErrorCollector &get_errors() const { return error_collector; }
 };
 
 #endif // CZC_LEXER_HPP

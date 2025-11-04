@@ -4,7 +4,7 @@
  * @author BegoniaHe
  */
 
-#include "czc/lexer/source_tracker.hpp"
+#include "czc/utils/source_tracker.hpp"
 
 /**
  * @brief SourceTracker 构造函数

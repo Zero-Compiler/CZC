@@ -1,11 +1,11 @@
 /**
  * @file error_collector.hpp
- * @brief 词法分析错误收集器类定义
+ * @brief 词元预处理器错误收集器类定义
  * @author BegoniaHe
  */
 
-#ifndef CZC_LEX_ERROR_COLLECTOR_HPP
-#define CZC_LEX_ERROR_COLLECTOR_HPP
+#ifndef CZC_TP_ERROR_COLLECTOR_HPP
+#define CZC_TP_ERROR_COLLECTOR_HPP
 
 #include "czc/diagnostics/diagnostic_code.hpp"
 #include "czc/utils/source_location.hpp"
@@ -13,9 +13,9 @@
 #include <string>
 
 /**
- * @brief 词法错误记录结构
+ * @brief 词元预处理器错误记录结构
  */
-struct LexerError
+struct TPError
 {
     DiagnosticCode code;           ///< 诊断代码
     SourceLocation location;       ///< 源码位置
@@ -27,18 +27,18 @@ struct LexerError
      * @param loc 源码位置
      * @param arguments 消息参数列表
      */
-    LexerError(DiagnosticCode c, const SourceLocation &loc,
-               const std::vector<std::string> &arguments = {})
+    TPError(DiagnosticCode c, const SourceLocation &loc,
+            const std::vector<std::string> &arguments = {})
         : code(c), location(loc), args(arguments) {}
 };
 
 /**
- * @brief 错误收集器类 - 负责收集词法分析过程中的错误
+ * @brief 错误收集器类 - 负责收集词元预处理过程中的错误
  */
-class LexErrorCollector
+class TPErrorCollector
 {
 private:
-    std::vector<LexerError> errors; ///< 错误列表
+    std::vector<TPError> errors; ///< 错误列表
 
 public:
     /**
@@ -54,7 +54,7 @@ public:
      * @brief 获取所有错误
      * @return 错误列表的常量引用
      */
-    const std::vector<LexerError> &get_errors() const { return errors; }
+    const std::vector<TPError> &get_errors() const { return errors; }
 
     /**
      * @brief 检查是否有错误
@@ -74,4 +74,4 @@ public:
     size_t count() const { return errors.size(); }
 };
 
-#endif // CZC_LEX_ERROR_COLLECTOR_HPP
+#endif // CZC_TP_ERROR_COLLECTOR_HPP
