@@ -9,12 +9,19 @@
 #include <cassert>
 #include <vector>
 
+/**
+ * @brief 打印 Token 信息
+ * @param token 要打印的 Token
+ */
 void print_token(const Token &token)
 {
     std::cout << "Token(" << token_type_to_string(token.token_type)
               << ", \"" << token.value << "\")" << std::endl;
 }
 
+/**
+ * @brief 测试整数词法分析
+ */
 void test_integers()
 {
     std::cout << "\n=== Test: Integers ===" << std::endl;
@@ -33,6 +40,9 @@ void test_integers()
     std::cout << "Integer test passed" << std::endl;
 }
 
+/**
+ * @brief 测试浮点数词法分析
+ */
 void test_floats()
 {
     std::cout << "\n=== Test: Floats ===" << std::endl;
@@ -50,6 +60,9 @@ void test_floats()
     std::cout << "Float test passed" << std::endl;
 }
 
+/**
+ * @brief 测试字符串词法分析
+ */
 void test_strings()
 {
     std::cout << "\n=== Test: Strings ===" << std::endl;
@@ -67,6 +80,9 @@ void test_strings()
     std::cout << "String test passed" << std::endl;
 }
 
+/**
+ * @brief 测试关键字词法分析
+ */
 void test_keywords()
 {
     std::cout << "\n=== Test: Keywords ===" << std::endl;
@@ -89,6 +105,9 @@ void test_keywords()
     std::cout << "Keyword test passed" << std::endl;
 }
 
+/**
+ * @brief 测试标识符词法分析
+ */
 void test_identifiers()
 {
     std::cout << "\n=== Test: Identifiers ===" << std::endl;
@@ -110,6 +129,9 @@ void test_identifiers()
     std::cout << "Identifier test passed" << std::endl;
 }
 
+/**
+ * @brief 测试运算符词法分析
+ */
 void test_operators()
 {
     std::cout << "\n=== Test: Operators ===" << std::endl;
@@ -136,6 +158,9 @@ void test_operators()
     std::cout << "Operator test passed" << std::endl;
 }
 
+/**
+ * @brief 测试分隔符词法分析
+ */
 void test_delimiters()
 {
     std::cout << "\n=== Test: Delimiters ===" << std::endl;
@@ -158,6 +183,9 @@ void test_delimiters()
     std::cout << "Delimiter test passed" << std::endl;
 }
 
+/**
+ * @brief 测试注释处理
+ */
 void test_comments()
 {
     std::cout << "\n=== Test: Comments ===" << std::endl;
@@ -183,6 +211,9 @@ void test_comments()
     std::cout << "Comment test passed" << std::endl;
 }
 
+/**
+ * @brief 测试复杂表达式
+ */
 void test_complex_expression()
 {
     std::cout << "\n=== Test: Complex Expression ===" << std::endl;
@@ -209,6 +240,9 @@ void test_complex_expression()
     std::cout << "Complex expression test passed" << std::endl;
 }
 
+/**
+ * @brief 测试 if 语句
+ */
 void test_if_statement()
 {
     std::cout << "\n=== Test: If Statement ===" << std::endl;
@@ -225,6 +259,9 @@ void test_if_statement()
     std::cout << "If statement test passed" << std::endl;
 }
 
+/**
+ * @brief 测试数组和范围
+ */
 void test_array_range()
 {
     std::cout << "\n=== Test: Array and Range ===" << std::endl;
@@ -240,6 +277,9 @@ void test_array_range()
     std::cout << "Array and range test passed" << std::endl;
 }
 
+/**
+ * @brief 测试空白处理
+ */
 void test_whitespace_handling()
 {
     std::cout << "\n=== Test: Whitespace Handling ===" << std::endl;
@@ -256,6 +296,9 @@ void test_whitespace_handling()
     std::cout << "Whitespace handling test passed" << std::endl;
 }
 
+/**
+ * @brief 测试空输入
+ */
 void test_empty_input()
 {
     std::cout << "\n=== Test: Empty Input ===" << std::endl;
@@ -268,6 +311,9 @@ void test_empty_input()
     std::cout << "Empty input test passed" << std::endl;
 }
 
+/**
+ * @brief 测试转义字符串
+ */
 void test_escaped_strings()
 {
     std::cout << "\n=== Test: Escaped Strings ===" << std::endl;
@@ -283,6 +329,9 @@ void test_escaped_strings()
     std::cout << "Escaped string test passed" << std::endl;
 }
 
+/**
+ * @brief 测试 UTF-8 字符串
+ */
 void test_utf8_strings()
 {
     std::cout << "\n=== Test: UTF-8 Strings ===" << std::endl;
@@ -302,6 +351,9 @@ void test_utf8_strings()
     std::cout << "UTF-8 string test passed" << std::endl;
 }
 
+/**
+ * @brief 测试无效数字字面量
+ */
 void test_invalid_number_literals()
 {
     std::cout << "\n=== Test: Invalid Number Literals ===" << std::endl;
@@ -341,6 +393,9 @@ void test_invalid_number_literals()
     std::cout << "Invalid number literals test passed" << std::endl;
 }
 
+/**
+ * @brief 测试未终止的字符串
+ */
 void test_unterminated_string()
 {
     std::cout << "\n=== Test: Unterminated String ===" << std::endl;
@@ -353,6 +408,9 @@ void test_unterminated_string()
     std::cout << "Unterminated string test passed" << std::endl;
 }
 
+/**
+ * @brief 测试无效转义序列
+ */
 void test_invalid_escape_sequence()
 {
     std::cout << "\n=== Test: Invalid Escape Sequence ===" << std::endl;
@@ -365,6 +423,9 @@ void test_invalid_escape_sequence()
     std::cout << "Invalid escape sequence test passed" << std::endl;
 }
 
+/**
+ * @brief 测试十六进制, 二进制和八进制数
+ */
 void test_hex_binary_octal()
 {
     std::cout << "\n=== Test: Hex, Binary, Octal Numbers ===" << std::endl;
@@ -382,6 +443,9 @@ void test_hex_binary_octal()
     std::cout << "Hex, binary, octal test passed" << std::endl;
 }
 
+/**
+ * @brief 测试多行字符串
+ */
 void test_multiline_strings()
 {
     std::cout << "\n=== Test: Multiline Strings ===" << std::endl;
@@ -396,6 +460,9 @@ void test_multiline_strings()
     std::cout << "Multiline string test passed" << std::endl;
 }
 
+/**
+ * @brief 测试原始字符串
+ */
 void test_raw_strings()
 {
     std::cout << "\n=== Test: Raw Strings ===" << std::endl;
@@ -425,6 +492,10 @@ void test_raw_strings()
     std::cout << "Raw string test passed" << std::endl;
 }
 
+/**
+ * @brief 主函数入口
+ * @return 程序退出码
+ */
 int main()
 {
     std::cout << "Running Lexer Tests..." << std::endl;

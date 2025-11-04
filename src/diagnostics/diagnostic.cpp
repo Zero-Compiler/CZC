@@ -15,6 +15,10 @@
 
 using namespace czc::diagnostics;
 
+/**
+ * @brief I18nMessages 构造函数
+ * @param locale 区域设置标识符
+ */
 I18nMessages::I18nMessages(const std::string &locale)
     : current_locale(locale)
 {
@@ -24,6 +28,11 @@ I18nMessages::I18nMessages(const std::string &locale)
     }
 }
 
+/**
+ * @brief 从文件加载国际化消息
+ * @param locale 区域设置标识符
+ * @return 如果加载成功返回 true, 否则返回 false
+ */
 bool I18nMessages::load_from_file(const std::string &locale)
 {
     std::vector<std::string> search_paths;
@@ -130,6 +139,10 @@ bool I18nMessages::load_from_file(const std::string &locale)
     return !messages.empty();
 }
 
+/**
+ * @brief 设置当前区域
+ * @param locale 区域设置标识符
+ */
 void I18nMessages::set_locale(const std::string &locale)
 {
     current_locale = locale;
@@ -139,6 +152,11 @@ void I18nMessages::set_locale(const std::string &locale)
     }
 }
 
+/**
+ * @brief 获取诊断代码对应的消息模板
+ * @param code 诊断代码
+ * @return 消息模板的常量引用
+ */
 const MessageTemplate &I18nMessages::get_message(DiagnosticCode code) const
 {
     std::string code_str = diagnostic_code_to_string(code);
@@ -153,6 +171,12 @@ const MessageTemplate &I18nMessages::get_message(DiagnosticCode code) const
     return it->second;
 }
 
+/**
+ * @brief 格式化诊断消息
+ * @param code 诊断代码
+ * @param args 格式化参数
+ * @return 格式化后的消息字符串
+ */
 std::string I18nMessages::format_message(DiagnosticCode code,
                                          const std::vector<std::string> &args) const
 {
@@ -174,6 +198,12 @@ std::string I18nMessages::format_message(DiagnosticCode code,
     return result;
 }
 
+/**
+ * @brief 格式化诊断信息
+ * @param i18n 国际化消息管理器
+ * @param use_color 是否使用颜色
+ * @return 格式化后的诊断字符串
+ */
 std::string Diagnostic::format(const I18nMessages &i18n, bool use_color) const
 {
     std::ostringstream oss;
@@ -260,9 +290,17 @@ std::string Diagnostic::format(const I18nMessages &i18n, bool use_color) const
     return oss.str();
 }
 
+/**
+ * @brief DiagnosticEngine 构造函数
+ * @param locale 区域设置标识符
+ */
 DiagnosticEngine::DiagnosticEngine(const std::string &locale)
     : i18n(std::make_shared<I18nMessages>(locale)) {}
 
+/**
+ * @brief 报告一个诊断信息
+ * @param diag 诊断对象的共享指针
+ */
 void DiagnosticEngine::report(std::shared_ptr<Diagnostic> diag)
 {
     if (!diag)
@@ -281,6 +319,10 @@ void DiagnosticEngine::report(std::shared_ptr<Diagnostic> diag)
     diagnostics.push_back(diag);
 }
 
+/**
+ * @brief 打印所有诊断信息
+ * @param use_color 是否使用颜色
+ */
 void DiagnosticEngine::print_all(bool use_color) const
 {
     for (const auto &diag : diagnostics)

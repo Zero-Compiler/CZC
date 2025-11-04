@@ -10,6 +10,13 @@
 #include <sstream>
 #include <iomanip>
 
+/**
+ * @brief 报告一个词法分析错误
+ * @param code 诊断代码
+ * @param error_line 错误发生的行号
+ * @param error_column 错误发生的列号
+ * @param args 格式化参数
+ */
 void Lexer::report_error(DiagnosticCode code,
                          size_t error_line,
                          size_t error_column,
@@ -19,6 +26,10 @@ void Lexer::report_error(DiagnosticCode code,
     error_collector.add(code, loc, args);
 }
 
+/**
+ * @brief 向前移动一个字符
+ * @details 更新源码跟踪器的位置和当前字符
+ */
 void Lexer::advance()
 {
     if (!current_char.has_value())
@@ -42,6 +53,11 @@ void Lexer::advance()
     }
 }
 
+/**
+ * @brief 查看未来位置的字符
+ * @param offset 偏移量
+ * @return 如果位置有效, 返回对应的字符, 否则返回 std::nullopt
+ */
 std::optional<char> Lexer::peek(size_t offset) const
 {
     size_t peek_pos = tracker.get_position() + offset;
@@ -53,6 +69,9 @@ std::optional<char> Lexer::peek(size_t offset) const
     return std::nullopt;
 }
 
+/**
+ * @brief 跳过空白字符
+ */
 void Lexer::skip_whitespace()
 {
     while (current_char.has_value() && std::isspace(current_char.value()))
@@ -61,6 +80,9 @@ void Lexer::skip_whitespace()
     }
 }
 
+/**
+ * @brief 跳过单行注释
+ */
 void Lexer::skip_comment()
 {
     if (current_char == '/' && peek(1) == '/')
@@ -76,6 +98,13 @@ void Lexer::skip_comment()
     }
 }
 
+/**
+ * @brief 读取带前缀的数字 (例如 0x, 0b, 0o)
+ * @param valid_chars 允许的数字字符
+ * @param prefix_str 前缀字符串 (用于报错)
+ * @param error_code 缺少数字时报告的错误码
+ * @return 构造的 Token
+ */
 Token Lexer::read_prefixed_number(const std::string &valid_chars,
                                   const std::string &prefix_str,
                                   DiagnosticCode error_code)
@@ -122,6 +151,10 @@ Token Lexer::read_prefixed_number(const std::string &valid_chars,
                  token_line, token_column);
 }
 
+/**
+ * @brief 读取数字 (整数, 浮点数, 科学计数法)
+ * @return 构造的 Token
+ */
 Token Lexer::read_number()
 {
     size_t start = tracker.get_position();
@@ -249,6 +282,10 @@ Token Lexer::read_number()
     }
 }
 
+/**
+ * @brief 读取标识符或关键字
+ * @return 构造的 Token
+ */
 Token Lexer::read_identifier()
 {
     size_t start = tracker.get_position();
@@ -286,6 +323,11 @@ Token Lexer::read_identifier()
 }
 
 // 解析 Unicode 转义序列
+/**
+ * @brief 解析 Unicode 转义序列
+ * @param digit_count 需要解析的十六进制数字个数
+ * @return 转换后的 UTF-8 字符串
+ */
 std::string Lexer::parse_unicode_escape(size_t digit_count)
 {
     std::string hex_digits;
@@ -321,6 +363,10 @@ std::string Lexer::parse_unicode_escape(size_t digit_count)
 }
 
 // 解析十六进制转义序列 \xHH
+/**
+ * @brief 解析十六进制转义序列 (\\xHH)
+ * @return 转换后的字节字符串
+ */
 std::string Lexer::parse_hex_escape()
 {
     std::string hex_digits;
@@ -361,6 +407,10 @@ std::string Lexer::parse_hex_escape()
     return result;
 }
 
+/**
+ * @brief 读取字符串字面量
+ * @return 构造的 Token
+ */
 Token Lexer::read_string()
 {
     size_t token_line = tracker.get_line();
@@ -535,6 +585,10 @@ Token Lexer::read_string()
     return Token(TokenType::String, value, token_line, token_column);
 }
 
+/**
+ * @brief 读取原始字符串字面量 (r"...")
+ * @return 构造的 Token
+ */
 Token Lexer::read_raw_string()
 {
     size_t token_line = tracker.get_line();
@@ -595,6 +649,11 @@ Token Lexer::read_raw_string()
     return Token(TokenType::String, value, token_line, token_column);
 }
 
+/**
+ * @brief Lexer 构造函数
+ * @param input_str 输入的源码字符串
+ * @param fname 文件名
+ */
 Lexer::Lexer(const std::string &input_str,
              const std::string &fname)
     : tracker(input_str, fname)
@@ -610,6 +669,10 @@ Lexer::Lexer(const std::string &input_str,
     }
 }
 
+/**
+ * @brief 获取下一个 Token
+ * @return 下一个 Token
+ */
 Token Lexer::next_token()
 {
     while (true)
@@ -833,6 +896,10 @@ Token Lexer::next_token()
     return token;
 }
 
+/**
+ * @brief 将整个输入源 tokenize
+ * @return Token 向量
+ */
 std::vector<Token> Lexer::tokenize()
 {
     std::vector<Token> tokens;

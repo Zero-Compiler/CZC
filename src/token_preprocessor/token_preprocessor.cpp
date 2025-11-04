@@ -15,6 +15,13 @@
 #include <sstream>
 #include <stdexcept>
 
+/**
+ * @brief 分析科学计数法字面量
+ * @param literal 字面量字符串
+ * @param token 对应的 Token
+ * @param context 分析上下文
+ * @return 如果分析成功, 返回包含分析信息的 ScientificNotationInfo, 否则返回 std::nullopt
+ */
 std::optional<ScientificNotationInfo> ScientificNotationAnalyzer::analyze(
     const std::string &literal,
     const Token *token,
@@ -38,6 +45,13 @@ std::optional<ScientificNotationInfo> ScientificNotationAnalyzer::analyze(
 
     return info;
 }
+/**
+ * @brief 解析科学计数法的尾数和指数
+ * @param literal 字面量字符串
+ * @param mantissa 用于存储尾数的字符串
+ * @param exponent 用于存储指数的整数
+ * @return 如果解析成功返回 true, 否则返回 false
+ */
 bool ScientificNotationAnalyzer::parse_components(const std::string &literal, std::string &mantissa, int64_t &exponent)
 {
     // 查找 'e' 或 'E'
@@ -78,6 +92,11 @@ bool ScientificNotationAnalyzer::parse_components(const std::string &literal, st
     return true;
 }
 
+/**
+ * @brief 去除小数部分末尾的零
+ * @param decimal_part 小数部分的字符串
+ * @return 去除末尾零后的字符串
+ */
 std::string ScientificNotationAnalyzer::trim_trailing_zeros(const std::string &decimal_part)
 {
     if (decimal_part.empty())
@@ -94,6 +113,11 @@ std::string ScientificNotationAnalyzer::trim_trailing_zeros(const std::string &d
     return decimal_part.substr(0, end);
 }
 
+/**
+ * @brief 计算尾数的小数位数 (去除末尾零后)
+ * @param mantissa 尾数字符串
+ * @return 小数位数
+ */
 size_t ScientificNotationAnalyzer::count_decimal_digits(const std::string &mantissa)
 {
     size_t dot_pos = mantissa.find('.');
@@ -109,6 +133,13 @@ size_t ScientificNotationAnalyzer::count_decimal_digits(const std::string &manti
     return trimmed.length();
 }
 
+/**
+ * @brief 推断科学计数法字面量的数值类型
+ * @param info 科学计数法分析信息
+ * @param token 对应的 Token
+ * @param context 分析上下文
+ * @return 推断出的数值类型 (INT64 或 FLOAT)
+ */
 InferredNumericType ScientificNotationAnalyzer::infer_type(
     const ScientificNotationInfo &info,
     const Token *token,
@@ -155,6 +186,14 @@ InferredNumericType ScientificNotationAnalyzer::infer_type(
     }
 }
 
+/**
+ * @brief 检查科学计数法表示的数值是否在 int64 范围内
+ * @param mantissa 尾数
+ * @param exponent 指数
+ * @param token 对应的 Token
+ * @param context 分析上下文
+ * @return 如果在范围内返回 true, 否则返回 false
+ */
 bool ScientificNotationAnalyzer::fits_in_int64(
     const std::string &mantissa,
     int64_t exponent,
@@ -170,6 +209,14 @@ bool ScientificNotationAnalyzer::fits_in_int64(
     return magnitude.value() <= MAX_I64_MAGNITUDE;
 }
 
+/**
+ * @brief 计算数值的量级 (大致为10的多少次方)
+ * @param mantissa 尾数
+ * @param exponent 指数
+ * @param token 对应的 Token
+ * @param context 分析上下文
+ * @return 如果计算成功, 返回量级, 否则返回 std::nullopt
+ */
 std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
     const std::string &mantissa,
     int64_t exponent,
@@ -228,6 +275,13 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
     return magnitude;
 }
 
+/**
+ * @brief 报告整数溢出错误
+ * @param token 对应的 Token
+ * @param mantissa 尾数
+ * @param exponent 指数
+ * @param context 分析上下文
+ */
 void ScientificNotationAnalyzer::report_overflow(
     const Token *token,
     const std::string &mantissa,
@@ -259,6 +313,14 @@ void ScientificNotationAnalyzer::report_overflow(
     context.reporter->report(diag);
 }
 
+/**
+ * @brief 预处理 Token 流, 主要处理科学计数法
+ * @param tokens 原始 Token 流
+ * @param filename 文件名
+ * @param source_content 源码内容
+ * @param reporter 诊断报告器
+ * @return 处理后的 Token 流
+ */
 std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens,
                                               const std::string &filename,
                                               const std::string &source_content,
@@ -282,6 +344,14 @@ std::vector<Token> TokenPreprocessor::process(const std::vector<Token> &tokens,
     return processed_tokens;
 }
 
+/**
+ * @brief 处理单个科学计数法 Token
+ * @param token 待处理的 Token
+ * @param filename 文件名
+ * @param source_content 源码内容
+ * @param reporter 诊断报告器
+ * @return 处理后的 Token
+ */
 Token TokenPreprocessor::process_scientific_token(const Token &token,
                                                   const std::string &filename,
                                                   const std::string &source_content,
@@ -301,6 +371,11 @@ Token TokenPreprocessor::process_scientific_token(const Token &token,
     return Token(new_type, token.value, token.line, token.column);
 }
 
+/**
+ * @brief 将推断出的数值类型转换为 TokenType
+ * @param type 推断出的数值类型
+ * @return 对应的 TokenType
+ */
 TokenType TokenPreprocessor::inferred_type_to_token_type(InferredNumericType type)
 {
     switch (type)
@@ -314,6 +389,11 @@ TokenType TokenPreprocessor::inferred_type_to_token_type(InferredNumericType typ
     }
 }
 
+/**
+ * @brief 将推断出的数值类型转换为字符串
+ * @param type 推断出的数值类型
+ * @return 类型的字符串表示
+ */
 std::string inferred_type_to_string(InferredNumericType type)
 {
     switch (type)

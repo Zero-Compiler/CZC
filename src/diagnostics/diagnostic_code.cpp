@@ -8,6 +8,11 @@
 #include <sstream>
 #include <iomanip>
 
+/**
+ * @brief 将诊断代码转换为字符串
+ * @param code 诊断代码
+ * @return 格式化后的字符串 (例如 "L0001")
+ */
 std::string diagnostic_code_to_string(DiagnosticCode code)
 {
     int code_num = static_cast<int>(code);

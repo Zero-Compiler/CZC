@@ -7,6 +7,10 @@
 #include "czc/lexer/lexer.hpp"
 #include <iostream>
 
+/**
+ * @brief 主函数入口
+ * @return 程序退出码
+ */
 int main()
 {
     Lexer lexer("+ - * / % = == ! != < <= > >= && ||");

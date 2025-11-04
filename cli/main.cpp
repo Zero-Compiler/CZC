@@ -196,6 +196,12 @@ bool tokenize_file(const std::string &input_path, const std::string &locale)
     return true;
 }
 
+/**
+ * @brief 程序主入口
+ * @param argc 命令行参数数量
+ * @param argv 命令行参数数组
+ * @return 程序退出码
+ */
 int main(int argc, char *argv[])
 {
     if (argc < 2)

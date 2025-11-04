@@ -6,11 +6,21 @@
 
 #include "czc/lexer/utf8_handler.hpp"
 
+/**
+ * @brief 检查字节是否为 UTF-8 连续字节
+ * @param ch 待检查的字节
+ * @return 如果是连续字节返回 true, 否则返回 false
+ */
 bool Utf8Handler::is_continuation(unsigned char ch)
 {
     return (ch & 0xC0) == 0x80; // 10xxxxxx
 }
 
+/**
+ * @brief 获取 UTF-8 字符的字节长度
+ * @param first_byte 字符的第一个字节
+ * @return 字符的字节长度, 如果无效则返回 0
+ */
 size_t Utf8Handler::get_char_length(unsigned char first_byte)
 {
     if ((first_byte & 0x80) == 0)
@@ -24,6 +34,11 @@ size_t Utf8Handler::get_char_length(unsigned char first_byte)
     return 0;     // Invalid
 }
 
+/**
+ * @brief 将 Unicode 码点转换为 UTF-8 编码字符串
+ * @param codepoint Unicode 码点
+ * @return 转换后的 UTF-8 字符串
+ */
 std::string Utf8Handler::codepoint_to_utf8(unsigned int codepoint)
 {
     std::string result;
@@ -58,6 +73,13 @@ std::string Utf8Handler::codepoint_to_utf8(unsigned int codepoint)
     return result;
 }
 
+/**
+ * @brief 从输入字符串中读取一个完整的 UTF-8 字符
+ * @param input 输入字符串
+ * @param pos 当前位置 (将被更新)
+ * @param dest 存储读取字符的目标字符串
+ * @return 如果成功读取返回 true, 否则返回 false
+ */
 bool Utf8Handler::read_char(const std::string &input, size_t &pos, std::string &dest)
 {
     if (pos >= input.size())

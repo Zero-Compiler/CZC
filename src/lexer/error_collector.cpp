@@ -6,6 +6,12 @@
 
 #include "czc/lexer/error_collector.hpp"
 
+/**
+ * @brief 添加一个诊断错误
+ * @param code 诊断代码
+ * @param loc 源码位置
+ * @param args 格式化参数
+ */
 void ErrorCollector::add(DiagnosticCode code, const SourceLocation &loc,
                          const std::vector<std::string> &args)
 {

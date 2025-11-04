@@ -8,6 +8,11 @@
 #include <filesystem>
 #include <algorithm>
 
+/**
+ * @brief 根据模式收集文件
+ * @param patterns 文件模式向量 (支持 * 和 ? 通配符)
+ * @return 收集到的文件路径向量
+ */
 std::vector<std::string> FileCollector::collect_files(const std::vector<std::string> &patterns)
 {
     std::vector<std::string> files_to_process;
@@ -55,6 +60,12 @@ std::vector<std::string> FileCollector::collect_files(const std::vector<std::str
     return files_to_process;
 }
 
+/**
+ * @brief 检查文件名是否匹配模式
+ * @param filename 文件名
+ * @param pattern 模式字符串
+ * @return 如果匹配返回 true, 否则返回 false
+ */
 bool FileCollector::matches_pattern(const std::string &filename, const std::string &pattern)
 {
     size_t pattern_idx = 0;

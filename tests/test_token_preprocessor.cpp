@@ -37,7 +37,9 @@ void print_analysis(const std::string &literal, const ScientificNotationInfo &in
     std::cout << "  Normalized: " << info.normalized_value << std::endl;
 }
 
-// 负指数应该推断为 FLOAT
+/**
+ * @brief 测试负指数推断为 FLOAT
+ */
 void test_negative_exponent()
 {
     std::cout << "\n=== Test: Negative Exponent ===" << std::endl;
@@ -58,7 +60,9 @@ void test_negative_exponent()
     std::cout << "123e-1 -> FLOAT" << std::endl;
 }
 
-// 无小数点的整数形式
+/**
+ * @brief 测试无小数点的整数形式
+ */
 void test_integer_form()
 {
     std::cout << "\n=== Test: Integer Form (No Decimal Point) ===" << std::endl;
@@ -92,7 +96,9 @@ void test_integer_form()
     std::cout << "1e19 -> FLOAT (overflow)" << std::endl;
 }
 
-// 有小数点的情况 - 小数位数 > 指数
+/**
+ * @brief 测试有小数点的情况 - 小数位数 > 指数
+ */
 void test_decimal_greater_than_exponent()
 {
     std::cout << "\n=== Test: Decimal Digits > Exponent ===" << std::endl;
@@ -117,7 +123,9 @@ void test_decimal_greater_than_exponent()
     std::cout << "1.5e1 -> INT64" << std::endl;
 }
 
-// 尾随零的处理
+/**
+ * @brief 测试尾随零的处理
+ */
 void test_trailing_zeros()
 {
     std::cout << "\n=== Test: Trailing Zeros ===" << std::endl;
@@ -144,7 +152,9 @@ void test_trailing_zeros()
     std::cout << "1.234000e10 -> INT64" << std::endl;
 }
 
-// 边界情况
+/**
+ * @brief 测试边界情况
+ */
 void test_edge_cases()
 {
     std::cout << "\n=== Test: Edge Cases ===" << std::endl;
@@ -175,7 +185,9 @@ void test_edge_cases()
     std::cout << "2.5e+3 -> INT64" << std::endl;
 }
 
-// Token 流处理
+/**
+ * @brief 测试 Token 流处理
+ */
 void test_token_processing()
 {
     std::cout << "\n=== Test: Token Stream Processing ===" << std::endl;
@@ -209,7 +221,9 @@ void test_token_processing()
     }
 }
 
-// 详细分析输出
+/**
+ * @brief 测试详细分析输出
+ */
 void test_detailed_analysis()
 {
     std::cout << "\n=== Test: Detailed Analysis Output ===" << std::endl;
@@ -233,7 +247,9 @@ void test_detailed_analysis()
     }
 }
 
-// 实际数值验证
+/**
+ * @brief 测试实际数值验证
+ */
 void test_actual_values()
 {
     std::cout << "\n=== Test: Actual Value Validation ===" << std::endl;
@@ -263,6 +279,10 @@ void test_actual_values()
     std::cout << "2.5e-3 = 0.0025 (FLOAT)" << std::endl;
 }
 
+/**
+ * @brief 主函数入口
+ * @return 程序退出码
+ */
 int main()
 {
     std::cout << "===================================" << std::endl;

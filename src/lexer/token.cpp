@@ -6,11 +6,21 @@
 
 #include "czc/lexer/token.hpp"
 
-// Token constructor
+/**
+ * @brief Token 构造函数
+ * @param type Token 类型
+ * @param val Token 的值
+ * @param line 行号
+ * @param column 列号
+ */
 Token::Token(TokenType type, const std::string &val, size_t line, size_t column)
     : token_type(type), value(val), line(line), column(column) {}
 
-// Helper function to get keyword token type
+/**
+ * @brief 根据字符串获取关键字类型
+ * @param word 待检查的字符串
+ * @return 如果是关键字, 返回对应的 TokenType, 否则返回 std::nullopt
+ */
 std::optional<TokenType> get_keyword(const std::string &word)
 {
     if (word == "let")
@@ -38,7 +48,11 @@ std::optional<TokenType> get_keyword(const std::string &word)
     return std::nullopt;
 }
 
-// Helper function to convert TokenType to string representation
+/**
+ * @brief 将 TokenType 转换为字符串表示
+ * @param type Token 类型
+ * @return 类型的字符串表示
+ */
 std::string token_type_to_string(TokenType type)
 {
     switch (type)
