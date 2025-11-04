@@ -2,12 +2,13 @@
  * @file diagnostic_code.hpp
  * @brief 诊断代码和级别定义
  * @author BegoniaHe
+ * @date 2025-11-04
  */
 
 #ifndef CZC_DIAGNOSTIC_CODE_HPP
 #define CZC_DIAGNOSTIC_CODE_HPP
 
-#include "czc/lexer/source_location.hpp"
+#include "czc/utils/source_location.hpp"
 #include <string>
 
 /**
@@ -15,9 +16,9 @@
  */
 enum class DiagnosticLevel
 {
-    Warning, ///< 警告
-    Error,   ///< 错误
-    Fatal    ///< 致命错误
+    Warning, // 警告
+    Error,   // 错误
+    Fatal    // 致命错误
 };
 
 /**
@@ -39,8 +40,8 @@ enum class DiagnosticCode
     L0011_InvalidUtf8Sequence,   // 无效的 UTF-8 序列
 
     // === TokenPreprocessor 警告/错误 (T0001-T0999) ===
-    T0001_ScientificIntOverflow = 1001, // 科学计数法整数溢出
-    T0002_ScientificFloatRecommend,     // 建议使用浮点数
+    T0001_ScientificIntOverflow = 1001, // 科学计数法整数溢出（已废弃，仅用于兼容）
+    T0002_ScientificFloatOverflow,      // 科学计数法浮点数溢出
 };
 
 /**

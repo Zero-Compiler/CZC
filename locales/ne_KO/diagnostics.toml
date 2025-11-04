@@ -61,6 +61,6 @@ help = "考虑使用浮点数表示或使用更小的指数哦喵~"
 source = "token_preprocessor"
 
 [T0002]
-message = "科学计数法 '{0}' 的指数为负数喵!~"
-help = "这将被视为浮点数；如果是有意为之，建议使用明确的浮点数语法呢喵~"
+message = "科学计数法 '{0}' 超出 float64 范围了喵!~"
+help = "该值太大，无法用 64 位浮点数表示呢喵~"
 source = "token_preprocessor"
