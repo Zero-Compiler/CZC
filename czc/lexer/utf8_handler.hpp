@@ -17,8 +17,7 @@
  *   验证字节序列以及在 Unicode 码点和 UTF-8 编码之间进行转换。
  *   所有方法都是静态的，因此该类不能被实例化。
  */
-class Utf8Handler
-{
+class Utf8Handler {
 public:
   /**
    * @brief 检查给定的字节是否为 UTF-8 序列中的续字节。
@@ -51,7 +50,8 @@ public:
    * @param[out] dest 读取到的 UTF-8 字符将被追加到此字符串。
    * @return 如果成功读取一个有效的 UTF-8 字符，则返回 true。
    */
-  static bool read_char(const std::string &input, size_t &pos, std::string &dest);
+  static bool read_char(const std::string &input, size_t &pos,
+                        std::string &dest);
 };
 
 #endif // CZC_UTF8_HANDLER_HPP

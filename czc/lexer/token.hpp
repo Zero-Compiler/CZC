@@ -8,14 +8,13 @@
 #ifndef CZC_LEXER_TOKEN_HPP
 #define CZC_LEXER_TOKEN_HPP
 
-#include <string>
 #include <optional>
+#include <string>
 
 /**
  * @brief Token 类型枚举
  */
-enum class TokenType
-{
+enum class TokenType {
   // 字面量
   Integer,            // 整数字面量
   Float,              // 浮点数字面量
@@ -87,8 +86,7 @@ enum class TokenType
  *   （例如标识符、整数、关键字）、其在源代码中的原始文本值，
  *   以及它在源文件中的位置（行号和列号），这对于错误报告至关重要。
  */
-class Token
-{
+class Token {
 public:
   /// @brief Token 的类型，定义了其语法含义。
   TokenType token_type;
@@ -106,7 +104,8 @@ public:
    * @param[in] line Token 所在的行号。
    * @param[in] column Token 开始的列号。
    */
-  Token(TokenType type, const std::string &val, size_t line = 0, size_t column = 0);
+  Token(TokenType type, const std::string &val, size_t line = 0,
+        size_t column = 0);
 };
 
 /**

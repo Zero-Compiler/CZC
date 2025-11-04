@@ -10,16 +10,15 @@
 
 #include "diagnostic_code.hpp"
 #include "diagnostic_reporter.hpp"
+#include <memory>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 /**
  * @brief 存储单条诊断消息的国际化模板。
  * @details 包含消息正文、辅助说明以及来源信息，用于构建完整的诊断报告。
  */
-struct MessageTemplate
-{
+struct MessageTemplate {
   /// @brief 消息格式化字符串，例如 "invalid character '{0}'"。
   std::string message;
   /// @brief (可选) 补充的帮助信息或修复建议。
@@ -35,8 +34,7 @@ struct MessageTemplate
  *   并提供接口来获取和格式化诊断消息。
  * @note 此类不是线程安全的。
  */
-class I18nMessages
-{
+class I18nMessages {
 private:
   /// @brief 当前设置的语言环境字符串，例如 "en_US"。
   std::string current_locale;
@@ -59,7 +57,8 @@ public:
 
   /**
    * @brief 切换当前的语言环境。
-   * @details 如果新的语言环境与当前不同，将尝试从对应的 .toml 文件加载新的消息模板。
+   * @details 如果新的语言环境与当前不同，将尝试从对应的 .toml
+   * 文件加载新的消息模板。
    * @param[in] locale 新的语言环境标识符。
    */
   void set_locale(const std::string &locale);
@@ -91,8 +90,7 @@ public:
  *   此类封装了诊断事件的所有信息，包括其严重级别、唯一的诊断代码、
  *   在源代码中的位置、格式化消息所需的参数以及相关的源代码行。
  */
-class Diagnostic
-{
+class Diagnostic {
 private:
   /// @brief 诊断的严重级别（例如：警告、错误）。
   DiagnosticLevel level;
@@ -113,9 +111,7 @@ public:
    * @param[in] loc 源代码中的位置。
    * @param[in] arguments (可选) 格式化消息所需的参数。
    */
-  Diagnostic(DiagnosticLevel lvl,
-             DiagnosticCode c,
-             const SourceLocation &loc,
+  Diagnostic(DiagnosticLevel lvl, DiagnosticCode c, const SourceLocation &loc,
              const std::vector<std::string> &arguments = {})
       : level(lvl), code(c), location(loc), args(arguments) {}
 
@@ -161,7 +157,8 @@ public:
    *   此方法使用提供的 I18nMessages 管理器来生成本地化的消息，
    *   并可以应用 ANSI 颜色代码以增强可读性。
    * @param[in] i18n 用于消息本地化的国际化管理器。
-   * @param[in] use_color 如果为 true，则在输出中使用 ANSI 颜色代码。默认为 true。
+   * @param[in] use_color 如果为 true，则在输出中使用 ANSI 颜色代码。默认为
+   * true。
    * @return 返回格式化后的完整诊断报告字符串。
    */
   std::string format(const I18nMessages &i18n, bool use_color = true) const;
@@ -175,8 +172,7 @@ public:
  *   它还管理 I18nMessages 实例以支持多语言输出。
  * @note 此类不是线程安全的。
  */
-class DiagnosticEngine : public IDiagnosticReporter
-{
+class DiagnosticEngine : public IDiagnosticReporter {
 private:
   /// @brief 存储所有已报告的诊断信息的列表。
   std::vector<std::shared_ptr<Diagnostic>> diagnostics;
@@ -218,7 +214,8 @@ public:
 
   /**
    * @brief 将所有收集到的诊断信息打印到标准输出。
-   * @param[in] use_color 如果为 true，则使用 ANSI 颜色代码进行打印。默认为 true。
+   * @param[in] use_color 如果为 true，则使用 ANSI 颜色代码进行打印。默认为
+   * true。
    */
   void print_all(bool use_color = true) const;
 
