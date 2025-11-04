@@ -22,67 +22,67 @@ namespace lexer {
  */
 enum class TokenType {
   // === 字面量 ===
-  Integer,            ///< 整数字面量, e.g., `123`, `0xFF`
-  Float,              ///< 浮点数字面量, e.g., `3.14`
-  String,             ///< 字符串字面量, e.g., `"hello"`
-  Identifier,         ///< 标识符, e.g., `my_var`
-  ScientificExponent, ///< 科学计数法字面量, e.g., `1.23e-4`
+  Integer,            // 整数字面量, e.g., `123`, `0xFF`
+  Float,              // 浮点数字面量, e.g., `3.14`
+  String,             // 字符串字面量, e.g., `"hello"`
+  Identifier,         // 标识符, e.g., `my_var`
+  ScientificExponent, // 科学计数法字面量, e.g., `1.23e-4`
 
   // === 关键字 ===
-  Let,    ///< `let` 关键字
-  Var,    ///< `var` 关键字
-  Fn,     ///< `fn` 关键字
-  Return, ///< `return` 关键字
-  If,     ///< `if` 关键字
-  Else,   ///< `else` 关键字
-  While,  ///< `while` 关键字
-  For,    ///< `for` 关键字
-  In,     ///< `in` 关键字
-  True,   ///< `true` 布尔字面量
-  False,  ///< `false` 布尔字面量
+  Let,    // `let` 关键字
+  Var,    // `var` 关键字
+  Fn,     // `fn` 关键字
+  Return, // `return` 关键字
+  If,     // `if` 关键字
+  Else,   // `else` 关键字
+  While,  // `while` 关键字
+  For,    // `for` 关键字
+  In,     // `in` 关键字
+  True,   // `true` 布尔字面量
+  False,  // `false` 布尔字面量
 
   // === 运算符 ===
-  Plus,    ///< `+`
-  Minus,   ///< `-`
-  Star,    ///< `*`
-  Slash,   ///< `/`
-  Percent, ///< `%`
+  Plus,    // `+`
+  Minus,   // `-`
+  Star,    // `*`
+  Slash,   // `/`
+  Percent, // `%`
 
   // === 赋值与比较运算符 ===
-  Equal,        ///< `=`
-  PlusEqual,    ///< `+=`
-  MinusEqual,   ///< `-=`
-  StarEqual,    ///< `*=`
-  PercentEqual, ///< `%=`
-  SlashEqual,   ///< `/=`
-  EqualEqual,   ///< `==`
-  BangEqual,    ///< `!=`
-  Less,         ///< `<`
-  LessEqual,    ///< `<=`
-  Greater,      ///< `>`
-  GreaterEqual, ///< `>=`
+  Equal,        // `=`
+  PlusEqual,    // `+=`
+  MinusEqual,   // `-=`
+  StarEqual,    // `*=`
+  PercentEqual, // `%=`
+  SlashEqual,   // `/=`
+  EqualEqual,   // `==`
+  BangEqual,    // `!=`
+  Less,         // `<`
+  LessEqual,    // `<=`
+  Greater,      // `>`
+  GreaterEqual, // `>=`
 
   // === 逻辑运算符 ===
-  And,  ///< `&&`
-  Or,   ///< `||`
-  Bang, ///< `!`
+  And,  // `&&`
+  Or,   // `||`
+  Bang, // `!`
 
   // === 分隔符 ===
-  LeftParen,    ///< `(`
-  RightParen,   ///< `)`
-  LeftBrace,    ///< `{`
-  RightBrace,   ///< `}`
-  LeftBracket,  ///< `[`
-  RightBracket, ///< `]`
-  Comma,        ///< `,`
-  Semicolon,    ///< `;`
-  Colon,        ///< `:`
-  Dot,          ///< `.`
-  DotDot,       ///< `..`
+  LeftParen,    // `(`
+  RightParen,   // `)`
+  LeftBrace,    // `{`
+  RightBrace,   // `}`
+  LeftBracket,  // `[`
+  RightBracket, // `]`
+  Comma,        // `,`
+  Semicolon,    // `;`
+  Colon,        // `:`
+  Dot,          // `.`
+  DotDot,       // `..`
 
   // === 特殊 ===
-  EndOfFile, ///< 表示输入流已结束的特殊 Token
-  Unknown,   ///< 表示无法识别的字符或序列
+  EndOfFile, // 表示输入流已结束的特殊 Token
+  Unknown,   // 表示无法识别的字符或序列
 };
 
 /**

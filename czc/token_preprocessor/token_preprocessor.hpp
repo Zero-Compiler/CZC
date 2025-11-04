@@ -31,8 +31,8 @@ constexpr int MAX_F64_MAGNITUDE = 308;
  *   表示根据科学计数法字面量的形式和值推断出的最终数值类型。
  */
 enum class InferredNumericType {
-  INT64, ///< 推断为 64 位整数。
-  FLOAT  ///< 推断为 64 位浮点数。
+  INT64, // 推断为 64 位整数。
+  FLOAT  // 推断为 64 位浮点数。
 };
 
 /**
