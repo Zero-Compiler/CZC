@@ -1,8 +1,8 @@
 /**
  * @file lexer.cpp
- * @brief 词法分析器实现
+ * @brief `Lexer` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #include "czc/lexer/lexer.hpp"
@@ -20,27 +20,32 @@ using namespace czc::utils;
 void Lexer::report_error(DiagnosticCode code, size_t error_line,
                          size_t error_column,
                          const std::vector<std::string> &args) {
-  // 创建一个只包含错误发生点的 SourceLocation。
+  // NOTE: 创建一个只包含错误发生点的 SourceLocation。对于词法错误，
+  //       通常我们只关心单个字符或符号的位置，因此起始和结束位置是相同的。
   auto loc = SourceLocation(tracker.get_filename(), error_line, error_column,
                             error_line, error_column);
   error_collector.add(code, loc, args);
 }
 
 void Lexer::advance() {
-  // 如果已经到达源码末尾，则无需再前进。
+  // --- 防御性检查 ---
+  // 如果已经到达源码末尾，则无需再前进，防止 tracker 越界。
   if (!current_char.has_value()) {
     return;
   }
 
-  // 将当前字符传递给 tracker，以便它能正确更新行号和列号（特别是处理换行符）。
+  // NOTE: 将当前字符传递给 tracker 是 advance 逻辑的核心。tracker 内部会
+  //       检查该字符是否为换行符，并据此更新其内部的行号和列号状态。
+  //       这是将位置跟踪逻辑与词法分析规则逻辑解耦的关键。
   char ch = current_char.value();
   tracker.advance(ch);
 
   size_t pos = tracker.get_position();
   const auto &input = tracker.get_input();
 
+  // --- 更新当前字符 ---
   // 更新 current_char 为 tracker 前进后的新位置上的字符。
-  // 如果到达末尾，则设置为 std::nullopt，这将作为后续处理的终止信号。
+  // 如果到达末尾，则设置为 std::nullopt，这将作为后续所有处理的终止信号。
   if (pos < input.size()) {
     current_char = input[pos];
   } else {
@@ -58,20 +63,23 @@ std::optional<char> Lexer::peek(size_t offset) const {
 }
 
 void Lexer::skip_whitespace() {
-  // 持续消耗字符，直到遇到非空白字符或源码结束。
+  // NOTE: 持续消耗字符，直到遇到非空白字符或源码结束。
+  //       `isspace` 可以正确处理空格、制表符、换行符等多种空白字符。
   while (current_char.has_value() && std::isspace(current_char.value())) {
     advance();
   }
 }
 
 void Lexer::skip_comment() {
+  // --- 单行注释处理 ---
   // 检查是否是 `//` 开头的单行注释。
   if (current_char == '/' && peek(1) == '/') {
-    // 如果是，则一直消耗字符直到行尾或文件末尾。
+    // 如果是，则一直消耗字符直到行尾（`\n`）或文件末尾。
     while (current_char.has_value() && current_char != '\n') {
       advance();
     }
-    // 如果是因为换行符而停止，则额外消耗掉这个换行符。
+    // NOTE: 如果是因为换行符而停止，则需要额外调用一次 advance() 来消耗掉
+    //       这个换行符本身，以便下一次 next_token() 从新的一行开始。
     if (current_char == '\n') {
       advance();
     }
@@ -109,8 +117,11 @@ Token Lexer::read_prefixed_number(const std::string &valid_chars,
   size_t current_pos = tracker.get_position();
   if (current_pos == digit_start) {
     report_error(error_code, token_line, token_column, {prefix_str});
-    // 即使有错，也返回一个 Unknown 类型的 Token，包含了错误的文本，
-    // 这样可以支持后续的错误恢复。
+    // --- 错误恢复 ---
+    // NOTE: 即使在报告错误后，我们仍然返回一个 `Unknown` 类型的 Token，
+    //       其中包含了被识别为错误的文本。这是一种简单的错误恢复策略，
+    //       它允许解析器（Parser）看到这个错误并可能尝试从中恢复，而不是
+    //       让词法分析器完全卡住。
     const auto &input = tracker.get_input();
     return Token(TokenType::Unknown,
                  std::string(&input[start], current_pos - start), token_line,
@@ -155,14 +166,16 @@ Token Lexer::read_number() {
     }
     // 处理小数点。只允许一个小数点。
     else if (ch == '.' && !is_float) {
-      // 小数点后面必须跟一个数字。像 `1.` 这样的写法被视为整数 `1`
-      // 和一个单独的点号 `.` Token。这是为了简化语法。
+      // NOTE: 小数点后面必须紧跟一个数字才被认为是浮点数的一部分。
+      //       像 `1.` 这样的写法将被解析为整数 `1` 和一个单独的点号 `.` Token。
+      //       这是一种设计选择，旨在简化语言的语法，避免范围操作符（`..`）
+      //       或方法调用（`.`）与浮点数产生歧义。
       auto next = peek(1);
       if (next.has_value() && std::isdigit(next.value())) {
         is_float = true;
         advance();
       } else {
-        // 小数点后不是数字，数字部分结束。
+        // 小数点后不是数字，说明数字字面量到此结束。
         break;
       }
     } else {
@@ -202,14 +215,16 @@ Token Lexer::read_number() {
   }
 
   // --- 验证数字字面量后的字符 ---
-  // 根据语言规范，数字字面量后面不能直接跟标识符字符（字母或下划线）。
-  // 例如 `123a` 是无效的，以避免歧义。
+  // NOTE: 根据语言规范，数字字面量后面不能直接跟标识符字符（字母或下划线）。
+  //       例如 `123a` 是无效的。这个规则是为了消除歧义，例如区分
+  //       `123` 和变量 `a`，而不是一个名为 `123a` 的无效标识符。
   if (current_char.has_value() &&
       (std::isalpha(current_char.value()) || current_char.value() == '_')) {
     std::string bad_suffix(1, current_char.value());
     report_error(DiagnosticCode::L0005_InvalidTrailingChar, token_line,
                  token_column, {bad_suffix});
-    // 消耗掉这个无效字符，以避免词法分析器卡在同一个错误上。
+    // --- 错误恢复 ---
+    // 消耗掉这个无效字符，以避免词法分析器在下一次调用时再次报告同一个错误。
     advance();
     size_t current_pos = tracker.get_position();
     const auto &input = tracker.get_input();
@@ -224,8 +239,10 @@ Token Lexer::read_number() {
 
   // --- 根据解析过程中设置的标志，确定最终的 Token 类型 ---
   if (is_scientific) {
-    // 科学计数法字面量需要后续处理（在 TokenPreprocessor 中）
-    // 来确定其最终类型是整数还是浮点数，并检查溢出。
+    // NOTE: 所有科学计数法字面量都被暂时标记为 `ScientificExponent`。
+    //       这是因为在词法分析阶段，我们只关心其语法形式，而不关心其
+    //       具体的值。其最终类型（整数或浮点数）的推断和溢出检查将在
+    //       后续的 TokenPreprocessor 阶段完成。
     return Token(TokenType::ScientificExponent, value, token_line,
                  token_column);
   }
@@ -250,9 +267,11 @@ Token Lexer::read_identifier() {
     if (std::isalnum(ch) || ch == '_') {
       advance();
     }
-    // 简单的检查，所有非 ASCII 字符（高位为1）都被视为标识符的一部分。
-    // NOTE: 这是一个宽松的规则。更严格的实现可能需要检查 Unicode
-    // 属性，以只允许特定范围的字母或符号。
+    // NOTE: 这是一个简单而宽松的 Unicode 标识符规则：所有非 ASCII 字符
+    //       （即最高位为 1 的字节）都被视为标识符的一部分。这使得像 `变量`
+    //       或 `résumé` 这样的标识符成为可能。一个更严格的实现可能需要
+    //       检查 Unicode 字符属性，以只允许特定范围的字母或符号（例如，
+    //       排除表情符号或标点符号），但这会显著增加复杂性。
     else if (uch >= 0x80) {
       advance();
     } else {
@@ -436,13 +455,26 @@ Token Lexer::read_string() {
       }
     } else {
       // --- 处理非转义的普通字符（可能为多字节 UTF-8） ---
-      // NOTE: 这里的 UTF-8 处理逻辑存在缺陷。它一次只 advance() 一个字节，
-      // 依赖于循环的下一次迭代来处理多字节字符的剩余部分。
-      // TODO(BegoniaHe): 修正此处的 UTF-8 处理逻辑。应该使用
-      // Utf8Handler::read_char 来完整读取一个字符，并一次性 advance
-      // 对应的字节数。
-      value += ch;
-      advance();
+      // NOTE: 使用 Utf8Handler::read_char 来确保正确处理多字节字符。
+      //       此函数会完整读取一个 UTF-8 字符（可能是1-4字节），
+      //       并相应地推进 tracker 的位置。
+      size_t current_pos = tracker.get_position();
+      std::string utf8_char;
+      if (Utf8Handler::read_char(std::string(tracker.get_input().begin(),
+                                             tracker.get_input().end()),
+                                 current_pos, utf8_char)) {
+        value += utf8_char;
+        // 同步 tracker 和 lexer 的状态
+        while (tracker.get_position() < current_pos) {
+          advance();
+        }
+      } else {
+        // 如果 read_char 失败，说明遇到了无效的 UTF-8 序列。
+        // 报告错误并消耗掉这个无效字节，以避免无限循环。
+        report_error(DiagnosticCode::L0011_InvalidUtf8Sequence,
+                     tracker.get_line(), tracker.get_column(), {});
+        advance();
+      }
     }
   }
 
@@ -482,11 +514,23 @@ Token Lexer::read_raw_string() {
       break;
     }
 
-    // 在原始字符串中，所有字符（包括反斜杠）都按其字面意义处理，不进行任何转义。
-    // TODO(BegoniaHe): 同 read_string, 此处的 UTF-8 处理逻辑需要修正为
-    // 一次性处理多字节字符。
-    value += ch;
-    advance();
+    // NOTE: 在原始字符串中，所有字符（包括反斜杠 `\` 和换行符 `\n`）
+    //       都按其字面意义处理，不进行任何转义。
+    //       同样使用 Utf8Handler::read_char 来确保正确处理多字节字符。
+    size_t current_pos = tracker.get_position();
+    std::string utf8_char;
+    if (Utf8Handler::read_char(
+            std::string(tracker.get_input().begin(), tracker.get_input().end()),
+            current_pos, utf8_char)) {
+      value += utf8_char;
+      while (tracker.get_position() < current_pos) {
+        advance();
+      }
+    } else {
+      report_error(DiagnosticCode::L0011_InvalidUtf8Sequence,
+                   tracker.get_line(), tracker.get_column(), {});
+      advance();
+    }
   }
 
   if (!terminated) {
@@ -510,17 +554,19 @@ Lexer::Lexer(const std::string &input_str, const std::string &fname)
 }
 
 Token Lexer::next_token() {
-  // --- 主循环：跳过空白和注释 ---
-  // 确保每次进入 Token 解析逻辑时，`current_char` 都是一个有意义的字符。
+  // --- 主循环：跳过无关内容 ---
+  // NOTE: 这个循环是词法分析器的“空转”阶段。它的任务是不断地跳过
+  //       所有对语法分析无意义的内容（空白和注释），直到 `current_char`
+  //       指向一个潜在 Token 的起始字符，或者到达文件末尾。
   while (true) {
     skip_whitespace();
 
     if (current_char == '/' && peek(1) == '/') {
       skip_comment();
-      continue; // 跳过注释后，可能还有更多空白，所以继续循环。
+      continue; // 跳过注释后，可能还有更多空白或另一条注释，所以必须继续循环。
     }
 
-    break; // 如果既不是空白也不是注释，则退出循环，开始解析 Token。
+    break; // 如果既不是空白也不是注释，则退出循环，准备解析一个有意义的 Token。
   }
 
   // 如果在跳过无关内容后到达了文件末尾，则返回 EOF Token。
@@ -563,7 +609,10 @@ Token Lexer::next_token() {
   Token token(TokenType::Unknown, "", token_line, token_column);
 
   // --- 处理单字符和双字符运算符及分隔符 ---
-  // 对于双字符运算符（如 `+=`, `==`），需要向前看（peek）一个字符来判断。
+  // NOTE: 对于可能构成双字符运算符（如 `+=`, `==`）的字符，词法分析器
+  //       必须向前“看”一个字符（peek）来做出决定。如果匹配，则消耗两个
+  //       字符并返回双字符 Token；否则，只消耗当前字符并返回单字符 Token。
+  //       这种策略被称为“最大匹配原则”（Maximal Munch Principle）。
   switch (ch) {
   case '+':
     token = peek(1) == '='
@@ -572,10 +621,15 @@ Token Lexer::next_token() {
                 : Token(TokenType::Plus, "+", token_line, token_column);
     break;
   case '-':
-    token = peek(1) == '='
-                ? (advance(),
-                   Token(TokenType::MinusEqual, "-=", token_line, token_column))
-                : Token(TokenType::Minus, "-", token_line, token_column);
+    if (peek(1) == '=') {
+      advance();
+      token = Token(TokenType::MinusEqual, "-=", token_line, token_column);
+    } else if (peek(1) == '>') {
+      advance();
+      token = Token(TokenType::Arrow, "->", token_line, token_column);
+    } else {
+      token = Token(TokenType::Minus, "-", token_line, token_column);
+    }
     break;
   case '*':
     token = peek(1) == '='

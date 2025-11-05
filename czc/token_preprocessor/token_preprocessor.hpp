@@ -1,8 +1,8 @@
 /**
  * @file token_preprocessor.hpp
- * @brief Token 预处理器类定义
+ * @brief 定义了 `TokenPreprocessor`，用于在语法分析前对 Token 流进行细化。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #ifndef CZC_TOKEN_PREPROCESSOR_HPP
@@ -19,11 +19,15 @@
 namespace czc {
 namespace token_preprocessor {
 
-// `int64_t` 的最大值约为 9e18，因此整数部分超过 18 位可能溢出。
-// 用于在类型推断时快速检查潜在的整数溢出。
+/**
+ * @brief `int64_t` 的最大值约为 9e18，因此整数部分超过 18 位可能溢出。
+ * @details 用于在类型推断时快速检查潜在的整数溢出。
+ */
 constexpr int MAX_I64_MAGNITUDE = 18;
-// IEEE 754 双精度浮点数 (double) 的最大指数约为 10^308。
-// 用于在解析阶段检测潜在的浮点数溢出。
+/**
+ * @brief IEEE 754 双精度浮点数 (double) 的最大指数约为 10^308。
+ * @details 用于在解析阶段检测潜在的浮点数溢出。
+ */
 constexpr int MAX_F64_MAGNITUDE = 308;
 
 /**
@@ -37,21 +41,22 @@ enum class InferredNumericType {
 
 /**
  * @brief 存储对科学计数法字面量进行详细分析后提取出的信息。
+ * @property {数据成员} 这是一个纯数据结构 (POD-like)。
  */
 struct ScientificNotationInfo {
-  // 原始字符串, e.g., "1.5e10"
+  // 原始字符串, e.g., "1.5e10"。
   std::string original_literal;
-  // 尾数部分, e.g., "1.5"
+  // 尾数部分, e.g., "1.5"。
   std::string mantissa;
-  // 指数部分, e.g., 10
+  // 指数部分, e.g., 10。
   int64_t exponent;
-  // 尾数是否包含小数点
+  // 尾数是否包含小数点。
   bool has_decimal_point;
-  // 小数点后的有效位数（去除尾随0后）
+  // 小数点后的有效位数（去除尾随0后）。
   size_t decimal_digits;
-  // 根据规则推断出的类型
+  // 根据规则推断出的类型。
   InferredNumericType inferred_type;
-  // 规范化后的值（用于后续计算）
+  // 规范化后的值（用于后续计算）。
   std::string normalized_value;
 };
 
@@ -70,9 +75,13 @@ struct AnalysisContext {
 
   /**
    * @brief 构造一个新的分析上下文。
-   * @param[in] fname     文件名。
-   * @param[in] source    源码内容。
+   *
+   * @param[in] fname     文件名（第一个字符串参数）。
+   * @param[in] source    源码内容（第二个字符串参数）。
    * @param[in] collector (可选) 错误收集器指针。
+   *
+   * @warning 前两个参数都是字符串引用，容易混淆。
+   *          正确顺序为: 文件名, 源码内容, 错误收集器。
    */
   AnalysisContext(const std::string &fname, const std::string &source,
                   TPErrorCollector *collector = nullptr)
@@ -80,11 +89,18 @@ struct AnalysisContext {
 };
 
 /**
- * @brief
- *   提供用于分析科学计数法字面量的静态工具函数。
+ * @brief 提供用于分析科学计数法字面量的静态工具函数集。
  * @details
- *   此类是无状态的，其所有方法都是静态的，用于对单个科学计数法字符串
- *   进行分解、类型推断和溢出检查。
+ *   此类封装了处理科学计数法字面量（如 `1.23e-10`）的所有复杂逻辑。
+ *   由于词法分析器在扫描阶段无法确定一个科学计数法数字最终应该是整数还是浮点数，
+ *   也无法进行溢出检查，因此这些职责被委托给了这个分析器。它负责：
+ *   1.  **分解**: 将字面量分解为尾数和指数。
+ *   2.  **类型推断**: 根据尾数是否包含小数点以及指数的大小，推断其应为 `INT64`
+ * 还是 `FLOAT`。
+ *   3.  **溢出检查**: 估算数值的数量级，以判断其是否超出 `int64_t` 或 `double`
+ * 的表示范围。
+ *
+ * @note 此类是无状态的，所有方法均为静态，不应被实例化。
  */
 class ScientificNotationAnalyzer {
 public:
@@ -174,13 +190,20 @@ private:
 };
 
 /**
- * @brief 在语法分析前对 Token 流进行分析和转换。
+ * @brief 在语法分析前对 Token 流进行分析、转换和细化。
  * @details
- *   此预处理器目前专注于处理科学计数法字面量。词法分析器会将所有
- *   科学计数法形式的数字（例如 `1.23e10`）识别为 `ScientificExponent` 类型。
- *   TokenPreprocessor 则会进一步分析这些字面量，根据其值和形式推断
- *   它们应该是整数（`INT64`）还是浮点数（`FLOAT`），并相应地更新 Token
- * 的类型。 它还会检查数值溢出等问题。
+ *   此预处理器是介于词法分析和语法分析之间的一个重要阶段。它的主要职责是
+ *   处理那些在词法分析阶段无法完全确定的语法单元。目前，其核心功能是
+ *   **科学计数法字面量的类型推断**。
+ *
+ *   词法分析器会将所有科学计数法形式的数字（例如 `1.23e10`）统一识别为
+ *   临时的 `ScientificExponent` 类型。此预处理器随后会遍历 Token 流，
+ *   利用 `ScientificNotationAnalyzer` 对这些字面量进行深度分析，最终将
+ *   它们的类型精确地转换为 `Integer` 或
+ * `Float`，并在此过程中捕获数值溢出等错误。
+ *
+ * @property {设计} 这种分离的设计使得词法分析器可以保持简单和高速，将复杂的
+ *   数值分析逻辑解耦到这个专门的模块中。
  * @property {线程安全} 非线程安全。
  */
 class TokenPreprocessor {

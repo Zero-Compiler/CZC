@@ -1,8 +1,8 @@
 /**
  * @file token.cpp
- * @brief Token 类实现
+ * @brief `Token` 类及相关工具函数的实现。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #include "czc/lexer/token.hpp"
@@ -14,9 +14,12 @@ Token::Token(TokenType type, const std::string &val, size_t line, size_t column)
     : token_type(type), value(val), line(line), column(column) {}
 
 std::optional<TokenType> get_keyword(const std::string &word) {
-  // 这是一个简单的线性搜索，用于将字符串映射到关键字 Token 类型。
-  // NOTE: 对于少量关键字，这种方法足够高效。如果关键字数量庞大，
-  // 可以考虑使用 std::unordered_map 或完美的哈希函数来优化性能。
+  // NOTE: 这是一个简单的线性搜索，用于将标识符字符串映射到其对应的关键字
+  //       Token 类型。对于当前语言这种关键字数量较少（约10-20个）的情况，
+  //       一连串的 `if` 比较通常比 `std::unordered_map` 更快，因为它避免了
+  //       哈希计算和潜在的哈希冲突处理开销。如果未来关键字数量大幅增加，
+  //       可以考虑使用完美的哈希函数生成器（如
+  //       gperf）来生成一个更高效的查找表。
   if (word == "let")
     return TokenType::Let;
   if (word == "var")
@@ -141,6 +144,8 @@ std::string token_type_to_string(TokenType type) {
     return "Dot";
   case TokenType::DotDot:
     return "DotDot";
+  case TokenType::Arrow:
+    return "Arrow";
   case TokenType::EndOfFile:
     return "EOF";
   case TokenType::Unknown:

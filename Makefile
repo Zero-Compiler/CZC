@@ -1,4 +1,4 @@
-.PHONY: all build clean test install help fmt
+.PHONY: all build clean test install help fmt tidy
 
 ifeq ($(OS),Windows_NT)
     CMAKE_GENERATOR := -G "MinGW Makefiles"
@@ -98,6 +98,30 @@ fmt:
 		echo "Installation:"; \
 		echo "  macOS:   brew install clang-format"; \
 		echo "  Ubuntu:  sudo apt-get install clang-format"; \
+		echo "  Fedora:  sudo dnf install clang-tools-extra"; \
+		echo "===================================";\
+		exit 1; \
+	fi
+
+# 整理代码
+tidy:
+	@echo "==================================="
+	@echo "Tidying C/C++ Source Files"
+	@echo "==================================="
+	@if command -v clang-tidy >/dev/null 2>&1; then \
+		echo "Running clang-tidy..."; \
+		find src cli tests -type f \( -name "*.cpp" -o -name "*.c" \) -exec clang-tidy -p build {} + ; \
+		echo ""; \
+		echo "===================================";\
+		echo "Tidying completed!";\
+		echo "===================================";\
+	else \
+		echo "Error: clang-tidy not found!"; \
+		echo "Please install clang-tidy first."; \
+		echo ""; \
+		echo "Installation:"; \
+		echo "  macOS:   brew install llvm"; \
+		echo "  Ubuntu:  sudo apt-get install clang-tidy"; \
 		echo "  Fedora:  sudo dnf install clang-tools-extra"; \
 		echo "===================================";\
 		exit 1; \

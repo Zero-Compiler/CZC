@@ -1,6 +1,6 @@
 /**
  * @file diagnostic_reporter.hpp
- * @brief 诊断报告器接口定义
+ * @brief 定义了 `IDiagnosticReporter` 接口，用于报告诊断事件。
  * @author BegoniaHe
  * @date 2025-11-04
  */
@@ -16,11 +16,11 @@ namespace diagnostics {
 class Diagnostic;
 
 /**
- * @brief 定义诊断报告器的抽象接口 (Interface)。
+ * @brief 定义诊断报告器的抽象接口。
  * @details
  *   此接口定义了一个契约，允许编译器的不同组件（如词法分析器、解析器）
  *   以统一的方式报告诊断事件，而无需关心这些事件最终如何被处理、存储或显示。
- *   实现此接口的类（如 DiagnosticEngine）将负责具体的诊断处理逻辑。
+ *   实现此接口的类（如 `DiagnosticEngine`）将负责具体的诊断处理逻辑。
  */
 class IDiagnosticReporter {
 public:

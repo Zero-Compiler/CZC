@@ -1,7 +1,8 @@
 /**
  * @file test_lexer.cpp
- * @brief 词法分析器测试套件
+ * @brief 词法分析器测试套件。
  * @author BegoniaHe
+ * @date 2025-11-05
  */
 
 #include "czc/lexer/lexer.hpp"

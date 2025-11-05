@@ -1,8 +1,8 @@
 /**
  * @file diagnostic_code.hpp
- * @brief 诊断代码和级别定义
+ * @brief 定义了诊断消息的严重级别、唯一的诊断代码以及相关工具函数。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #ifndef CZC_DIAGNOSTIC_CODE_HPP
@@ -33,21 +33,37 @@ enum class DiagnosticLevel {
  */
 enum class DiagnosticCode {
   // === Lexer 警告/错误 (L0001-L0999) ===
-  L0001_MissingHexDigits = 1,  // "0x" 后缺少十六进制数字。
-  L0002_MissingBinaryDigits,   // "0b" 后缺少二进制数字。
-  L0003_MissingOctalDigits,    // "0o" 后缺少八进制数字。
-  L0004_MissingExponentDigits, // 科学计数法指数部分缺少数字。
-  L0005_InvalidTrailingChar,   // 数字字面量后跟随无效字符。
-  L0006_InvalidEscapeSequence, // 字符串中存在无效的转义序列。
-  L0007_UnterminatedString,    // 字符串字面量未正确闭合。
-  L0008_InvalidHexEscape,      // 十六进制转义序列格式无效。
-  L0009_InvalidUnicodeEscape,  // Unicode 转义序列格式无效。
-  L0010_InvalidCharacter,      // 在源文件中遇到无效字符。
-  L0011_InvalidUtf8Sequence,   // 无效的 UTF-8 编码序列。
+  L0001_MissingHexDigits = 1,  // "0x" 后缺少十六进制数字
+  L0002_MissingBinaryDigits,   // "0b" 后缺少二进制数字
+  L0003_MissingOctalDigits,    // "0o" 后缺少八进制数字
+  L0004_MissingExponentDigits, // 科学计数法指数部分缺少数字
+  L0005_InvalidTrailingChar,   // 数字字面量后跟随无效字符
+  L0006_InvalidEscapeSequence, // 字符串中存在无效的转义序列
+  L0007_UnterminatedString,    // 字符串字面量未正确闭合
+  L0008_InvalidHexEscape,      // 十六进制转义序列格式无效
+  L0009_InvalidUnicodeEscape,  // Unicode 转义序列格式无效
+  L0010_InvalidCharacter,      // 在源文件中遇到无效字符
+  L0011_InvalidUtf8Sequence,   // 无效的 UTF-8 编码序列
 
   // === TokenPreprocessor 警告/错误 (T0001-T0999) ===
-  T0001_ScientificIntOverflow = 1001, // (已废弃) 科学计数法整数部分溢出。
-  T0002_ScientificFloatOverflow,      // 科学计数法表示的浮点数溢出。
+  // DEPRECATED: 此代码已废弃，相关逻辑已移除。
+  T0001_ScientificIntOverflow = 1001,
+  T0002_ScientificFloatOverflow, // 科学计数法表示的浮点数溢出
+
+  // === Parser 错误 (P0001-P0999) ===
+  P0001_UnexpectedToken = 2001,  // 遇到意外的 Token
+  P0002_UnexpectedEOF,           // 意外的文件结束
+  P0003_ExpectedSemicolon,       // 期望分号
+  P0004_ExpectedIdentifier,      // 期望标识符
+  P0005_ExpectedExpression,      // 期望表达式
+  P0006_ExpectedLeftParen,       // 期望左括号
+  P0007_ExpectedRightParen,      // 期望右括号
+  P0008_ExpectedLeftBrace,       // 期望左花括号
+  P0009_ExpectedRightBrace,      // 期望右花括号
+  P0010_ExpectedRightBracket,    // 期望右方括号
+  P0011_ExpectedTypeAnnotation,  // 期望类型注解
+  P0012_ExpectedArrow,           // 期望箭头 ->
+  P0013_InvalidAssignmentTarget, // 无效的赋值目标
 };
 
 /**

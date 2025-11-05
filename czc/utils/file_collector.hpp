@@ -1,6 +1,6 @@
 /**
  * @file file_collector.hpp
- * @brief 文件收集器类定义
+ * @brief 提供基于通配符模式的文件收集功能。
  * @author BegoniaHe
  * @date 2025-11-04
  */
@@ -20,6 +20,11 @@ namespace utils {
  *   此类主要用于命令行接口（CLI），以解析用户输入的文件路径，
  *   这些路径可能包含通配符（如 `*` 和 `?`）。它负责将这些模式
  *   扩展为匹配的具体文件列表。
+ * @property {线程安全} 此类仅包含静态方法，不维护状态，因此是线程安全的。
+ * @example
+ *   std::vector<std::string> patterns = {"src/ *.cpp", "include/ *.h"};
+ *   std::vector<std::string> files =
+ * czc::utils::FileCollector::collect_files(patterns);
  */
 class FileCollector {
 public:
@@ -29,7 +34,8 @@ public:
    *   一个包含文件路径或模式的字符串向量。模式可以包含 `*`
    *   （匹配任意数量的字符）和 `?`（匹配单个字符）。
    * @return
-   *   返回一个包含所有匹配的、唯一的、按字母顺序排序的文件路径的向量。
+   *   返回一个包含所有匹配的、按字母顺序排序的文件路径的向量。
+   *   如果模式匹配了重复的文件，结果中可能包含重复项。
    *   如果没有找到匹配的文件，则返回空向量。
    */
   static std::vector<std::string>

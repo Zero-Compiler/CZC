@@ -1,8 +1,8 @@
 /**
  * @file token_preprocessor.cpp
- * @brief Token 预处理器实现
+ * @brief `TokenPreprocessor` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #include "czc/token_preprocessor/token_preprocessor.hpp"
@@ -30,8 +30,9 @@ ScientificNotationAnalyzer::analyze(const std::string &literal,
   ScientificNotationInfo info;
   info.original_literal = literal;
 
+  // --- 分析流程 ---
   // 1. 将字面量分解为尾数和指数部分。
-  //    如果基本结构（如缺少'e'）都不满足，则分析失败。
+  //    这是最基础的结构验证，如果连 'e'/'E' 都没有，则直接失败。
   if (!parse_components(literal, info.mantissa, info.exponent)) {
     return std::nullopt;
   }
@@ -45,8 +46,10 @@ ScientificNotationAnalyzer::analyze(const std::string &literal,
   // 4. 根据尾数、指数和小数点信息，推断其最合适的类型（INT64 或 FLOAT）。
   info.inferred_type = infer_type(info, token, context);
 
-  // 5.
-  // 创建一个规范化的表示，虽然当前未使用，但可能对未来的代码生成或常量折叠有用。
+  // 5. 创建一个规范化的字符串表示。
+  //    NOTE: 当前此值未被使用，但保留它是为了将来可能的扩展，例如
+  //          需要进行更高精度的常量折叠或代码生成时，有一个统一的
+  //          中间表示会很有用。
   info.normalized_value = info.mantissa + "e" + std::to_string(info.exponent);
 
   return info;
@@ -71,15 +74,18 @@ bool ScientificNotationAnalyzer::parse_components(const std::string &literal,
     return false; // 指数不能为空。
   }
 
-  // 使用 std::stoll 将指数字符串转换为64位整数。
-  // 使用 try-catch 块来处理转换失败的情况（例如，"1e_abc" 或指数超出 int64
-  // 范围）。
+  // NOTE: 使用 std::stoll 将指数字符串转换为64位整数。stoll 提供了内置的
+  //       错误处理机制：
+  //       - `std::invalid_argument`: 如果指数部分包含非数字字符（除了
+  //         可选的前导 `+` 或 `-`），例如 "1e_abc"。
+  //       - `std::out_of_range`: 如果指数的值超出了 `int64_t` 的表示范围。
+  //       通过捕获这些异常，我们可以稳健地处理格式错误的科学计数法。
   try {
     exponent = std::stoll(exp_str);
   } catch (const std::invalid_argument &) {
-    return false; // 指数部分不是有效的数字。
+    return false;
   } catch (const std::out_of_range &) {
-    return false; // 指数值超出了 int64 的表示范围。
+    return false;
   }
 
   return true;
@@ -106,8 +112,11 @@ ScientificNotationAnalyzer::count_decimal_digits(const std::string &mantissa) {
 
   std::string decimal_part = mantissa.substr(dot_pos + 1);
 
-  // 去除尾随的零，因为它们不影响数值，但会影响小数位数的判断。
-  // 例如，1.20e2 和 1.2e2 的值相同，都应该能推断为整数 120。
+  // NOTE: 在计算小数位数之前，必须去除尾随的零。这是因为它们不影响数值，
+  //       但会影响类型推断。例如，`1.20e2` 和 `1.2e2` 的值相同（都是 120），
+  //       我们希望两者都能被正确地推断为整数。如果不去除尾随零，`1.20e2`
+  //       的小数位数会被误判为 2，导致 `exponent (2)` 不大于 `decimal_digits
+  //       (2)`， 从而错误地进入 `fits_in_int64` 检查。
   return trim_trailing_zeros(decimal_part).length();
 }
 
@@ -150,12 +159,14 @@ bool ScientificNotationAnalyzer::fits_in_int64(const std::string &mantissa,
                                                int64_t exponent,
                                                const Token *token,
                                                const AnalysisContext &context) {
-  // 通过计算数值的量级（大致是10的多少次方）来快速判断是否可能溢出。
-  // 这是一个近似检查，比直接进行高精度计算要快得多。
+  // NOTE: 这是一个关键的优化。我们不进行实际的高精度数学计算来判断溢出，
+  //       因为这会非常慢且复杂。相反，我们通过 `calculate_magnitude`
+  //       来估算数值的数量级（即它大约是 10 的多少次方）。
+  //       这是一个非常快速的近似检查。
   auto magnitude = calculate_magnitude(mantissa, exponent, token, context);
   if (!magnitude.has_value()) {
-    // 如果量级计算失败（通常意味着超过了 float64 的范围），那它肯定也超出了
-    // int64。
+    // 如果量级计算本身就失败了（通常意味着该数值甚至超出了 float64 的
+    // 表示范围），那么它肯定也无法放入 int64。
     return false;
   }
 
@@ -168,7 +179,12 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
     const AnalysisContext &context) {
 
   // --- 通过估算最终数值的位数来判断其量级 ---
-  // 例如，1.23e10 的量级大约是 2 + 10 - 1 = 11 (因为 123 * 10^8)。
+  // NOTE: 这个算法的目的是在不执行实际浮点运算的情况下，估算出一个科学
+  //       计数法字面量的数量级（magnitude），即它约等于 10 的多少次方。
+  //       例如，对于 `1.23e10`，我们将其转换为 `123 * 10^8`。
+  //       `123` 有 3 位有效数字，所以它的值在 `10^2` 和 `10^3` 之间。
+  //       因此，`123 * 10^8` 的值在 `10^10` 和 `10^11` 之间，其量级可以
+  //       估算为 `(3 - 1) + 8 = 10`。
 
   // 1. 从尾数中提取所有数字，忽略小数点。 "1.23" -> "123"
   std::string significant_digits_str;
@@ -270,8 +286,10 @@ Token TokenPreprocessor::process_scientific_token(
   AnalysisContext context(filename, source_content, &error_collector);
   auto info = ScientificNotationAnalyzer::analyze(token.value, &token, context);
 
-  // 如果分析器无法处理该字面量（例如，因为它溢出了 float64），
-  // 则将其标记为 Unknown 类型的 Token，以便后续阶段可以报告错误。
+  // NOTE: 如果 `analyze` 返回 `std::nullopt`，通常意味着该字面量的值
+  //       过大，甚至超出了 `double` 的表示范围（在 `calculate_magnitude`
+  //       中检测到）。在这种情况下，错误已经被报告，我们只需将此 Token
+  //       标记为 `Unknown`，以防止后续阶段（如语法分析）尝试处理这个无效值。
   if (!info.has_value()) {
     return Token(TokenType::Unknown, token.value, token.line, token.column);
   }

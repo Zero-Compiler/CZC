@@ -1,8 +1,8 @@
 /**
  * @file lexer.hpp
- * @brief 词法分析器类定义
+ * @brief 定义了 `Lexer` 类，负责将源代码文本流转换为词法单元（Token）序列。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #ifndef CZC_LEXER_HPP
@@ -21,20 +21,27 @@ namespace czc {
 namespace lexer {
 
 /**
- * @brief 负责将源代码文本分解为一系列 Token 的词法分析器。
+ * @brief 负责将源代码文本流转换为词法单元（Token）序列的词法分析器。
  * @details
- *   词法分析器（或扫描器）是编译器的第一阶段。它逐字符地读取源代码，
- *   并将其组合成有意义的单元，称为 Token（例如，标识符、数字、运算符）。
- *   此类还负责处理空白、注释和基本的词法错误。
- * @property {线程安全} 非线程安全。此类是有状态的，不可在多线程间共享。
+ *   词法分析器（Scanner）是编译器的第一道门槛。它通过逐字符扫描输入源码，
+ *   将其分解为符合语言规范的、有意义的最小语法单元——Token。
+ *   这个过程包括识别关键字、标识符、字面量、运算符和分隔符，同时
+ *   智能地处理并忽略空白与注释。它还负责捕获最低级别的词法错误，
+ *   例如无效字符或未闭合的字符串。
+ *
+ * @property {设计} 这是一个有状态（Stateful）的扫描器，通过内部位置指针
+ *   (`tracker`) 维护其在源码中的扫描进度。
+ * @property {线程安全} 非线程安全。每个 `Lexer` 实例都应由单个线程独占使用。
  */
 class Lexer {
 private:
-  // 管理源代码输入流和当前位置（行、列）。
+  // 管理源代码输入流及当前扫描位置（行、列）。
   utils::SourceTracker tracker;
-  // 当前正在处理的字符。
+
+  // 当前正在处理的字符。若到达输入末尾，则为 `std::nullopt`。
   std::optional<char> current_char;
-  // 用于收集在词法分析期间遇到的所有错误。
+
+  // 用于收集在词法分析期间遇到的所有词法错误。
   LexErrorCollector error_collector;
 
   /**

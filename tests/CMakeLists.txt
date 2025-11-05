@@ -18,5 +18,18 @@ add_executable(test_token_preprocessor
 
 target_link_libraries(test_token_preprocessor PRIVATE czc)
 
+add_executable(test_parser
+    test_parser.cpp
+)
+
+target_link_libraries(test_parser PRIVATE czc)
+
+add_executable(test_source_tracker_performance
+    test_source_tracker_performance.cpp
+)
+
+target_link_libraries(test_source_tracker_performance PRIVATE czc)
+
 add_test(NAME LexerTest COMMAND test_lexer)
 add_test(NAME TokenPreprocessorTest COMMAND test_token_preprocessor)
+add_test(NAME ParserTest COMMAND test_parser)
