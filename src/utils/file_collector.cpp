@@ -1,6 +1,6 @@
 /**
  * @file file_collector.cpp
- * @brief 文件收集器实现
+ * @brief 文件收集器功能实现。
  * @author BegoniaHe
  * @date 2025-11-04
  */
@@ -61,43 +61,54 @@ FileCollector::collect_files(const std::vector<std::string> &patterns) {
 
 bool FileCollector::matches_pattern(const std::string &filename,
                                     const std::string &pattern) {
-  size_t pattern_idx = 0;
-  size_t filename_idx = 0;
+  size_t p_idx = 0;
+  size_t f_idx = 0;
+  // NOTE: 这是一个经典的通配符匹配算法，支持 '*' 和 '?'。
+  // 核心思想是使用回溯：当遇到 '*' 时，我们记录下它的位置以及
+  // 对应的文件名位置。如果后续匹配失败，我们可以回退到这个 '*'
+  // 的位置，让它多匹配一个字符，然后从新位置继续尝试。
 
-  while (pattern_idx < pattern.length() && filename_idx < filename.length()) {
-    if (pattern[pattern_idx] == '*') {
-      // --- 简化的 '*' 通配符处理 ---
-      // 这是一个非回溯的贪婪匹配。它对于简单的模式（如 "*.txt" 或 "prefix*")
-      // 是有效的，但对于更复杂的模式（如 "a*b*c"）可能行为不正确。
-      // TODO(BegoniaHe): 实现一个更健壮的、支持回溯的通配符匹配算法。
+  // star_p_idx 记录最近遇到的 '*' 在模式中的位置。
+  size_t star_p_idx = std::string::npos;
+  // star_f_idx 记录当遇到 '*' 时，文件名字符串的匹配位置。
+  size_t star_f_idx = std::string::npos;
 
-      // 如果 '*' 是模式的最后一个字符，它匹配剩余的所有文件名部分。
-      if (pattern_idx == pattern.length() - 1) {
-        return true;
-      }
-      // 跳过 '*'，查看模式中的下一个字符。
-      pattern_idx++;
-      // 在文件名中向前搜索，直到找到与模式中 '*' 之后字符匹配的字符。
-      while (filename_idx < filename.length() &&
-             filename[filename_idx] != pattern[pattern_idx]) {
-        filename_idx++;
-      }
-    } else if (pattern[pattern_idx] == '?') {
-      // '?' 匹配文件名中的任何单个字符。
-      pattern_idx++;
-      filename_idx++;
-    } else if (pattern[pattern_idx] == filename[filename_idx]) {
-      // 如果模式字符和文件名字符相同，则两者都向前移动。
-      pattern_idx++;
-      filename_idx++;
-    } else {
-      // 字符不匹配。
+  while (f_idx < filename.length()) {
+    // --- Case 1: 字符匹配或遇到 '?' ---
+    if (p_idx < pattern.length() &&
+        (pattern[p_idx] == '?' || pattern[p_idx] == filename[f_idx])) {
+      p_idx++;
+      f_idx++;
+    }
+    // --- Case 2: 遇到 '*' 通配符 ---
+    else if (p_idx < pattern.length() && pattern[p_idx] == '*') {
+      // 记录 '*' 的位置，并准备让它匹配 0 个字符。
+      star_p_idx = p_idx;
+      star_f_idx = f_idx;
+      p_idx++; // 移动模式指针，跳过 '*'
+    }
+    // --- Case 3: 匹配失败，尝试回溯 ---
+    else if (star_p_idx != std::string::npos) {
+      // 当前字符不匹配，但我们之前遇到过 '*'。
+      // 这时回溯到上一个 '*' 的状态。
+      p_idx = star_p_idx + 1; // 模式指针回到 '*' 的下一个字符
+      star_f_idx++;           // 让 '*' 多匹配一个字符
+      f_idx = star_f_idx;     // 文件名指针也相应移动
+    }
+    // --- Case 4: 无法匹配且无法回溯 ---
+    else {
       return false;
     }
   }
 
-  // 只有当模式和文件名都同时到达末尾时，才算完全匹配。
-  return pattern_idx == pattern.length() && filename_idx == filename.length();
+  // --- 文件名已遍历完，检查模式剩余部分 ---
+  // 如果模式还有剩余字符，只有当它们都是 '*' 时才算匹配成功。
+  while (p_idx < pattern.length() && pattern[p_idx] == '*') {
+    p_idx++;
+  }
+
+  // 最终，只有当模式也完全匹配到末尾时，才算成功。
+  return p_idx == pattern.length();
 }
 
 } // namespace utils

@@ -11,7 +11,6 @@ else()
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
-# 核心库：libczc
 add_library(czc STATIC
     src/lexer/token.cpp
     src/lexer/lexer.cpp
@@ -23,6 +22,10 @@ add_library(czc STATIC
     src/diagnostics/diagnostic.cpp
     src/utils/source_tracker.cpp
     src/utils/file_collector.cpp
+    src/cst/cst_node.cpp
+    src/cst/error_collector.cpp
+    src/parser/parser.cpp
+    src/parser/error_collector.cpp
 )
 
 target_include_directories(czc PUBLIC
@@ -46,7 +49,6 @@ install(DIRECTORY include/czc
     DESTINATION include
 )
 
-# 测试
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
     enable_testing()

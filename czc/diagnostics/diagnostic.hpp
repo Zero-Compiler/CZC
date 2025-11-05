@@ -1,8 +1,8 @@
 /**
  * @file diagnostic.hpp
- * @brief 诊断系统核心类定义
+ * @brief 定义了诊断系统的核心组件，包括 `Diagnostic`、`DiagnosticEngine` 等。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #ifndef CZC_DIAGNOSTIC_HPP
@@ -24,22 +24,34 @@ namespace diagnostics {
  *   此结构体定义了本地化诊断消息所需的所有静态文本，包括消息格式、
  *   可选的帮助文本和来源信息。
  */
+/**
+ * @brief 存储单条诊断消息的国际化模板。
+ * @details
+ *   此结构体定义了本地化诊断消息所需的所有静态文本，包括消息格式、
+ *   可选的帮助文本和来源信息。
+ * @property {数据成员} 这是一个纯数据结构 (POD-like)。
+ */
 struct MessageTemplate {
   // 消息格式化字符串，例如 "invalid character '{0}'"。
   // 占位符 {0}, {1}, ... 将被动态参数替换。
-  std::string message;
+  std::string message{};
   // (可选) 补充的帮助信息或修复建议。
-  std::string help;
+  std::string help{};
   // (可选) 消息来源，例如定义该诊断的模块或标准。
-  std::string source;
+  std::string source{};
 };
 
 /**
- * @brief 管理和提供国际化（i18n）的诊断消息。
+ * @brief 管理和提供国际化（i18n）的诊断消息模板。
  * @details
- *   此类负责根据当前的语言环境（locale）加载对应的消息模板文件（.toml），
- *   并提供接口来获取和格式化诊断消息。
- * @property {线程安全} 非线程安全。在多线程环境中需由调用者外部加锁。
+ *   该类是编译器诊断信息本地化的核心。它负责根据指定的语言环境（locale）
+ *   从对应的 `.toml` 文件中加载结构化的消息模板。这使得编译器的错误和警告
+ *   信息可以轻松地翻译成多种语言，而无需修改编译器本身的源代码。
+ *
+ * @property {设计} 采用懒加载（lazy loading）模式，仅在需要时加载 `.toml`
+ * 文件。
+ * @property {线程安全} 非线程安全。在多线程环境中需由调用者外部加锁或为每个线程
+ *   创建独立实例。
  */
 class I18nMessages {
 private:
@@ -93,10 +105,21 @@ public:
 };
 
 /**
- * @brief 代表一个具体的诊断事件（如错误或警告）。
+ * @brief 代表一个具体的、不可变的诊断事件（如错误或警告）。
  * @details
- *   此类是不可变对象，封装了诊断事件的所有信息，包括其严重级别、
- *   唯一的诊断代码、在源代码中的位置以及格式化消息所需的参数。
+ *   此类是一个数据传输对象（DTO），封装了单个诊断事件的所有静态信息。
+ *   一旦创建，其内容（如级别、代码、位置）就不应被修改。这种不可变性
+ *   使得 `Diagnostic` 对象可以安全地在系统的不同组件之间传递。
+ *   它包含了生成一条完整、用户友好的诊断报告所需的所有要素。
+ */
+/**
+ * @brief 代表一个具体的、不可变的诊断事件（如错误或警告）。
+ * @details
+ *   此类是一个数据传输对象（DTO），封装了单个诊断事件的所有静态信息。
+ *   一旦创建，其内容（如级别、代码、位置）就不应被修改。这种不可变性
+ *   使得 `Diagnostic` 对象可以安全地在系统的不同组件之间传递。
+ *   它包含了生成一条完整、用户友好的诊断报告所需的所有要素。
+ * @property {不可变性} 除 `source_line` 外，对象在构造后应视为不可变的。
  */
 class Diagnostic {
 private:
@@ -107,9 +130,9 @@ private:
   // 诊断在源代码中的精确位置（文件、行、列）。
   utils::SourceLocation location;
   // 用于格式化诊断消息的动态参数列表。
-  std::vector<std::string> args;
+  std::vector<std::string> args{};
   // 发生诊断的源代码行内容，用于在报告中显示上下文。
-  std::string source_line;
+  std::string source_line{};
 
 public:
   /**
@@ -122,7 +145,7 @@ public:
   Diagnostic(DiagnosticLevel lvl, DiagnosticCode c,
              const utils::SourceLocation &loc,
              const std::vector<std::string> &arguments = {})
-      : level(lvl), code(c), location(loc), args(arguments) {}
+      : level(lvl), code(c), location(loc), args(arguments), source_line() {}
 
   /**
    * @brief 设置与此诊断相关的源代码行。
@@ -173,15 +196,19 @@ public:
 };
 
 /**
- * @brief 编译器中处理所有诊断信息的中心枢纽。
+ * @brief 编译器中处理所有诊断信息的中心枢纽和协调器。
  * @details
- *   此类实现了 IDiagnosticReporter 接口，负责收集、计数和最终报告
- *   在编译过程中产生的所有诊断（错误和警告）。
- *   它还管理 I18nMessages 实例以支持多语言输出。
- * @property {线程安全} 非线程安全。在多线程环境中需由调用者外部加锁。
- * @property {生命周期}
- *   DiagnosticEngine 应在所有可能报告诊断的组件（如 Lexer, Parser）
- *   的生命周期内保持有效。
+ *   此类是整个诊断系统的引擎，实现了 `IDiagnosticReporter` 接口，作为所有
+ *   编译器组件（词法、语法、语义分析器等）报告错误的统一入口。它负责：
+ *   1. 收集并存储所有报告的 `Diagnostic` 对象。
+ *   2. 实时跟踪错误和警告的数量，以决定编译流程是否应提前终止。
+ *   3. 协调 `I18nMessages` 实例，以支持多语言的诊断报告。
+ *   4. 在编译结束时，将所有收集到的诊断信息格式化并呈现给用户。
+ *
+ * @property {生命周期} `DiagnosticEngine`
+ *   的实例必须在所有可能报告诊断的组件（如 Lexer,
+ * Parser）的生命周期内保持有效。
+ * @property {线程安全} 非线程安全。应在主编译线程中创建和使用。
  */
 class DiagnosticEngine : public IDiagnosticReporter {
 private:
@@ -189,9 +216,9 @@ private:
   std::vector<std::shared_ptr<Diagnostic>> diagnostics;
   // 指向国际化消息管理器的共享指针。
   std::shared_ptr<I18nMessages> i18n;
-  // 记录已报告的错误总数。
+  // 已报告的错误总数。
   size_t error_count = 0;
-  // 记录已报告的警告总数。
+  // 已报告的警告总数。
   size_t warning_count = 0;
 
 public:

@@ -1,8 +1,8 @@
 /**
  * @file token.hpp
- * @brief Token 类型和类定义
+ * @brief 定义了词法单元 `Token` 及其相关类型 `TokenType`。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #ifndef CZC_LEXER_TOKEN_HPP
@@ -79,6 +79,7 @@ enum class TokenType {
   Colon,        // `:`
   Dot,          // `.`
   DotDot,       // `..`
+  Arrow,        // `->`
 
   // === 特殊 ===
   EndOfFile, // 表示输入流已结束的特殊 Token
@@ -86,20 +87,29 @@ enum class TokenType {
 };
 
 /**
- * @brief 代表源代码中的一个词法单元。
+ * @brief 代表源代码中的一个原子性语法单元（词法单元）。
  * @details
- *   Token 是编译器进行语法分析的基本单位。每个 Token 都包含其类型、
- *   在源代码中的原始文本值，以及精确的源码位置，这对于错误报告至关重要。
+ *   Token 是词法分析阶段的输出，也是语法分析阶段的输入。它将无结构的字符流
+ *   转换为结构化的、带有明确语法含义的单元。每个 Token
+ * 实例都是一个不可变的数据容器，
+ *   精确记录了其类型、原始文本和源码位置，这对于后续的语法分析、CST 构建和
+ *   高质量的错误报告至关重要。
+ *
+ * @property {生命周期} 通常作为值对象被复制和传递。
+ * @property {不可变性} Token 在构造后应被视为不可变的数据容器。
  */
 class Token {
 public:
-  // Token 的类型，定义了其语法含义。
+  // Token 的语法类型，如 `Identifier`, `Integer`, `Plus` 等。
   TokenType token_type;
-  // Token 在源代码中的原始文本表示。
+
+  // Token 在源代码中的原始文本表示，例如 "my_var", "42", "+"。
   std::string value;
-  // Token 开始处的行号（从 1 开始计数）。
+
+  // Token 在源代码中起始位置的行号（从 1 开始计数）。
   size_t line;
-  // Token 开始处的列号（从 1 开始计数）。
+
+  // Token 在源代码中起始位置的列号（UTF-8 字符计数，从 1 开始）。
   size_t column;
 
   /**

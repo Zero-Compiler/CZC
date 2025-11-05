@@ -1,8 +1,8 @@
 /**
  * @file source_tracker.cpp
- * @brief 源码跟踪器实现
+ * @brief `SourceTracker` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #include "czc/utils/source_tracker.hpp"
@@ -13,9 +13,11 @@ namespace utils {
 SourceTracker::SourceTracker(const std::string &source,
                              const std::string &fname)
     : filename(fname), position(0), line(1), column(1) {
-  // 将输入的 std::string 复制到内部的 std::vector<char>。
-  // NOTE: 使用 vector<char> 而非 string 是一个设计选择，
-  // 它在与需要原始指针和大小的 C API 交互时可能更直接。
+  // NOTE: 将输入的 std::string 复制到内部的 std::vector<char>。
+  //       使用 vector<char> 而非 string 是一个设计选择。虽然 string
+  //       在很多方面功能更强，但 vector<char> 确保了数据是连续存储的，
+  //       并且在与需要原始指针和大小的 C API 或其他底层库交互时可能更直接。
+  //       对于词法分析器这种性能敏感的组件，直接操作字符数组有时更清晰。
   input.assign(source.begin(), source.end());
 }
 
@@ -41,43 +43,59 @@ SourceLocation SourceTracker::make_location(size_t start_line,
   return SourceLocation(filename, start_line, start_col, line, column);
 }
 
+void SourceTracker::build_line_offsets() const {
+  // 如果已经构建过索引，直接返回。
+  if (line_offsets_built) {
+    return;
+  }
+
+  line_offsets.clear();
+  line_offsets.push_back(0); // 第 1 行从索引 0 开始
+
+  // 遍历整个输入，记录每个换行符后的位置作为下一行的起始。
+  for (size_t i = 0; i < input.size(); i++) {
+    if (input[i] == '\n') {
+      line_offsets.push_back(i + 1);
+    }
+  }
+
+  line_offsets_built = true;
+}
+
 std::string SourceTracker::get_source_line(size_t line_num) const {
   if (line_num == 0) {
     return "";
   }
 
-  // --- 线性扫描提取指定行 ---
-  // NOTE: 这是一个简单的线性扫描实现。对于需要频繁随机访问行的大型文件，
-  // 性能可能会较低。一个潜在的优化是在 SourceTracker 初始化时
-  // 预处理源码，构建一个行起始位置的索引表。
-  size_t current_line = 1;
-  size_t line_start = 0; // 当前行的起始字节索引。
+  // --- 使用预构建的行索引表实现 O(1) 查找 ---
+  build_line_offsets(); // 惰性初始化
 
-  for (size_t i = 0; i < input.size(); i++) {
-    // 当扫描到目标行时...
-    if (current_line == line_num) {
-      // ...继续向前扫描，直到找到该行的末尾（换行符或文件结尾）。
-      size_t line_end = i;
-      while (line_end < input.size() && input[line_end] != '\n') {
-        line_end++;
-      }
-      // 提取并返回该行的子字符串。
-      return std::string(input.begin() + line_start, input.begin() + line_end);
-    }
-
-    // 如果遇到换行符，意味着我们即将进入下一行。
-    if (input[i] == '\n') {
-      current_line++;
-      line_start = i + 1; // 更新下一行的起始位置。
-    }
+  // 检查行号是否有效
+  if (line_num > line_offsets.size()) {
+    return "";
   }
 
-  // 处理文件最后一行没有换行符的特殊情况。
-  if (current_line == line_num) {
-    return std::string(input.begin() + line_start, input.end());
+  // 获取该行的起始和结束位置
+  size_t line_start = line_offsets[line_num - 1];
+  size_t line_end;
+
+  if (line_num < line_offsets.size()) {
+    // 中间的行：结束位置是下一行的起始位置减 1（去掉 '\n'）
+    line_end = line_offsets[line_num] - 1;
+  } else {
+    // 最后一行：结束位置是文件末尾
+    line_end = input.size();
   }
 
-  return ""; // 行号超出范围。
+  // 边界检查：确保不会越界
+  if (line_start > input.size()) {
+    return "";
+  }
+  if (line_end > input.size()) {
+    line_end = input.size();
+  }
+
+  return std::string(input.begin() + line_start, input.begin() + line_end);
 }
 
 } // namespace utils

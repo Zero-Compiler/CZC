@@ -64,3 +64,68 @@ source = "token_preprocessor"
 message = "scientific notation '{0}' exceeds float64 range"
 help = "the value is too large to represent as a 64-bit floating-point number"
 source = "token_preprocessor"
+
+[P0001]
+message = "expected {0}, found {1}"
+help = "the parser encountered an unexpected token"
+source = "parser"
+
+[P0002]
+message = "unexpected end of file"
+help = "the file ended while the parser was expecting more tokens"
+source = "parser"
+
+[P0003]
+message = "expected ';' after {0}"
+help = "statements must be terminated with a semicolon"
+source = "parser"
+
+[P0004]
+message = "expected identifier, found {0}"
+help = "an identifier name is required here"
+source = "parser"
+
+[P0005]
+message = "expected expression, found {0}"
+help = "a valid expression is required here"
+source = "parser"
+
+[P0006]
+message = "expected '(', found {0}"
+help = "a left parenthesis is required here"
+source = "parser"
+
+[P0007]
+message = "expected ')', found {0}"
+help = "a right parenthesis is required to close the opening '('"
+source = "parser"
+
+[P0008]
+message = "expected '{{', found {0}"
+help = "a left brace is required to start a block"
+source = "parser"
+
+[P0009]
+message = "expected '}}', found {0}"
+help = "a right brace is required to close the opening '{{'"
+source = "parser"
+
+[P0010]
+message = "expected ']', found {0}"
+help = "a right bracket is required to close the opening '['"
+source = "parser"
+
+[P0011]
+message = "expected type annotation after ':', found {0}"
+help = "a valid type is required after ':'"
+source = "parser"
+
+[P0012]
+message = "expected '->' for function return type, found {0}"
+help = "use '->' to specify the function return type"
+source = "parser"
+
+[P0013]
+message = "invalid assignment target"
+help = "only identifiers and array indices can be assigned to"
+source = "parser"

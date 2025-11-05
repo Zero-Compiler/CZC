@@ -64,3 +64,68 @@ source = "token_preprocessor"
 message = "科学计数法 '{0}' 超出 float64 范围了喵!~"
 help = "该值太大，无法用 64 位浮点数表示呢喵~"
 source = "token_preprocessor"
+
+[P0001]
+message = "期望 {0}，实际遇到 {1} 喵!~"
+help = "解析器遇到了意外的 token 呢喵~"
+source = "parser"
+
+[P0002]
+message = "意外的文件结束了喵!~"
+help = "文件在解析器期望更多 token 时就结束了呢喵~"
+source = "parser"
+
+[P0003]
+message = "在 {0} 之后期望 ';' 喵!~"
+help = "语句必须以分号结尾才行喵~"
+source = "parser"
+
+[P0004]
+message = "期望标识符，实际遇到 {0} 喵!~"
+help = "此处需要一个标识符名称的说喵~"
+source = "parser"
+
+[P0005]
+message = "期望表达式，实际遇到 {0} 喵!~"
+help = "此处需要一个有效的表达式哦喵~"
+source = "parser"
+
+[P0006]
+message = "期望 '('，实际遇到 {0} 喵!~"
+help = "此处需要左括号呢喵~"
+source = "parser"
+
+[P0007]
+message = "期望 ')'，实际遇到 {0} 喵!~"
+help = "需要右括号来闭合开始的 '(' 哦喵~"
+source = "parser"
+
+[P0008]
+message = "期望 '{{'，实际遇到 {0} 喵!~"
+help = "需要左花括号来开始代码块的说喵~"
+source = "parser"
+
+[P0009]
+message = "期望 '}}'，实际遇到 {0} 喵!~"
+help = "需要右花括号来闭合开始的 '{{' 才行喵~"
+source = "parser"
+
+[P0010]
+message = "期望 ']'，实际遇到 {0} 喵!~"
+help = "需要右方括号来闭合开始的 '[' 呢喵~"
+source = "parser"
+
+[P0011]
+message = "在 ':' 之后期望类型注解，实际遇到 {0} 喵!~"
+help = "在 ':' 后需要一个有效的类型哦喵~"
+source = "parser"
+
+[P0012]
+message = "期望 '->' 来指定函数返回类型，实际遇到 {0} 喵!~"
+help = "使用 '->' 来指定函数的返回类型的说喵~"
+source = "parser"
+
+[P0013]
+message = "无效的赋值目标喵!~"
+help = "只有标识符和数组索引可以被赋值呢喵~"
+source = "parser"

@@ -1,8 +1,8 @@
 /**
  * @file source_tracker.hpp
- * @brief 源码跟踪器类定义
+ * @brief 定义了 `SourceTracker` 类，用于管理和跟踪源代码的读取位置。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #ifndef CZC_SOURCE_TRACKER_HPP
@@ -16,26 +16,60 @@ namespace czc {
 namespace utils {
 
 /**
- * @brief 管理源代码文本并跟踪当前解析位置。
+ * @brief 管理源代码文本并精确跟踪当前的扫描位置。
  * @details
- *   此类是词法分析器的核心辅助工具。它持有整个源文件的内容，并维护一个
- *   指向当前处理位置的指针，同时精确跟踪当前的行号和列号。
- *   这使得词法分析器可以逐字符地遍历输入，并在需要时轻松地创建
- *   精确的 SourceLocation 对象。
+ *   此类是词法分析器（Lexer）的状态管理核心。它封装了对源文件内容的访问，
+ *   并维护一个内部指针来跟踪当前正在处理的字节位置 (`position`)、行号 (`line`)
+ *   和列号 (`column`)。通过将位置跟踪逻辑从词法分析器中分离出来，
+ *   使得 Lexer 本身可以更专注于 Token 的识别规则。
+ *
+ *   `SourceTracker` 的主要职责包括：
+ *   1.  提供对源码字符的顺序访问。
+ *   2.  在每次 `advance`
+ * 调用时，根据遇到的字符（特别是换行符）正确更新行号和列号。
+ *   3.  能够根据起始和结束位置，快速创建用于错误报告的 `SourceLocation` 对象。
+ *
  * @property {线程安全} 非线程安全。此类是有状态的，不可在多线程间共享。
  */
 class SourceTracker {
 private:
-  // 正在处理的源文件的名称。
+  // 正在处理的源文件的名称，用于生成 `SourceLocation`。
   std::string filename;
   // 源文件的完整内容，存储为字符向量以便高效索引。
   std::vector<char> input;
-  // 当前在 `input` 向量中的字节索引。
+  // 当前在 `input` 向量中的字节索引，范围: [0, input.size()]。
   size_t position;
   // 当前位置对应的行号（从 1 开始计数）。
   size_t line;
   // 当前位置在当前行中的列号（从 1 开始计数）。
   size_t column;
+
+  // --- 性能优化: 行索引缓存 ---
+  // NOTE: 为了优化 `get_source_line` 的性能，我们使用惰性初始化的行索引表。
+  //       line_offsets[i] 存储第 i+1 行的起始字节位置（行号从 1 开始）。
+  //       例如: line_offsets[0] = 0 (第 1 行从字节 0 开始)
+  //            line_offsets[1] = 15 (第 2 行从字节 15 开始，假设第 1 行有 14
+  //            个字符 + '\n')
+  //       使用 mutable 允许在 const 方法中构建索引（惰性初始化）。
+  mutable std::vector<size_t> line_offsets;
+  mutable bool line_offsets_built = false;
+
+  /**
+   * @brief 惰性构建行起始位置索引表。
+   * @details
+   *   此方法在首次调用 `get_source_line` 时执行。它遍历整个输入一次，
+   *   记录每一行的起始字节位置。后续的 `get_source_line` 调用将直接使用
+   *   这个索引表，实现 O(1) 的行查找性能。
+   *
+   *   复杂度分析:
+   *   - 构建索引: O(n)，其中 n 是源文件的字节数
+   *   - 查找行号: O(1)
+   *   - 总体复杂度（对于 m 个错误）: O(n + m) vs 原先的 O(n × m)
+   *
+   * @note 使用 mutable 和 const 标记允许在 const 方法中缓存数据，
+   *       这是一种常见的惰性初始化模式。
+   */
+  void build_line_offsets() const;
 
 public:
   /**

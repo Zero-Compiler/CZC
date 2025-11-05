@@ -1,8 +1,8 @@
 /**
  * @file utf8_handler.hpp
- * @brief UTF-8 处理工具类定义
+ * @brief 定义了 `Utf8Handler` 类，提供处理 UTF-8 编码文本的静态工具函数。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #ifndef CZC_UTF8_HANDLER_HPP
@@ -14,11 +14,15 @@ namespace czc {
 namespace lexer {
 
 /**
- * @brief 提供用于处理 UTF-8 编码文本的静态工具函数。
+ * @brief 提供处理 UTF-8 编码文本的静态核心工具函数。
  * @details
- *   此类封装了与 UTF-8 编码相关的底层操作，例如确定字符边界、
- *   验证字节序列以及在 Unicode 码点和 UTF-8 编码之间进行转换。
- *   所有方法都是静态的，因此该类不能被实例化。
+ *   为了支持现代编程语言中常见的 Unicode 标识符和字符串内容，对 UTF-8
+ *   编码的正确处理至关重要。此类提供了一组无状态的静态方法，用于处理
+ *   UTF-8 字节流的底层细节，包括验证字节序列、确定多字节字符的边界、
+ *   以及在 Unicode 码点和 UTF-8 编码之间进行转换。
+ *
+ * @note 此类不应被实例化；所有功能均通过静态方法提供。
+ * @property {线程安全} 所有方法均为纯函数，因此是线程安全的。
  */
 class Utf8Handler {
 public:

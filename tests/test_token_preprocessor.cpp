@@ -1,7 +1,8 @@
 /**
  * @file test_token_preprocessor.cpp
- * @brief Token 预处理器测试套件
+ * @brief Token 预处理器测试套件。
  * @author BegoniaHe
+ * @date 2025-11-05
  */
 
 #include "czc/lexer/lexer.hpp"

@@ -1,8 +1,9 @@
 /**
  * @file error_collector.hpp
- * @brief 词元预处理器错误收集器类定义
+ * @brief 定义了用于收集 Token 预处理阶段错误的 `TPError` 和
+ * `TPErrorCollector`。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #ifndef CZC_TP_ERROR_COLLECTOR_HPP
@@ -17,17 +18,19 @@ namespace czc {
 namespace token_preprocessor {
 
 /**
- * @brief 代表一个在 Token 预处理阶段检测到的错误。
+ * @brief 代表一个在 Token 预处理阶段捕获到的错误。
  * @details
- *   此结构体用于封装预处理错误的所有相关信息，例如在分析科学计数法
- *   字面量时发生的溢出错误。
+ *   此结构体是一个数据容器，用于封装预处理阶段检测到的单个错误的所有关键信息，
+ *   例如在分析科学计数法字面量时发生的数值溢出。
  */
 struct TPError {
-  // 标识错误类型的唯一代码。
+  // 标识错误类型的唯一代码，例如 `T0002_ScientificFloatOverflow`。
   diagnostics::DiagnosticCode code;
-  // 错误在源代码中的位置。
+
+  // 错误在源代码中的精确位置（文件、行、列）。
   utils::SourceLocation location;
-  // (可选) 用于生成详细错误消息的参数。
+
+  // 用于填充错误消息模板的参数列表。
   std::vector<std::string> args;
 
   /**
@@ -42,16 +45,18 @@ struct TPError {
 };
 
 /**
- * @brief 收集并管理在 Token 预处理过程中产生的所有错误。
+ * @brief 收集并管理 Token 预处理过程中产生的所有错误。
  * @details
- *   此类为 TokenPreprocessor 提供了一个统一的错误记录机制。
- *   当检测到如数值溢出等问题时，预处理器会使用此类来记录错误，
- *   而不是中断处理流程。
+ *   该类为 `TokenPreprocessor` 提供了一个统一的错误记录机制。当检测到
+ *   如数值溢出等问题时，预处理器会通过 `add` 方法记录错误，然后继续处理
+ *   下一个 Token。这种 **延迟错误报告** 的设计允许一次性向用户展示所有
+ *   在预处理阶段发现的问题。
+ *
  * @property {线程安全} 非线程安全。
  */
 class TPErrorCollector {
 private:
-  // 存储所有已报告的预处理错误的列表。
+  /// 存储所有已报告的预处理错误的列表。
   std::vector<TPError> errors;
 
 public:

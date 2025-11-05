@@ -1,8 +1,8 @@
 /**
  * @file diagnostic.cpp
- * @brief 诊断系统实现
+ * @brief 诊断系统核心组件的实现。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-05
  */
 
 #include "czc/diagnostics/diagnostic.hpp"
@@ -17,9 +17,10 @@
 using namespace czc::diagnostics;
 
 I18nMessages::I18nMessages(const std::string &locale) : current_locale(locale) {
-  // 尝试加载指定的语言环境文件。
-  // 如果失败（例如，文件不存在或格式错误），则回退到默认的 "en_US" 语言环境。
-  // 这种设计确保了程序在任何情况下都能提供至少一种语言的诊断信息，增强了健壮性。
+  // NOTE: 尝试加载用户指定的语言环境。如果失败（例如，文件不存在或格式错误），
+  //       则立即回退到默认的 "en_US" 语言环境。这种“失败安全” (fail-safe)
+  //       的设计确保了诊断系统在任何情况下都能正常工作，至少能提供英文的
+  //       错误信息，从而增强了编译器的健壮性。
   if (!load_from_file(locale)) {
     load_from_file("en_US");
   }
@@ -29,20 +30,26 @@ bool I18nMessages::load_from_file(const std::string &locale) {
   std::vector<std::string> search_paths;
 
   // --- 建立本地化文件的搜索路径 ---
-  // 这种多路径搜索策略提高了灵活性，适应不同的部署和开发环境。
+  // NOTE: 采用多路径搜索策略是为了提高程序的灵活性和可移植性，使其能够
+  //       适应不同的部署和开发环境。搜索顺序经过精心设计：
+  //       1. 环境变量 (`ZERO_LOCALE_PATH`): 优先级最高，允许用户或构建系统
+  //          在运行时动态指定本地化文件的位置，非常适合容器化或自定义安装。
+  //       2. 相对路径: 其次尝试相对于当前工作目录的常见路径，这覆盖了
+  //          大多数本地开发和标准构建输出的场景。
 
-  // 1. 检查环境变量 `ZERO_LOCALE_PATH`，允许用户覆盖默认的本地化文件位置。
+  // 1. 检查环境变量 `ZERO_LOCALE_PATH`
   const char *env_path = std::getenv("ZERO_LOCALE_PATH");
   if (env_path != nullptr && env_path[0] != '\0') {
     std::string base_path(env_path);
-    // 规范化路径，移除末尾的斜杠（如果存在）。
-    if (!base_path.empty() && base_path.back() == '/') {
+    // 规范化路径，移除末尾可能存在的斜杠，以确保路径拼接的正确性。
+    if (!base_path.empty() &&
+        (base_path.back() == '/' || base_path.back() == '\\')) {
       base_path.pop_back();
     }
     search_paths.push_back(base_path + "/" + locale + "/diagnostics.toml");
   }
 
-  // 2. 添加相对于可执行文件的常见相对路径，以适应标准安装布局。
+  // 2. 添加相对于当前工作目录的常见相对路径
   search_paths.push_back("locales/" + locale + "/diagnostics.toml");
   search_paths.push_back("../locales/" + locale + "/diagnostics.toml");
   search_paths.push_back("../../locales/" + locale + "/diagnostics.toml");
@@ -52,7 +59,7 @@ bool I18nMessages::load_from_file(const std::string &locale) {
   for (const auto &path : search_paths) {
     if (std::filesystem::exists(path)) {
       filepath = path;
-      break; // 找到第一个有效文件后立即停止搜索。
+      break; // NOTE: 找到第一个有效文件后立即停止搜索，确保了搜索路径的优先级。
     }
   }
 
@@ -66,7 +73,12 @@ bool I18nMessages::load_from_file(const std::string &locale) {
   }
 
   // --- 手动解析简化的 TOML 格式 ---
-  // 在加载新文件之前，清空旧的消息映射表，以支持动态语言切换。
+  // NOTE: 这里采用了一个简化的、手写的 TOML 解析器，而不是引入一个完整的
+  //       第三方 TOML 库。这样做的权衡是为了：
+  //       - 优点: 减少外部依赖，使编译器更轻量、更易于构建。
+  //       - 缺点: 解析器功能有限，仅支持 `[section]` 和 `key = "value"`
+  //         格式，对 TOML 文件的格式要求更严格。
+  // 在加载新文件之前，清空旧的消息映射表，这是支持动态语言切换的关键步骤。
   messages.clear();
 
   std::string line;
@@ -103,8 +115,14 @@ bool I18nMessages::load_from_file(const std::string &locale) {
     std::string key = line.substr(0, eq_pos);
     std::string value = line.substr(eq_pos + 1);
 
-    // 清理键和值，去除两端的空白字符和值两端的引号。
-    // 这样做可以使 .toml 文件的格式更加宽松，提高用户体验。
+    // --- 清理键和值 ---
+    // NOTE:
+    // 对键和值进行修剪（trimming）操作，去除两端的空白字符和值两端的引号。
+    //       这使得 .toml 文件的格式可以更加宽松（例如，允许 `key = " value "
+    //       `）， 提高了用户编写本地化文件时的容错性。 `find_last_not_of`
+    //       的结果加 1 是为了正确处理 `erase` 的范围。
+    //       如果字符串全为空白，`find_last_not_of` 返回 `npos`，`npos + 1`
+    //       溢出为 0， `erase(0)` 恰好能清空整个字符串，这是一个巧妙的处理。
     key.erase(0, key.find_first_not_of(" \t"));
     key.erase(key.find_last_not_of(" \t") + 1);
 
@@ -139,8 +157,11 @@ const MessageTemplate &I18nMessages::get_message(DiagnosticCode code) const {
   std::string code_str = diagnostic_code_to_string(code);
   auto it = messages.find(code_str);
 
-  // 如果找不到对应的消息模板（例如，.toml 文件不完整），
-  // 返回一个静态的、通用的未知错误模板，以避免程序崩溃。
+  // NOTE: 如果在消息映射中找不到对应的模板（例如，.toml 文件不完整或
+  //       代码中新增了诊断码但忘记更新 .toml），我们不能让程序崩溃。
+  //       返回一个静态的、通用的未知错误模板是一种健壮的错误处理方式，
+  //       确保了即使在配置不完整的情况下，程序也能继续运行并提供有意义的
+  //       （尽管是通用的）反馈。
   if (it == messages.end()) {
     static MessageTemplate unknown{"unknown error", "", "system"};
     return unknown;
@@ -161,10 +182,14 @@ I18nMessages::format_message(DiagnosticCode code,
   for (size_t i = 0; i < args.size(); ++i) {
     std::string placeholder = "{" + std::to_string(i) + "}";
     size_t pos = 0;
-    // 循环查找并替换所有出现的同一个占位符。
+    // NOTE: 这里使用循环来查找并替换所有出现的同一个占位符（例如，消息
+    //       `"{0} is not compatible with {0}"`）。在 `replace` 之后，
+    //       必须将搜索起始位置 `pos` 更新到被替换内容之后，以防止
+    //       当替换内容本身也包含占位符时（虽然不太可能，但仍是好的实践）
+    //       导致的无限循环。
     while ((pos = result.find(placeholder, pos)) != std::string::npos) {
       result.replace(pos, placeholder.length(), args[i]);
-      pos += args[i].length(); // 更新搜索起始位置，防止无限循环。
+      pos += args[i].length();
     }
   }
 
@@ -228,8 +253,11 @@ std::string Diagnostic::format(const I18nMessages &i18n, bool use_color) const {
   if (!source_line.empty()) {
     // 为了对齐，计算行号所需的宽度。
     int line_width = std::to_string(location.line).length();
+    // NOTE: 设置一个最小行号宽度（例如 3），可以确保即使在文件的前几行
+    //       出错，诊断信息的整体布局也能保持对齐和美观，不会因为行号
+    //       从 1 位数变成 2 位数而导致格式错乱。
     if (line_width < 3) {
-      line_width = 3; // 最小宽度为3，为了美观。
+      line_width = 3;
     }
 
     // 打印源代码行。

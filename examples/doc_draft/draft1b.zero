@@ -1,0 +1,20 @@
+/** @doc
+ * @summary 计算绝对值
+ * @param x 整数输入
+ * @return 绝对值（>= 0）
+ * @see 数学库/基础算子
+ */
+fn abs(x: Integer) -> Integer {
+    if x < 0 { return -x; }
+    return x;
+}
+
+/** @autodoc @notes 本条目仅包含从签名与元信息静态提取的内容 */
+fn clamp(x: Integer, lo: Integer, hi: Integer) -> Integer {
+    if x < lo { return lo; }
+    if x > hi { return hi; }
+    return x;
+}
+
+/// @nodoc 内部工具函数
+fn _impl_detail() { }
