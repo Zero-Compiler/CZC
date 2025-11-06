@@ -27,6 +27,7 @@ enum class TokenType {
   String,             // 字符串字面量, e.g., `"hello"`
   Identifier,         // 标识符, e.g., `my_var`
   ScientificExponent, // 科学计数法字面量, e.g., `1.23e-4`
+  Comment,            // 注释, e.g., `// comment`
 
   // === 关键字 ===
   Let,    // `let` 关键字

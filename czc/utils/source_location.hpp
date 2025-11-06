@@ -15,30 +15,29 @@ namespace utils {
 
 /**
  * @brief 代表源代码中的一个特定区域（或点）。
- * @details
- *   此结构体用于精确定位 Token、AST 节点或诊断信息在源文件中的位置。
- *   它包含了文件名、起始和结束的行号与列号，是实现精确错误报告和
- *   源代码交互（如 IDE 高亮）的基础。
+ * @details 此结构体用于精确定位 Token、AST 节点或诊断信息在源文件中的位置。
+ *          它包含了文件名、起始和结束的行号与列号，是实现精确错误报告和
+ *          源代码交互（如 IDE 高亮）的基础。
  * @property {数据成员} 所有成员均为公开的 `size_t` 或 `std::string`，
  *           这是一个纯数据结构 (Plain Old Data, POD-like)。
  */
 struct SourceLocation {
-  // 关联的源文件名。
+  // 关联的源文件名
   std::string filename;
-  // 区域开始的行号（从 1 开始计数）。
+  // 区域开始的行号（从 1 开始计数）
   size_t line;
-  // 区域开始的列号（从 1 开始计数）。
+  // 区域开始的列号（从 1 开始计数）
   size_t column;
-  // 区域结束的行号（从 1 开始计数）。
+  // 区域结束的行号（从 1 开始计数）
   size_t end_line;
-  // 区域结束的列号（从 1 开始计数）。
+  // 区域结束的列号（从 1 开始计数）
   size_t end_column;
 
   /**
    * @brief 构造一个新的 SourceLocation 对象。
    * @details
-   *   如果结束行号或列号未提供（或为0），它们将自动设置为与起始位置相同，
-   *   从而创建一个表示单个点的 SourceLocation。
+   * 如果结束行号或列号未提供（或为0），它们将自动设置为与起始位置相同，
+   *          从而创建一个表示单个点的 SourceLocation。
    *
    * @param[in] file     文件名。
    * @param[in] ln       起始行号（1-based）。

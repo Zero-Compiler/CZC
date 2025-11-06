@@ -72,6 +72,9 @@ enum class CSTNodeType {
 
   // --- 分隔符 ---
   Delimiter, ///< 分隔符（括号、分号等）
+
+  // --- 注释 ---
+  Comment, ///< 注释
 };
 
 /**
@@ -139,20 +142,6 @@ public:
    */
   const std::optional<lexer::Token> &get_token() const { return token; }
 
-  /**
-   * @brief 设置节点的字符串值。
-   * @details
-   *   用于字面量节点（如整数、字符串、标识符）。
-   * @param[in] val 字符串值。
-   */
-  void set_value(const std::string &val) { value = val; }
-
-  /**
-   * @brief 获取节点的字符串值。
-   * @return 字符串值的可选引用。
-   */
-  const std::optional<std::string> &get_value() const { return value; }
-
 protected:
   // 节点的具体语法类型。
   CSTNodeType node_type;
@@ -166,9 +155,6 @@ protected:
   // 关联的单个 Token，用于表示关键字、运算符、分隔符等叶子节点。
   // @note 对于复合节点，此项通常为空。
   std::optional<lexer::Token> token;
-
-  // 节点的文本值，主要用于存储字面量（如 "hello", 42）和标识符的名称。
-  std::optional<std::string> value;
 };
 
 // --- 辅助函数 ---

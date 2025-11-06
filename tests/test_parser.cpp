@@ -32,15 +32,13 @@ void print_cst(const CSTNode *node, int indent = 0) {
   // 打印节点类型
   std::cout << cst_node_type_to_string(node->get_type());
 
-  // 打印节点值
-  if (node->get_value()) {
-    std::cout << " [" << *node->get_value() << "]";
-  }
-
-  // 打印 Token 类型
+  // 打印 Token 类型和值
   if (node->get_token()) {
     std::cout << " <" << token_type_to_string(node->get_token()->token_type)
               << ">";
+    if (!node->get_token()->value.empty()) {
+      std::cout << " [" << node->get_token()->value << "]";
+    }
   }
 
   std::cout << std::endl;

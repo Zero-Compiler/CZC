@@ -70,20 +70,36 @@ void Lexer::skip_whitespace() {
   }
 }
 
-void Lexer::skip_comment() {
+Token Lexer::read_comment() {
   // --- 单行注释处理 ---
   // 检查是否是 `//` 开头的单行注释。
+  size_t token_line = tracker.get_line();
+  size_t token_column = tracker.get_column();
+  std::string comment_text;
+
   if (current_char == '/' && peek(1) == '/') {
-    // 如果是，则一直消耗字符直到行尾（`\n`）或文件末尾。
+    // 记录 "//"
+    comment_text += "//";
+    advance(); // 跳过第一个 '/'
+    advance(); // 跳过第二个 '/'
+
+    // 读取注释内容直到行尾（`\n`）或文件末尾。
     while (current_char.has_value() && current_char != '\n') {
+      comment_text += current_char.value();
       advance();
     }
+
     // NOTE: 如果是因为换行符而停止，则需要额外调用一次 advance() 来消耗掉
     //       这个换行符本身，以便下一次 next_token() 从新的一行开始。
     if (current_char == '\n') {
       advance();
     }
+
+    return Token(TokenType::Comment, comment_text, token_line, token_column);
   }
+
+  // 如果不是注释，返回一个 Unknown token。
+  return Token(TokenType::Unknown, "", token_line, token_column);
 }
 
 Token Lexer::read_prefixed_number(const std::string &valid_chars,
@@ -95,7 +111,7 @@ Token Lexer::read_prefixed_number(const std::string &valid_chars,
 
   // 消耗掉数字前缀，例如 "0x"。
   advance(); // '0'
-  advance(); // 'x'/'b'/'o'
+  advance(); // 'x'/'b'/'o'/'X'/'B'/'O'
 
   // 记录数字部分的起始位置，用于后续检查是否为空。
   size_t digit_start = tracker.get_position();
@@ -208,6 +224,8 @@ Token Lexer::read_number() {
       report_error(DiagnosticCode::L0004_MissingExponentDigits, token_line,
                    token_column,
                    {std::string(&input[start], current_pos - start)});
+      // --- 错误恢复 ---
+      // 返回一个 `Unknown` 类型的 Token，包含错误的文本。
       return Token(TokenType::Unknown,
                    std::string(&input[start], current_pos - start), token_line,
                    token_column);
@@ -554,25 +572,21 @@ Lexer::Lexer(const std::string &input_str, const std::string &fname)
 }
 
 Token Lexer::next_token() {
-  // --- 主循环：跳过无关内容 ---
-  // NOTE: 这个循环是词法分析器的“空转”阶段。它的任务是不断地跳过
-  //       所有对语法分析无意义的内容（空白和注释），直到 `current_char`
-  //       指向一个潜在 Token 的起始字符，或者到达文件末尾。
-  while (true) {
-    skip_whitespace();
+  // --- 主循环：跳过空白 ---
+  // NOTE: 这个循环是词法分析器的"空转"阶段。它的任务是不断地跳过
+  //       所有空白字符，直到 `current_char` 指向一个潜在 Token 的起始字符，
+  //       或者到达文件末尾。注释现在被视为有效的 Token。
+  skip_whitespace();
 
-    if (current_char == '/' && peek(1) == '/') {
-      skip_comment();
-      continue; // 跳过注释后，可能还有更多空白或另一条注释，所以必须继续循环。
-    }
-
-    break; // 如果既不是空白也不是注释，则退出循环，准备解析一个有意义的 Token。
-  }
-
-  // 如果在跳过无关内容后到达了文件末尾，则返回 EOF Token。
+  // 如果在跳过空白后到达了文件末尾，则返回 EOF Token。
   if (!current_char.has_value()) {
     return Token(TokenType::EndOfFile, "", tracker.get_line(),
                  tracker.get_column());
+  }
+
+  // 检查是否是注释
+  if (current_char == '/' && peek(1) == '/') {
+    return read_comment();
   }
 
   char ch = current_char.value();

@@ -1,4 +1,4 @@
-.PHONY: all build clean test install help fmt tidy
+.PHONY: all build clean test install help fmt tidy pullall pullerrmsg
 
 ifeq ($(OS),Windows_NT)
     CMAKE_GENERATOR := -G "MinGW Makefiles"
@@ -126,6 +126,22 @@ tidy:
 		echo "===================================";\
 		exit 1; \
 	fi
+
+# 拉取所有子模块
+pullall:
+	@echo "Pulling all submodules..."
+	@git submodule update --init --recursive
+	@echo "All submodules pulled successfully!"
+	@echo "==================================="
+
+# 拉取错误信息
+pullerrmsg:
+	@echo "Pulling error messages..."
+	@cd error-msg
+	@git pull origin main
+	@cd ..
+	@echo "Error messages pulled successfully!"
+	@echo "==================================="
 
 # 帮助信息
 help:

@@ -26,6 +26,8 @@ add_library(czc STATIC
     src/cst/error_collector.cpp
     src/parser/parser.cpp
     src/parser/error_collector.cpp
+    src/formatter/formatter.cpp
+    src/formatter/error_collector.cpp
 )
 
 target_include_directories(czc PUBLIC

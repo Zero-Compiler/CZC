@@ -62,9 +62,10 @@ private:
   void skip_whitespace();
 
   /**
-   * @brief 消耗并忽略单行或多行注释。
+   * @brief 读取单行或多行注释并返回注释 Token。
+   * @return 返回一个表示注释的 Token。
    */
-  void skip_comment();
+  Token read_comment();
 
   /**
    * @brief 从当前位置解析一个数字字面量（整数、浮点数或科学计数法）。

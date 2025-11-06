@@ -11,7 +11,7 @@ namespace czc {
 namespace cst {
 
 CSTNode::CSTNode(CSTNodeType type, const utils::SourceLocation &location)
-    : node_type(type), location(location), children(), token(), value() {}
+    : node_type(type), location(location), children(), token() {}
 
 void CSTNode::add_child(std::unique_ptr<CSTNode> child) {
   // NOTE: 使用 emplace_back 和 std::move 可以最高效地将 unique_ptr 的所有权
@@ -83,6 +83,8 @@ std::string cst_node_type_to_string(CSTNodeType type) {
     return "Operator";
   case CSTNodeType::Delimiter:
     return "Delimiter";
+  case CSTNodeType::Comment:
+    return "Comment";
   default:
     return "Unknown";
   }

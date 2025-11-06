@@ -46,6 +46,8 @@
         "cwctype": "cpp",
         "execution": "cpp",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "__node_handle": "cpp",
+        "deque": "cpp"
     }
 }

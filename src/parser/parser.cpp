@@ -87,6 +87,14 @@ std::unique_ptr<CSTNode> Parser::parse() {
   auto program = make_cst_node(CSTNodeType::Program, make_location());
 
   while (!check(TokenType::EndOfFile)) {
+    // 处理注释：将注释作为 CST 节点添加到程序中
+    if (check(TokenType::Comment)) {
+      auto comment_token = advance();
+      auto comment_node = make_cst_node(CSTNodeType::Comment, comment_token);
+      program->add_child(std::move(comment_node));
+      continue;
+    }
+
     auto stmt = declaration();
     if (stmt) {
       program->add_child(std::move(stmt));
@@ -94,12 +102,12 @@ std::unique_ptr<CSTNode> Parser::parse() {
       // --- 错误恢复/同步 ---
       // NOTE: 当一个声明或语句解析失败时（例如，由于语法错误），我们不能
       //       立即停止。相反，我们采用一种简单的同步策略：持续消耗 Token，
-      //       直到找到一个可能是下一条语句开头的“同步点”（如分号或关键字）。
+      //       直到找到一个可能是下一条语句开头的"同步点"（如分号或关键字）。
       //       这使得解析器能够从错误中恢复，并继续报告文件后续部分可能存在的
       //       其他错误。
       while (!check(TokenType::EndOfFile) && !check(TokenType::Semicolon) &&
              !check(TokenType::Let) && !check(TokenType::Var) &&
-             !check(TokenType::Fn)) {
+             !check(TokenType::Fn) && !check(TokenType::Comment)) {
         advance();
       }
       // 如果我们停在了一个分号上，消耗掉它，以确保下一轮循环从分号之后开始。
@@ -139,7 +147,6 @@ std::unique_ptr<CSTNode> Parser::var_declaration() {
     return nullptr;
   }
   auto name_node = make_cst_node(CSTNodeType::Identifier, *name_token);
-  name_node->set_value(name_token->value);
   node->add_child(std::move(name_node));
 
   // 解析可选的类型注解
@@ -177,6 +184,13 @@ std::unique_ptr<CSTNode> Parser::var_declaration() {
     node->add_child(std::move(semi_node));
   }
 
+  // 检查是否有行内注释
+  if (check(TokenType::Comment)) {
+    auto comment_token = advance();
+    auto comment_node = make_cst_node(CSTNodeType::Comment, comment_token);
+    node->add_child(std::move(comment_node));
+  }
+
   return node;
 }
 
@@ -194,7 +208,6 @@ std::unique_ptr<CSTNode> Parser::fn_declaration() {
     return nullptr;
   }
   auto name_node = make_cst_node(CSTNodeType::Identifier, *name_token);
-  name_node->set_value(name_token->value);
   node->add_child(std::move(name_node));
 
   // 消费左括号
@@ -218,7 +231,6 @@ std::unique_ptr<CSTNode> Parser::fn_declaration() {
       auto param_node = make_cst_node(CSTNodeType::Parameter, *param_name);
       auto param_name_node =
           make_cst_node(CSTNodeType::Identifier, *param_name);
-      param_name_node->set_value(param_name->value);
       param_node->add_child(std::move(param_name_node));
 
       // 解析可选的类型注解
@@ -308,7 +320,6 @@ std::unique_ptr<CSTNode> Parser::parse_type() {
   if (token.token_type == TokenType::Identifier) {
     advance();
     auto type_node = make_cst_node(CSTNodeType::TypeAnnotation, token);
-    type_node->set_value(token.value);
     return type_node;
   }
 
@@ -432,6 +443,14 @@ std::unique_ptr<CSTNode> Parser::block_statement() {
 
   auto stmt_list = make_cst_node(CSTNodeType::StatementList, make_location());
   while (!check(TokenType::RightBrace) && !check(TokenType::EndOfFile)) {
+    // 处理块中的注释
+    if (check(TokenType::Comment)) {
+      auto comment_token = advance();
+      auto comment_node = make_cst_node(CSTNodeType::Comment, comment_token);
+      stmt_list->add_child(std::move(comment_node));
+      continue;
+    }
+
     auto stmt = declaration();
     if (stmt) {
       stmt_list->add_child(std::move(stmt));
@@ -461,6 +480,13 @@ std::unique_ptr<CSTNode> Parser::expression_statement() {
   if (semicolon) {
     auto semi_node = make_cst_node(CSTNodeType::Delimiter, *semicolon);
     node->add_child(std::move(semi_node));
+  }
+
+  // 检查是否有行内注释
+  if (check(TokenType::Comment)) {
+    auto comment_token = advance();
+    auto comment_node = make_cst_node(CSTNodeType::Comment, comment_token);
+    node->add_child(std::move(comment_node));
   }
 
   return node;
@@ -759,7 +785,6 @@ std::unique_ptr<CSTNode> Parser::call() {
       if (member_name) {
         auto member_name_node =
             make_cst_node(CSTNodeType::Identifier, *member_name);
-        member_name_node->set_value(member_name->value);
         member_node->add_child(std::move(member_name_node));
       }
 
@@ -777,7 +802,6 @@ std::unique_ptr<CSTNode> Parser::primary() {
   if (match_token({TokenType::True, TokenType::False})) {
     Token token = tokens[current - 1];
     auto node = make_cst_node(CSTNodeType::BooleanLiteral, token);
-    node->set_value(token.value);
     return node;
   }
 
@@ -785,7 +809,6 @@ std::unique_ptr<CSTNode> Parser::primary() {
   if (match_token({TokenType::Integer})) {
     Token token = tokens[current - 1];
     auto node = make_cst_node(CSTNodeType::IntegerLiteral, token);
-    node->set_value(token.value);
     return node;
   }
 
@@ -793,7 +816,6 @@ std::unique_ptr<CSTNode> Parser::primary() {
   if (match_token({TokenType::Float})) {
     Token token = tokens[current - 1];
     auto node = make_cst_node(CSTNodeType::FloatLiteral, token);
-    node->set_value(token.value);
     return node;
   }
 
@@ -801,7 +823,6 @@ std::unique_ptr<CSTNode> Parser::primary() {
   if (match_token({TokenType::String})) {
     Token token = tokens[current - 1];
     auto node = make_cst_node(CSTNodeType::StringLiteral, token);
-    node->set_value(token.value);
     return node;
   }
 
@@ -809,7 +830,6 @@ std::unique_ptr<CSTNode> Parser::primary() {
   if (match_token({TokenType::Identifier})) {
     Token token = tokens[current - 1];
     auto node = make_cst_node(CSTNodeType::Identifier, token);
-    node->set_value(token.value);
     return node;
   }
 

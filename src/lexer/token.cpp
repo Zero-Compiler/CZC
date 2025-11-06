@@ -60,6 +60,8 @@ std::string token_type_to_string(TokenType type) {
     return "Identifier";
   case TokenType::ScientificExponent:
     return "ScientificExponent";
+  case TokenType::Comment:
+    return "Comment";
   case TokenType::Let:
     return "Let";
   case TokenType::Var:
