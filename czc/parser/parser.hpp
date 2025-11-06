@@ -180,13 +180,6 @@ private:
   std::unique_ptr<cst::CSTNode> while_statement();
 
   /**
-   * @brief 解析打印语句。
-   * @details 语法：print ( expression ) ;
-   * @return 打印语句节点。
-   */
-  std::unique_ptr<cst::CSTNode> print_statement();
-
-  /**
    * @brief 解析代码块。
    * @details 语法：{ statements }
    * @return 代码块节点。

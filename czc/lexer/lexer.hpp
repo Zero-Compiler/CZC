@@ -1,6 +1,6 @@
 /**
  * @file lexer.hpp
- * @brief 定义了 `Lexer` 类，负责将源代码文本流转换为词法单元（Token）序列。
+ * @brief 定义了 `Lexer` 类，负责将源代码文本流转换为词法单元序列。
  * @author BegoniaHe
  * @date 2025-11-05
  */

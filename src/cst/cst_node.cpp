@@ -35,8 +35,6 @@ std::string cst_node_type_to_string(CSTNodeType type) {
     return "IfStmt";
   case CSTNodeType::WhileStmt:
     return "WhileStmt";
-  case CSTNodeType::PrintStmt:
-    return "PrintStmt";
   case CSTNodeType::BlockStmt:
     return "BlockStmt";
   case CSTNodeType::ExprStmt:
@@ -49,6 +47,8 @@ std::string cst_node_type_to_string(CSTNodeType type) {
     return "CallExpr";
   case CSTNodeType::IndexExpr:
     return "IndexExpr";
+  case CSTNodeType::MemberExpr:
+    return "MemberExpr";
   case CSTNodeType::AssignExpr:
     return "AssignExpr";
   case CSTNodeType::IndexAssignExpr:

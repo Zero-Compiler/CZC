@@ -32,12 +32,12 @@ void print_cst(const CSTNode *node, int indent = 0) {
   // 打印节点类型
   std::cout << cst_node_type_to_string(node->get_type());
 
-  // 打印节点值（如果有）
+  // 打印节点值
   if (node->get_value()) {
     std::cout << " [" << *node->get_value() << "]";
   }
 
-  // 打印 Token 类型（如果有）
+  // 打印 Token 类型
   if (node->get_token()) {
     std::cout << " <" << token_type_to_string(node->get_token()->token_type)
               << ">";
@@ -59,7 +59,7 @@ void print_cst(const CSTNode *node, int indent = 0) {
 void test_variable_declaration() {
   std::cout << "\n=== Test: Variable Declaration ===" << std::endl;
 
-  Lexer lexer("let x: int = 42;");
+  Lexer lexer("let x: Integer = 42;");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
@@ -79,7 +79,7 @@ void test_variable_declaration() {
 void test_function_declaration() {
   std::cout << "\n=== Test: Function Declaration ===" << std::endl;
 
-  Lexer lexer("fn add(a: int, b: int) -> int { return a + b; }");
+  Lexer lexer("fn add(a: Integer, b: Integer) -> Integer { return a + b; }");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
@@ -119,7 +119,7 @@ void test_binary_expression() {
 void test_if_statement() {
   std::cout << "\n=== Test: If Statement ===" << std::endl;
 
-  Lexer lexer("if x > 0 { print(x); } else { print(0); }");
+  Lexer lexer("if x > 0 { io.print(x); } else { io.print(0); }");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
@@ -240,6 +240,52 @@ void test_error_handling() {
 }
 
 /**
+ * @brief 测试成员访问表达式的解析。
+ */
+void test_member_access() {
+  std::cout << "\n=== Test: Member Access ===" << std::endl;
+
+  // 测试简单成员访问
+  Lexer lexer1("io.print(x);");
+  auto tokens1 = lexer1.tokenize();
+  Parser parser1(tokens1);
+  auto cst1 = parser1.parse();
+
+  assert(cst1 != nullptr);
+  assert(cst1->get_type() == CSTNodeType::Program);
+  assert(!parser1.has_errors());
+
+  std::cout << "Simple member access parsed successfully" << std::endl;
+  print_cst(cst1.get());
+
+  // 测试链式成员访问
+  Lexer lexer2("obj.field.method();");
+  auto tokens2 = lexer2.tokenize();
+  Parser parser2(tokens2);
+  auto cst2 = parser2.parse();
+
+  assert(cst2 != nullptr);
+  assert(cst2->get_type() == CSTNodeType::Program);
+  assert(!parser2.has_errors());
+
+  std::cout << "Chained member access parsed successfully" << std::endl;
+  print_cst(cst2.get());
+
+  // 测试成员访问与索引混合
+  Lexer lexer3("arr[0].name;");
+  auto tokens3 = lexer3.tokenize();
+  Parser parser3(tokens3);
+  auto cst3 = parser3.parse();
+
+  assert(cst3 != nullptr);
+  assert(cst3->get_type() == CSTNodeType::Program);
+  assert(!parser3.has_errors());
+
+  std::cout << "Member access with index parsed successfully" << std::endl;
+  print_cst(cst3.get());
+}
+
+/**
  * @brief 主测试入口。
  */
 int main() {
@@ -257,6 +303,7 @@ int main() {
     test_function_call();
     test_parenthesized_expression();
     test_error_handling();
+    test_member_access();
 
     std::cout << "\n======================================" << std::endl;
     std::cout << "  All tests passed!" << std::endl;

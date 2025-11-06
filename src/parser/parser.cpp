@@ -743,6 +743,27 @@ std::unique_ptr<CSTNode> Parser::call() {
       }
 
       expr = std::move(index_node);
+    } else if (match_token({TokenType::Dot})) {
+      // 成员访问
+      Token dot = tokens[current - 1];
+      auto member_node =
+          make_cst_node(CSTNodeType::MemberExpr, make_location());
+
+      member_node->add_child(std::move(expr));
+
+      auto dot_node = make_cst_node(CSTNodeType::Delimiter, dot);
+      member_node->add_child(std::move(dot_node));
+
+      // 右侧必须是标识符
+      auto member_name = consume(TokenType::Identifier);
+      if (member_name) {
+        auto member_name_node =
+            make_cst_node(CSTNodeType::Identifier, *member_name);
+        member_name_node->set_value(member_name->value);
+        member_node->add_child(std::move(member_name_node));
+      }
+
+      expr = std::move(member_node);
     } else {
       break;
     }
