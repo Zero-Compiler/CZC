@@ -36,7 +36,6 @@ enum class CSTNodeType {
   ReturnStmt, ///< 返回语句: return expr;
   IfStmt,     ///< 条件语句: if expr { stmts } else { stmts }
   WhileStmt,  ///< 循环语句: while expr { stmts }
-  PrintStmt,  ///< 打印语句: print(expr);
   BlockStmt,  ///< 代码块: { stmts }
   ExprStmt,   ///< 表达式语句: expr;
 
@@ -45,6 +44,7 @@ enum class CSTNodeType {
   UnaryExpr,       ///< 一元表达式: op operand
   CallExpr,        ///< 函数调用: callee(args)
   IndexExpr,       ///< 索引访问: object[index]
+  MemberExpr,      ///< 成员访问: object.member
   AssignExpr,      ///< 赋值表达式: lvalue = rvalue
   IndexAssignExpr, ///< 索引赋值: object[index] = value
   ArrayLiteral,    ///< 数组字面量: [elem1, elem2, ...]
@@ -134,7 +134,7 @@ public:
   void set_token(const lexer::Token &token);
 
   /**
-   * @brief 获取关联的 Token（如果有）。
+   * @brief 获取关联的 Token。
    * @return Token 的可选值。
    */
   const std::optional<lexer::Token> &get_token() const { return token; }
