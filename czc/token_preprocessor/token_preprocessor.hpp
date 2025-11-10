@@ -25,7 +25,7 @@ namespace token_preprocessor {
  */
 constexpr int MAX_I64_MAGNITUDE = 18;
 /**
- * @brief IEEE 754 双精度浮点数 (double) 的最大指数约为 10^308。
+ * @brief IEEE 754 双精度浮点数 (float64) 的最大指数约为 10^308。
  * @details 用于在解析阶段检测潜在的浮点数溢出。
  */
 constexpr int MAX_F64_MAGNITUDE = 308;

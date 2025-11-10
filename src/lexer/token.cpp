@@ -6,42 +6,35 @@
  */
 
 #include "czc/lexer/token.hpp"
+#include <unordered_map>
 
 namespace czc {
 namespace lexer {
 
-Token::Token(TokenType type, const std::string &val, size_t line, size_t column)
-    : token_type(type), value(val), line(line), column(column) {}
+Token::Token(TokenType type, const std::string &val, size_t line, size_t column,
+             bool synthetic)
+    : token_type(type), value(val), line(line), column(column),
+      is_synthetic(synthetic) {}
 
 std::optional<TokenType> get_keyword(const std::string &word) {
-  // NOTE: 这是一个简单的线性搜索，用于将标识符字符串映射到其对应的关键字
-  //       Token 类型。对于当前语言这种关键字数量较少（约10-20个）的情况，
-  //       一连串的 `if` 比较通常比 `std::unordered_map` 更快，因为它避免了
-  //       哈希计算和潜在的哈希冲突处理开销。如果未来关键字数量大幅增加，
-  //       可以考虑使用完美的哈希函数生成器（如
-  //       gperf）来生成一个更高效的查找表。
-  if (word == "let")
-    return TokenType::Let;
-  if (word == "var")
-    return TokenType::Var;
-  if (word == "fn")
-    return TokenType::Fn;
-  if (word == "return")
-    return TokenType::Return;
-  if (word == "if")
-    return TokenType::If;
-  if (word == "else")
-    return TokenType::Else;
-  if (word == "while")
-    return TokenType::While;
-  if (word == "for")
-    return TokenType::For;
-  if (word == "in")
-    return TokenType::In;
-  if (word == "true")
-    return TokenType::True;
-  if (word == "false")
-    return TokenType::False;
+  // NOTE: 使用静态哈希表优化关键字查找性能。
+  //       相比线性搜索，哈希表查找的时间复杂度从 O(n) 降低到 O(1)。
+  //       对于 15+ 个关键字的场景，这能带来明显的性能提升。
+  //       静态局部变量确保哈希表只初始化一次，避免重复构建开销。
+  static const std::unordered_map<std::string, TokenType> KEYWORDS = {
+      {"let", TokenType::Let},     {"var", TokenType::Var},
+      {"fn", TokenType::Fn},       {"return", TokenType::Return},
+      {"if", TokenType::If},       {"else", TokenType::Else},
+      {"while", TokenType::While}, {"for", TokenType::For},
+      {"in", TokenType::In},       {"struct", TokenType::Struct},
+      {"enum", TokenType::Enum},   {"type", TokenType::Type},
+      {"trait", TokenType::Trait}, {"true", TokenType::True},
+      {"false", TokenType::False}};
+
+  auto it = KEYWORDS.find(word);
+  if (it != KEYWORDS.end()) {
+    return it->second;
+  }
 
   // 如果字符串不匹配任何关键字，则返回空的可选值，
   // 表明它应该被视为一个普通标识符。
@@ -80,6 +73,14 @@ std::string token_type_to_string(TokenType type) {
     return "For";
   case TokenType::In:
     return "In";
+  case TokenType::Struct:
+    return "Struct";
+  case TokenType::Enum:
+    return "Enum";
+  case TokenType::Type:
+    return "Type";
+  case TokenType::Trait:
+    return "Trait";
   case TokenType::True:
     return "True";
   case TokenType::False:

@@ -63,14 +63,94 @@ std::optional<Token> Parser::consume(TokenType type) {
     return advance();
   }
 
-  // NOTE: 记录错误但不插入虚拟节点。让解析器在错误后继续尝试，
-  //       通过同步机制跳到下一个安全点。遵循 rustc/clang 的做法。
+  // 记录错误
   std::vector<std::string> args = {
       token_type_to_string(type),                      // 期望的 token
       token_type_to_string(current_token().token_type) // 实际的 token
   };
   report_error(DiagnosticCode::P0001_UnexpectedToken, make_location(), args);
+
+  // --- 错误恢复策略 ---
+  // 根据现代编译器实践（rustc, Swift），我们在某些关键位置
+  // 返回虚拟 Token 以便解析器能够继续工作并发现更多错误。
+
+  // 如果期望的是分号，跳过到下一个语句
+  if (type == TokenType::Semicolon) {
+    synchronize_to_semicolon();
+    // 返回虚拟分号以继续解析（标记为 synthetic）
+    return Token(TokenType::Semicolon, ";", current_token().line,
+                 current_token().column, true);
+  }
+
+  // 如果期望的是右括号、右方括号、右大括号，尝试同步
+  if (type == TokenType::RightParen || type == TokenType::RightBracket ||
+      type == TokenType::RightBrace) {
+    // 在匹配的分隔符丢失时，返回虚拟 Token（标记为 synthetic）
+    return Token(type, "", current_token().line, current_token().column, true);
+  }
+
   return std::nullopt;
+}
+
+void Parser::synchronize_to_semicolon() {
+  while (!check(TokenType::EndOfFile)) {
+    // 如果找到分号，消费它并停止
+    if (check(TokenType::Semicolon)) {
+      advance();
+      return;
+    }
+
+    // 如果遇到可能是下一个语句的开始，停止（但不消费）
+    if (check(TokenType::RightBrace) || check(TokenType::Let) ||
+        check(TokenType::Var) || check(TokenType::Fn) ||
+        check(TokenType::Return) || check(TokenType::If) ||
+        check(TokenType::While)) {
+      return;
+    }
+
+    advance();
+  }
+}
+
+void Parser::synchronize_to_statement_start() {
+  while (!check(TokenType::EndOfFile)) {
+    Token current = current_token();
+
+    // 停在语句关键字
+    if (current.token_type == TokenType::Let ||
+        current.token_type == TokenType::Var ||
+        current.token_type == TokenType::Fn ||
+        current.token_type == TokenType::Return ||
+        current.token_type == TokenType::If ||
+        current.token_type == TokenType::While ||
+        current.token_type == TokenType::RightBrace) {
+      return;
+    }
+
+    // 如果找到分号，消费它并停止
+    if (current.token_type == TokenType::Semicolon) {
+      advance();
+      return;
+    }
+
+    advance();
+  }
+}
+
+void Parser::synchronize_to_block_end() {
+  int brace_depth = 1; // 我们已经在一个代码块内
+
+  while (!check(TokenType::EndOfFile) && brace_depth > 0) {
+    if (check(TokenType::LeftBrace)) {
+      brace_depth++;
+    } else if (check(TokenType::RightBrace)) {
+      brace_depth--;
+      if (brace_depth == 0) {
+        return; // 找到匹配的右大括号，但不消费它
+      }
+    }
+    advance();
+  }
 }
 
 void Parser::report_error(DiagnosticCode code, const SourceLocation &location,
@@ -99,21 +179,9 @@ std::unique_ptr<CSTNode> Parser::parse() {
     if (stmt) {
       program->add_child(std::move(stmt));
     } else {
-      // --- 错误恢复/同步 ---
-      // NOTE: 当一个声明或语句解析失败时（例如，由于语法错误），我们不能
-      //       立即停止。相反，我们采用一种简单的同步策略：持续消耗 Token，
-      //       直到找到一个可能是下一条语句开头的"同步点"（如分号或关键字）。
-      //       这使得解析器能够从错误中恢复，并继续报告文件后续部分可能存在的
-      //       其他错误。
-      while (!check(TokenType::EndOfFile) && !check(TokenType::Semicolon) &&
-             !check(TokenType::Let) && !check(TokenType::Var) &&
-             !check(TokenType::Fn) && !check(TokenType::Comment)) {
-        advance();
-      }
-      // 如果我们停在了一个分号上，消耗掉它，以确保下一轮循环从分号之后开始。
-      if (check(TokenType::Semicolon)) {
-        advance();
-      }
+      // --- 增强的错误恢复 ---
+      // 当声明解析失败时，使用专门的同步方法恢复到下一个语句开始
+      synchronize_to_statement_start();
     }
   }
 
@@ -144,7 +212,9 @@ std::unique_ptr<CSTNode> Parser::var_declaration() {
   // 解析标识符
   auto name_token = consume(TokenType::Identifier);
   if (!name_token) {
-    return nullptr;
+    // 错误恢复：如果没有标识符，同步到分号
+    synchronize_to_semicolon();
+    return node; // 返回不完整的节点以继续解析
   }
   auto name_node = make_cst_node(CSTNodeType::Identifier, *name_token);
   node->add_child(std::move(name_node));
@@ -160,6 +230,10 @@ std::unique_ptr<CSTNode> Parser::var_declaration() {
     auto type_node = parse_type();
     if (type_node) {
       node->add_child(std::move(type_node));
+    } else {
+      // 类型解析失败，但继续尝试解析后续部分
+      synchronize_to_semicolon();
+      return node;
     }
   }
 
@@ -174,6 +248,10 @@ std::unique_ptr<CSTNode> Parser::var_declaration() {
     auto expr = expression();
     if (expr) {
       node->add_child(std::move(expr));
+    } else {
+      // 表达式解析失败，同步到分号
+      synchronize_to_semicolon();
+      return node;
     }
   }
 
@@ -205,7 +283,9 @@ std::unique_ptr<CSTNode> Parser::fn_declaration() {
   // 解析函数名
   auto name_token = consume(TokenType::Identifier);
   if (!name_token) {
-    return nullptr;
+    // 错误恢复：函数名缺失，尝试同步到代码块或下一个声明
+    synchronize_to_statement_start();
+    return node;
   }
   auto name_node = make_cst_node(CSTNodeType::Identifier, *name_token);
   node->add_child(std::move(name_node));
@@ -213,6 +293,11 @@ std::unique_ptr<CSTNode> Parser::fn_declaration() {
   // 消费左括号
   auto left_paren = consume(TokenType::LeftParen);
   if (left_paren) {
+    auto lparen_node = make_cst_node(CSTNodeType::Delimiter, *left_paren);
+    node->add_child(std::move(lparen_node));
+  } else {
+    // 错误恢复：左括号缺失，但尝试继续解析参数
+    // consume 已经报告了错误并插入了虚拟 token
     auto lparen_node = make_cst_node(CSTNodeType::Delimiter, *left_paren);
     node->add_child(std::move(lparen_node));
   }
@@ -225,6 +310,15 @@ std::unique_ptr<CSTNode> Parser::fn_declaration() {
       // 解析参数名
       auto param_name = consume(TokenType::Identifier);
       if (!param_name) {
+        // 参数名缺失，跳过到逗号或右括号
+        while (!check(TokenType::EndOfFile) && !check(TokenType::Comma) &&
+               !check(TokenType::RightParen)) {
+          advance();
+        }
+        if (check(TokenType::Comma)) {
+          advance();
+          continue;
+        }
         break;
       }
 
@@ -283,6 +377,9 @@ std::unique_ptr<CSTNode> Parser::fn_declaration() {
   auto body = block_statement();
   if (body) {
     node->add_child(std::move(body));
+  } else {
+    // 函数体解析失败，同步到下一个顶层声明
+    synchronize_to_statement_start();
   }
 
   return node;
@@ -302,6 +399,11 @@ std::unique_ptr<CSTNode> Parser::parse_type() {
     auto element_type = parse_type();
     if (element_type) {
       array_type->add_child(std::move(element_type));
+    } else {
+      // 元素类型缺失，报告错误但继续
+      std::vector<std::string> args = {"array element type"};
+      report_error(DiagnosticCode::P0011_ExpectedTypeAnnotation,
+                   make_location(), args);
     }
 
     // 消费右方括号
@@ -434,6 +536,10 @@ std::unique_ptr<CSTNode> Parser::block_statement() {
     if (left_brace) {
       auto lbrace_node = make_cst_node(CSTNodeType::Delimiter, *left_brace);
       node->add_child(std::move(lbrace_node));
+    } else {
+      // 左大括号缺失，尝试继续解析内容
+      auto lbrace_node = make_cst_node(CSTNodeType::Delimiter, *left_brace);
+      node->add_child(std::move(lbrace_node));
     }
   } else {
     Token left_brace = tokens[current - 1];
@@ -454,6 +560,13 @@ std::unique_ptr<CSTNode> Parser::block_statement() {
     auto stmt = declaration();
     if (stmt) {
       stmt_list->add_child(std::move(stmt));
+    } else {
+      // 错误恢复：语句解析失败，同步到下一个语句或块结束
+      synchronize_to_statement_start();
+      // 如果已经到达块结束，退出循环
+      if (check(TokenType::RightBrace) || check(TokenType::EndOfFile)) {
+        break;
+      }
     }
   }
   node->add_child(std::move(stmt_list));

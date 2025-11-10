@@ -48,6 +48,14 @@
         "queue": "cpp",
         "stack": "cpp",
         "__node_handle": "cpp",
-        "deque": "cpp"
+        "deque": "cpp",
+        "__hash_table": "cpp",
+        "memory": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp",
+        "algorithm": "cpp",
+        "__config": "cpp",
+        "forward_list": "cpp",
+        "functional": "cpp"
     }
 }

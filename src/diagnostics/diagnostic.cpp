@@ -86,6 +86,10 @@ bool I18nMessages::load_from_file(const std::string &locale) {
   MessageTemplate current_template;
 
   while (std::getline(file, line)) {
+    // 检查读取错误
+    if (file.bad()) {
+      return false; // I/O 错误，读取失败
+    }
     // 忽略空行和以 '#' 开头的注释行。
     if (line.empty() || line[0] == '#') {
       continue;

@@ -9,6 +9,7 @@
 #define CZC_LEX_ERROR_COLLECTOR_HPP
 
 #include "czc/diagnostics/diagnostic_code.hpp"
+#include "czc/utils/error_collector.hpp"
 #include "czc/utils/source_location.hpp"
 #include <string>
 #include <vector>
@@ -23,6 +24,8 @@ namespace lexer {
  *   它包括了错误的唯一标识码、精确的源码位置以及用于生成用户友好错误消息的动态参数。
  */
 struct LexerError {
+  using LocationType = utils::SourceLocation;
+
   // 标识错误类型的唯一代码，例如 `L0007_UnterminatedString`。
   diagnostics::DiagnosticCode code;
 
@@ -46,51 +49,12 @@ struct LexerError {
 /**
  * @brief 收集并管理词法分析过程中产生的所有错误。
  * @details
- *   该类的核心设计思想是 **延迟错误报告**。在词法分析过程中，当遇到错误时
- *   （例如一个未闭合的字符串），词法分析器并不会立即中断，而是通过 `add`
- *   方法将错误记录下来，并尝试恢复到下一个可识别的 Token。这种机制使得
+ *   使用统一的 ErrorCollector 模板实现错误收集。延迟错误报告机制使得
  *   编译器能够一次性分析完整个文件，并向用户报告所有检测到的词法问题。
  *
  * @property {线程安全} 非线程安全。应在单个词法分析线程中使用。
  */
-class LexErrorCollector {
-private:
-  /// 存储所有已报告的词法错误的列表。
-  std::vector<LexerError> errors;
-
-public:
-  /**
-   * @brief 向收集中添加一个新的词法错误。
-   * @param[in] code 错误的诊断代码。
-   * @param[in] loc  错误在源代码中的位置。
-   * @param[in] args (可选) 用于格式化错误消息的参数。
-   */
-  void add(diagnostics::DiagnosticCode code, const utils::SourceLocation &loc,
-           const std::vector<std::string> &args = {});
-
-  /**
-   * @brief 获取所有已收集的错误。
-   * @return 返回对内部错误列表的常量引用。
-   */
-  const std::vector<LexerError> &get_errors() const { return errors; }
-
-  /**
-   * @brief 检查是否收集到了任何错误。
-   * @return 如果错误列表不为空，则返回 `true`。
-   */
-  bool has_errors() const { return !errors.empty(); }
-
-  /**
-   * @brief 清空所有已收集的错误。
-   */
-  void clear() { errors.clear(); }
-
-  /**
-   * @brief 获取当前收集到的错误总数。
-   * @return 错误列表的大小。
-   */
-  size_t count() const { return errors.size(); }
-};
+using LexErrorCollector = utils::ErrorCollector<LexerError>;
 
 } // namespace lexer
 } // namespace czc

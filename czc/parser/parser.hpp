@@ -118,6 +118,28 @@ private:
                     const std::vector<std::string> &args = {});
 
   /**
+   * @brief 错误恢复：同步到分号。
+   * @details
+   *   当遇到语法错误时，跳过 Token 直到找到分号或其他语句边界，
+   *   以便继续解析后续代码并报告更多错误。
+   */
+  void synchronize_to_semicolon();
+
+  /**
+   * @brief 错误恢复：同步到语句开始。
+   * @details
+   *   跳过 Token 直到找到可能的语句开始（如关键字）或代码块边界。
+   */
+  void synchronize_to_statement_start();
+
+  /**
+   * @brief 错误恢复：同步到代码块结束。
+   * @details
+   *   在代码块解析失败时，跳过直到找到右大括号或 EOF。
+   */
+  void synchronize_to_block_end();
+
+  /**
    * @brief 从当前 Token 创建源码位置。
    * @return 源码位置对象。
    */

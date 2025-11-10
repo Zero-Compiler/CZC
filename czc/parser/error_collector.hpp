@@ -9,6 +9,7 @@
 #define CZC_PARSER_ERROR_COLLECTOR_HPP
 
 #include "czc/diagnostics/diagnostic_code.hpp"
+#include "czc/utils/error_collector.hpp"
 #include "czc/utils/source_location.hpp"
 #include <string>
 #include <vector>
@@ -23,6 +24,8 @@ namespace parser {
  *   它包括了错误的唯一标识码、精确的源码位置以及用于生成用户友好错误消息的动态参数。
  */
 struct ParserError {
+  using LocationType = utils::SourceLocation;
+
   // 标识错误类型的唯一代码，例如 `P0001_UnexpectedToken`。
   diagnostics::DiagnosticCode code;
 
@@ -46,52 +49,12 @@ struct ParserError {
 /**
  * @brief 收集并管理语法分析过程中产生的所有错误。
  * @details
- *   该类的核心设计思想是 **延迟错误报告** 和 **错误恢复**。当语法分析器
- *   遇到不符合语法规则的 Token 时，它会通过 `add` 方法记录一个错误，
- *   然后尝试通过同步（synchronization）等技术跳过一些 Token，直到找到一个
- *   可以安全恢复解析的位置。这使得解析器能够从错误中恢复并继续检查文件的
- *   其余部分，从而一次性报告多个独立的语法错误。
+ *   使用统一的 ErrorCollector 模板实现错误收集。支持延迟错误报告和错误恢复，
+ *   使解析器能够从错误中恢复并一次性报告多个独立的语法错误。
  *
  * @property {线程安全} 非线程安全。应在单个解析线程中使用。
  */
-class ParserErrorCollector {
-private:
-  /// 存储所有已报告的语法分析错误的列表。
-  std::vector<ParserError> errors;
-
-public:
-  /**
-   * @brief 向收集器添加一个新的语法分析错误。
-   * @param[in] code 错误的诊断代码。
-   * @param[in] loc  错误在源代码中的位置。
-   * @param[in] args (可选) 用于格式化错误消息的参数。
-   */
-  void add(diagnostics::DiagnosticCode code, const utils::SourceLocation &loc,
-           const std::vector<std::string> &args = {});
-
-  /**
-   * @brief 获取所有已收集的错误。
-   * @return 返回对内部错误列表的常量引用。
-   */
-  const std::vector<ParserError> &get_errors() const { return errors; }
-
-  /**
-   * @brief 检查是否收集到了任何错误。
-   * @return 如果错误列表不为空，则返回 `true`。
-   */
-  bool has_errors() const { return !errors.empty(); }
-
-  /**
-   * @brief 清空所有已收集的错误。
-   */
-  void clear() { errors.clear(); }
-
-  /**
-   * @brief 获取当前收集到的错误总数。
-   * @return 错误列表的大小。
-   */
-  size_t count() const { return errors.size(); }
-};
+using ParserErrorCollector = utils::ErrorCollector<ParserError>;
 
 } // namespace parser
 } // namespace czc

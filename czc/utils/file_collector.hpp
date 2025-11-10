@@ -20,10 +20,6 @@ namespace utils {
  *          这些路径可能包含通配符（如 `*` 和 `?`）。它负责将这些模式
  *          扩展为匹配的具体文件列表。
  * @property {线程安全} 此类仅包含静态方法，不维护状态，因此是线程安全的。
- * @example
- *   std::vector<std::string> patterns = {"src/*.cpp", "include/*.h"};
- *   std::vector<std::string> files =
- * czc::utils::FileCollector::collect_files(patterns);
  */
 class FileCollector {
 public:

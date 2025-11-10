@@ -373,6 +373,30 @@ std::string Formatter::visit_identifier(const cst::CSTNode *node) {
   return "";
 }
 
+std::string Formatter::visit_operator(const cst::CSTNode *node) {
+  if (node->get_token().has_value()) {
+    const auto &token = node->get_token().value();
+    // 跳过虚拟 Token
+    if (token.is_synthetic) {
+      return "";
+    }
+    return token.value;
+  }
+  return "";
+}
+
+std::string Formatter::visit_comment(const cst::CSTNode *node) {
+  if (node->get_token().has_value()) {
+    const auto &token = node->get_token().value();
+    // 虚拟 Token 不会是注释，但为了一致性还是检查
+    if (token.is_synthetic) {
+      return "";
+    }
+    return token.value;
+  }
+  return "";
+}
+
 std::string Formatter::visit_type_annotation(const cst::CSTNode *node) {
   // TODO: 实现类型注解格式化
   if (node->get_token().has_value()) {
@@ -439,23 +463,14 @@ std::string Formatter::visit_statement_list(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_operator(const cst::CSTNode *node) {
-  if (node->get_token().has_value()) {
-    return node->get_token()->value;
-  }
-  return "";
-}
-
 std::string Formatter::visit_delimiter(const cst::CSTNode *node) {
   if (node->get_token().has_value()) {
-    return node->get_token()->value;
-  }
-  return "";
-}
-
-std::string Formatter::visit_comment(const cst::CSTNode *node) {
-  if (node->get_token().has_value()) {
-    return node->get_token()->value;
+    const auto &token = node->get_token().value();
+    // 跳过虚拟 Token（用于错误恢复的占位符）
+    if (token.is_synthetic) {
+      return "";
+    }
+    return token.value;
   }
   return "";
 }

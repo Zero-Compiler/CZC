@@ -33,15 +33,21 @@ FileCollector::collect_files(const std::vector<std::string> &patterns) {
       // 遍历指定目录下的所有条目
       if (std::filesystem::exists(parent_path) &&
           std::filesystem::is_directory(parent_path)) {
-        for (const auto &entry :
-             std::filesystem::directory_iterator(parent_path)) {
-          // 只对常规文件进行模式匹配，忽略目录等
-          if (entry.is_regular_file()) {
-            std::string filename = entry.path().filename().string();
-            if (matches_pattern(filename, pattern)) {
-              files_to_process.push_back(entry.path().string());
+        try {
+          for (const auto &entry :
+               std::filesystem::directory_iterator(parent_path)) {
+            // 只对常规文件进行模式匹配，忽略目录等
+            if (entry.is_regular_file()) {
+              std::string filename = entry.path().filename().string();
+              if (matches_pattern(filename, pattern)) {
+                files_to_process.push_back(entry.path().string());
+              }
             }
           }
+        } catch (const std::filesystem::filesystem_error &e) {
+          // 目录遍历错误（权限不足、I/O错误等），跳过该目录
+          // 可以考虑记录警告日志
+          continue;
         }
       }
     } else {
@@ -61,6 +67,15 @@ FileCollector::collect_files(const std::vector<std::string> &patterns) {
 
 bool FileCollector::matches_pattern(const std::string &filename,
                                     const std::string &pattern) {
+  // 边界检查：空模式和空文件名的处理
+  if (pattern.empty()) {
+    return filename.empty();
+  }
+  if (filename.empty()) {
+    // 空文件名只能匹配全是 '*' 的模式
+    return pattern.find_first_not_of('*') == std::string::npos;
+  }
+
   size_t p_idx = 0;
   size_t f_idx = 0;
   // NOTE(BegoniaHe): 这是一个经典的通配符匹配算法，支持 '*' 和 '?'。

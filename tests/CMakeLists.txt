@@ -18,6 +18,18 @@ add_executable(test_token_preprocessor
 
 target_link_libraries(test_token_preprocessor PRIVATE czc)
 
+add_executable(test_error_recovery
+    test_error_recovery.cpp
+)
+
+target_link_libraries(test_error_recovery PRIVATE czc)
+
+add_executable(test_synthetic_tokens
+    test_synthetic_tokens.cpp
+)
+
+target_link_libraries(test_synthetic_tokens PRIVATE czc)
+
 add_executable(test_parser
     test_parser.cpp
 )
@@ -41,6 +53,12 @@ add_executable(test_comments
 )
 
 target_link_libraries(test_comments PRIVATE czc)
+
+add_executable(test_utf8_edge_cases
+    test_utf8_edge_cases.cpp
+)
+
+target_link_libraries(test_utf8_edge_cases PRIVATE czc)
 
 add_test(NAME LexerTest COMMAND test_lexer)
 add_test(NAME TokenPreprocessorTest COMMAND test_token_preprocessor)
