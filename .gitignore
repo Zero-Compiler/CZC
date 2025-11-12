@@ -4,6 +4,17 @@
 build/
 *.tokens
 
+# Code coverage files
+*.gcda
+*.gcno
+*.gcov
+coverage.info
+coverage_filtered.info
+coverage_html/
+
+# Generated documentation
+docs/
+
 # IDE files
 .vscode/
 .idea/
@@ -16,3 +27,6 @@ build/
 *.a
 *.so
 *.exe
+
+# claude code
+.claude/

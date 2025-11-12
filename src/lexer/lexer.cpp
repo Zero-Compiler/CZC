@@ -2,11 +2,13 @@
  * @file lexer.cpp
  * @brief `Lexer` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/lexer.hpp"
+
 #include "czc/lexer/utf8_handler.hpp"
+
 #include <cctype>
 #include <iomanip>
 #include <sstream>
@@ -19,7 +21,7 @@ using namespace czc::utils;
 
 void Lexer::report_error(DiagnosticCode code, size_t error_line,
                          size_t error_column,
-                         const std::vector<std::string> &args) {
+                         const std::vector<std::string>& args) {
   // NOTE: 创建一个只包含错误发生点的 SourceLocation。对于词法错误，
   //       通常我们只关心单个字符或符号的位置，因此起始和结束位置是相同的。
   auto loc = SourceLocation(tracker.get_filename(), error_line, error_column,
@@ -41,7 +43,7 @@ void Lexer::advance() {
   tracker.advance(ch);
 
   size_t pos = tracker.get_position();
-  const auto &input = tracker.get_input();
+  const auto& input = tracker.get_input();
 
   // --- 更新当前字符 ---
   // 更新 current_char 为 tracker 前进后的新位置上的字符。
@@ -55,7 +57,7 @@ void Lexer::advance() {
 
 std::optional<char> Lexer::peek(size_t offset) const {
   size_t peek_pos = tracker.get_position() + offset;
-  const auto &input = tracker.get_input();
+  const auto& input = tracker.get_input();
   if (peek_pos < input.size()) {
     return input[peek_pos];
   }
@@ -65,29 +67,47 @@ std::optional<char> Lexer::peek(size_t offset) const {
 void Lexer::skip_whitespace() {
   // NOTE: 持续消耗字符，直到遇到非空白字符或源码结束。
   //       `isspace` 可以正确处理空格、制表符、换行符等多种空白字符。
-  while (current_char.has_value() && std::isspace(current_char.value())) {
+  //       转换为 unsigned char 以避免在 char 为有符号类型的平台上出现 UB。
+  while (current_char.has_value() &&
+         std::isspace(static_cast<unsigned char>(current_char.value()))) {
     advance();
   }
 }
 
-void Lexer::skip_comment() {
+Token Lexer::read_comment() {
   // --- 单行注释处理 ---
   // 检查是否是 `//` 开头的单行注释。
+  size_t token_line = tracker.get_line();
+  size_t token_column = tracker.get_column();
+  std::string comment_text;
+
   if (current_char == '/' && peek(1) == '/') {
-    // 如果是，则一直消耗字符直到行尾（`\n`）或文件末尾。
+    // 记录 "//"
+    comment_text += "//";
+    advance(); // 跳过第一个 '/'
+    advance(); // 跳过第二个 '/'
+
+    // 读取注释内容直到行尾（`\n`）或文件末尾。
     while (current_char.has_value() && current_char != '\n') {
+      comment_text += current_char.value();
       advance();
     }
+
     // NOTE: 如果是因为换行符而停止，则需要额外调用一次 advance() 来消耗掉
     //       这个换行符本身，以便下一次 next_token() 从新的一行开始。
     if (current_char == '\n') {
       advance();
     }
+
+    return Token(TokenType::Comment, comment_text, token_line, token_column);
   }
+
+  // 如果不是注释，返回一个 Unknown token。
+  return Token(TokenType::Unknown, "", token_line, token_column);
 }
 
-Token Lexer::read_prefixed_number(const std::string &valid_chars,
-                                  const std::string &prefix_str,
+Token Lexer::read_prefixed_number(const std::string& valid_chars,
+                                  const std::string& prefix_str,
                                   DiagnosticCode error_code) {
   size_t start = tracker.get_position();
   size_t token_line = tracker.get_line();
@@ -95,7 +115,7 @@ Token Lexer::read_prefixed_number(const std::string &valid_chars,
 
   // 消耗掉数字前缀，例如 "0x"。
   advance(); // '0'
-  advance(); // 'x'/'b'/'o'
+  advance(); // 'x'/'b'/'o'/'X'/'B'/'O'
 
   // 记录数字部分的起始位置，用于后续检查是否为空。
   size_t digit_start = tracker.get_position();
@@ -122,16 +142,16 @@ Token Lexer::read_prefixed_number(const std::string &valid_chars,
     //       其中包含了被识别为错误的文本。这是一种简单的错误恢复策略，
     //       它允许解析器（Parser）看到这个错误并可能尝试从中恢复，而不是
     //       让词法分析器完全卡住。
-    const auto &input = tracker.get_input();
+    const auto& input = tracker.get_input();
     return Token(TokenType::Unknown,
-                 std::string(&input[start], current_pos - start), token_line,
-                 token_column);
+                 std::string(input.data() + start, current_pos - start),
+                 token_line, token_column);
   }
 
-  const auto &input = tracker.get_input();
+  const auto& input = tracker.get_input();
   return Token(TokenType::Integer,
-               std::string(&input[start], current_pos - start), token_line,
-               token_column);
+               std::string(input.data() + start, current_pos - start),
+               token_line, token_column);
 }
 
 Token Lexer::read_number() {
@@ -161,7 +181,7 @@ Token Lexer::read_number() {
   // --- 读取十进制数字的整数和可选的小数部分 ---
   while (current_char.has_value()) {
     char ch = current_char.value();
-    if (std::isdigit(ch)) {
+    if (std::isdigit(static_cast<unsigned char>(ch))) {
       advance();
     }
     // 处理小数点。只允许一个小数点。
@@ -171,7 +191,8 @@ Token Lexer::read_number() {
       //       这是一种设计选择，旨在简化语言的语法，避免范围操作符（`..`）
       //       或方法调用（`.`）与浮点数产生歧义。
       auto next = peek(1);
-      if (next.has_value() && std::isdigit(next.value())) {
+      if (next.has_value() &&
+          std::isdigit(static_cast<unsigned char>(next.value()))) {
         is_float = true;
         advance();
       } else {
@@ -197,20 +218,23 @@ Token Lexer::read_number() {
 
     // 指数部分必须至少包含一个数字。
     size_t exp_start = tracker.get_position();
-    while (current_char.has_value() && std::isdigit(current_char.value())) {
+    while (current_char.has_value() &&
+           std::isdigit(static_cast<unsigned char>(current_char.value()))) {
       advance();
     }
 
     // 如果在 'e' 或 'e-' 之后没有数字，这是一个词法错误。
     size_t current_pos = tracker.get_position();
     if (current_pos == exp_start) {
-      const auto &input = tracker.get_input();
+      const auto& input = tracker.get_input();
       report_error(DiagnosticCode::L0004_MissingExponentDigits, token_line,
                    token_column,
-                   {std::string(&input[start], current_pos - start)});
+                   {std::string(input.data() + start, current_pos - start)});
+      // --- 错误恢复 ---
+      // 返回一个 `Unknown` 类型的 Token，包含错误的文本。
       return Token(TokenType::Unknown,
-                   std::string(&input[start], current_pos - start), token_line,
-                   token_column);
+                   std::string(input.data() + start, current_pos - start),
+                   token_line, token_column);
     }
   }
 
@@ -219,7 +243,8 @@ Token Lexer::read_number() {
   //       例如 `123a` 是无效的。这个规则是为了消除歧义，例如区分
   //       `123` 和变量 `a`，而不是一个名为 `123a` 的无效标识符。
   if (current_char.has_value() &&
-      (std::isalpha(current_char.value()) || current_char.value() == '_')) {
+      (std::isalpha(static_cast<unsigned char>(current_char.value())) ||
+       current_char.value() == '_')) {
     std::string bad_suffix(1, current_char.value());
     report_error(DiagnosticCode::L0005_InvalidTrailingChar, token_line,
                  token_column, {bad_suffix});
@@ -227,15 +252,15 @@ Token Lexer::read_number() {
     // 消耗掉这个无效字符，以避免词法分析器在下一次调用时再次报告同一个错误。
     advance();
     size_t current_pos = tracker.get_position();
-    const auto &input = tracker.get_input();
+    const auto& input = tracker.get_input();
     return Token(TokenType::Unknown,
-                 std::string(&input[start], current_pos - start), token_line,
-                 token_column);
+                 std::string(input.data() + start, current_pos - start),
+                 token_line, token_column);
   }
 
   size_t current_pos = tracker.get_position();
-  const auto &input = tracker.get_input();
-  std::string value(&input[start], current_pos - start);
+  const auto& input = tracker.get_input();
+  std::string value(input.data() + start, current_pos - start);
 
   // --- 根据解析过程中设置的标志，确定最终的 Token 类型 ---
   if (is_scientific) {
@@ -257,31 +282,66 @@ Token Lexer::read_identifier() {
   size_t token_line = tracker.get_line();
   size_t token_column = tracker.get_column();
 
-  advance(); // 消耗第一个字符
+  // 处理标识符的第一个字符
+  if (current_char.has_value()) {
+    unsigned char uch = static_cast<unsigned char>(current_char.value());
 
+    // 如果第一个字符是UTF-8起始字节,使用Utf8Handler读取完整字符
+    if (uch >= 0x80) {
+      size_t current_pos = tracker.get_position();
+      std::string utf8_char;
+      const auto& input = tracker.get_input();
+
+      if (Utf8Handler::read_char(input, current_pos, utf8_char)) {
+        // UTF-8 字符有效，同步 tracker 的位置
+        while (tracker.get_position() < current_pos) {
+          advance();
+        }
+      } else {
+        // 第一个字符就是无效的UTF-8序列,返回错误token
+        advance();
+        return Token(TokenType::Unknown, std::string(input.data() + start, 1),
+                     token_line, token_column);
+      }
+    } else {
+      // ASCII字符,直接消耗
+      advance();
+    }
+  }
+
+  // 继续读取后续字符
   while (current_char.has_value()) {
     char ch = current_char.value();
     unsigned char uch = static_cast<unsigned char>(ch);
 
-    // 标识符可以包含字母、数字、下划线以及任何非 ASCII 的 UTF-8 字符。
-    if (std::isalnum(ch) || ch == '_') {
+    // 标识符可以包含字母、数字、下划线
+    if (std::isalnum(static_cast<unsigned char>(ch)) || ch == '_') {
       advance();
     }
-    // NOTE: 这是一个简单而宽松的 Unicode 标识符规则：所有非 ASCII 字符
-    //       （即最高位为 1 的字节）都被视为标识符的一部分。这使得像 `变量`
-    //       或 `résumé` 这样的标识符成为可能。一个更严格的实现可能需要
-    //       检查 Unicode 字符属性，以只允许特定范围的字母或符号（例如，
-    //       排除表情符号或标点符号），但这会显著增加复杂性。
+    // NOTE: 对于非 ASCII 字符（UTF-8 起始字节），使用 Utf8Handler
+    //       来正确读取完整的多字节字符序列，并验证其有效性。
     else if (uch >= 0x80) {
-      advance();
+      size_t current_pos = tracker.get_position();
+      std::string utf8_char;
+      const auto& input = tracker.get_input();
+
+      if (Utf8Handler::read_char(input, current_pos, utf8_char)) {
+        // UTF-8 字符有效，同步 tracker 的位置
+        while (tracker.get_position() < current_pos) {
+          advance();
+        }
+      } else {
+        // 遇到无效的 UTF-8 序列，标识符在此处结束
+        break;
+      }
     } else {
       break;
     }
   }
 
   size_t current_pos = tracker.get_position();
-  const auto &input = tracker.get_input();
-  std::string value(&input[start], current_pos - start);
+  const auto& input = tracker.get_input();
+  std::string value(input.data() + start, current_pos - start);
 
   // 检查解析出的字符串是否是语言的关键字。
   auto keyword_type = get_keyword(value);
@@ -295,7 +355,8 @@ std::string Lexer::parse_unicode_escape(size_t digit_count) {
   std::string hex_digits;
 
   for (size_t i = 0; i < digit_count; ++i) {
-    if (!current_char.has_value() || !std::isxdigit(current_char.value())) {
+    if (!current_char.has_value() ||
+        !std::isxdigit(static_cast<unsigned char>(current_char.value()))) {
       report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
                    tracker.get_line(), tracker.get_column(), {"u"});
       return "";
@@ -318,7 +379,8 @@ std::string Lexer::parse_hex_escape() {
 
   // 读取最多 2 个十六进制数字
   for (size_t i = 0; i < 2; ++i) {
-    if (!current_char.has_value() || !std::isxdigit(current_char.value())) {
+    if (!current_char.has_value() ||
+        !std::isxdigit(static_cast<unsigned char>(current_char.value()))) {
       break;
     }
     hex_digits += current_char.value();
@@ -412,7 +474,8 @@ Token Lexer::read_string() {
           advance(); // 跳过 '{'
           std::string hex_digits;
           while (current_char.has_value() && current_char.value() != '}') {
-            if (!std::isxdigit(current_char.value())) {
+            if (!std::isxdigit(
+                    static_cast<unsigned char>(current_char.value()))) {
               report_error(DiagnosticCode::L0009_InvalidUnicodeEscape,
                            tracker.get_line(), tracker.get_column(), {"u"});
               // 尝试恢复：跳过无效内容直到 '}' 或字符串结束
@@ -460,9 +523,9 @@ Token Lexer::read_string() {
       //       并相应地推进 tracker 的位置。
       size_t current_pos = tracker.get_position();
       std::string utf8_char;
-      if (Utf8Handler::read_char(std::string(tracker.get_input().begin(),
-                                             tracker.get_input().end()),
-                                 current_pos, utf8_char)) {
+      const auto& input = tracker.get_input();
+
+      if (Utf8Handler::read_char(input, current_pos, utf8_char)) {
         value += utf8_char;
         // 同步 tracker 和 lexer 的状态
         while (tracker.get_position() < current_pos) {
@@ -519,9 +582,9 @@ Token Lexer::read_raw_string() {
     //       同样使用 Utf8Handler::read_char 来确保正确处理多字节字符。
     size_t current_pos = tracker.get_position();
     std::string utf8_char;
-    if (Utf8Handler::read_char(
-            std::string(tracker.get_input().begin(), tracker.get_input().end()),
-            current_pos, utf8_char)) {
+    const auto& input = tracker.get_input();
+
+    if (Utf8Handler::read_char(input, current_pos, utf8_char)) {
       value += utf8_char;
       while (tracker.get_position() < current_pos) {
         advance();
@@ -543,9 +606,135 @@ Token Lexer::read_raw_string() {
   return Token(TokenType::String, value, token_line, token_column);
 }
 
-Lexer::Lexer(const std::string &input_str, const std::string &fname)
+std::optional<Token> Lexer::try_read_two_char_operator(char first_char,
+                                                       size_t token_line,
+                                                       size_t token_column) {
+  std::optional<char> next = peek(1);
+  if (!next.has_value()) {
+    return std::nullopt;
+  }
+
+  char second_char = next.value();
+
+  // Helper lambda to advance and create token
+  auto make_two_char_token = [&](TokenType type,
+                                 const std::string& value) -> Token {
+    advance();
+    return Token(type, value, token_line, token_column);
+  };
+
+  switch (first_char) {
+  case '+':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::PlusEqual, "+=");
+    break;
+  case '-':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::MinusEqual, "-=");
+    if (second_char == '>')
+      return make_two_char_token(TokenType::Arrow, "->");
+    break;
+  case '*':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::StarEqual, "*=");
+    break;
+  case '/':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::SlashEqual, "/=");
+    break;
+  case '%':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::PercentEqual, "%=");
+    break;
+  case '=':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::EqualEqual, "==");
+    break;
+  case '!':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::BangEqual, "!=");
+    break;
+  case '<':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::LessEqual, "<=");
+    break;
+  case '>':
+    if (second_char == '=')
+      return make_two_char_token(TokenType::GreaterEqual, ">=");
+    break;
+  case '&':
+    if (second_char == '&')
+      return make_two_char_token(TokenType::And, "&&");
+    break;
+  case '|':
+    if (second_char == '|')
+      return make_two_char_token(TokenType::Or, "||");
+    break;
+  case '.':
+    if (second_char == '.')
+      return make_two_char_token(TokenType::DotDot, "..");
+    break;
+  default:
+    break;
+  }
+
+  return std::nullopt;
+}
+
+Token Lexer::read_single_char_token(char ch, size_t token_line,
+                                    size_t token_column) {
+  switch (ch) {
+  case '+':
+    return Token(TokenType::Plus, "+", token_line, token_column);
+  case '-':
+    return Token(TokenType::Minus, "-", token_line, token_column);
+  case '*':
+    return Token(TokenType::Star, "*", token_line, token_column);
+  case '/':
+    return Token(TokenType::Slash, "/", token_line, token_column);
+  case '%':
+    return Token(TokenType::Percent, "%", token_line, token_column);
+  case '=':
+    return Token(TokenType::Equal, "=", token_line, token_column);
+  case '!':
+    return Token(TokenType::Bang, "!", token_line, token_column);
+  case '<':
+    return Token(TokenType::Less, "<", token_line, token_column);
+  case '>':
+    return Token(TokenType::Greater, ">", token_line, token_column);
+  case '&':
+    return Token(TokenType::Unknown, "&", token_line, token_column);
+  case '|':
+    return Token(TokenType::Unknown, "|", token_line, token_column);
+  case '(':
+    return Token(TokenType::LeftParen, "(", token_line, token_column);
+  case ')':
+    return Token(TokenType::RightParen, ")", token_line, token_column);
+  case '{':
+    return Token(TokenType::LeftBrace, "{", token_line, token_column);
+  case '}':
+    return Token(TokenType::RightBrace, "}", token_line, token_column);
+  case '[':
+    return Token(TokenType::LeftBracket, "[", token_line, token_column);
+  case ']':
+    return Token(TokenType::RightBracket, "]", token_line, token_column);
+  case ',':
+    return Token(TokenType::Comma, ",", token_line, token_column);
+  case ';':
+    return Token(TokenType::Semicolon, ";", token_line, token_column);
+  case ':':
+    return Token(TokenType::Colon, ":", token_line, token_column);
+  case '.':
+    return Token(TokenType::Dot, ".", token_line, token_column);
+  default:
+    return Token(TokenType::Unknown, std::string(1, ch), token_line,
+                 token_column);
+  }
+}
+
+Lexer::Lexer(const std::string& input_str, const std::string& fname)
     : tracker(input_str, fname) {
-  const auto &input = tracker.get_input();
+  const auto& input = tracker.get_input();
   if (!input.empty()) {
     current_char = input[0];
   } else {
@@ -554,25 +743,21 @@ Lexer::Lexer(const std::string &input_str, const std::string &fname)
 }
 
 Token Lexer::next_token() {
-  // --- 主循环：跳过无关内容 ---
-  // NOTE: 这个循环是词法分析器的“空转”阶段。它的任务是不断地跳过
-  //       所有对语法分析无意义的内容（空白和注释），直到 `current_char`
-  //       指向一个潜在 Token 的起始字符，或者到达文件末尾。
-  while (true) {
-    skip_whitespace();
+  // --- 主循环：跳过空白 ---
+  // NOTE: 这个循环是词法分析器的"空转"阶段。它的任务是不断地跳过
+  //       所有空白字符，直到 `current_char` 指向一个潜在 Token 的起始字符，
+  //       或者到达文件末尾。注释现在被视为有效的 Token。
+  skip_whitespace();
 
-    if (current_char == '/' && peek(1) == '/') {
-      skip_comment();
-      continue; // 跳过注释后，可能还有更多空白或另一条注释，所以必须继续循环。
-    }
-
-    break; // 如果既不是空白也不是注释，则退出循环，准备解析一个有意义的 Token。
-  }
-
-  // 如果在跳过无关内容后到达了文件末尾，则返回 EOF Token。
+  // 如果在跳过空白后到达了文件末尾，则返回 EOF Token。
   if (!current_char.has_value()) {
     return Token(TokenType::EndOfFile, "", tracker.get_line(),
                  tracker.get_column());
+  }
+
+  // 检查是否是注释
+  if (current_char == '/' && peek(1) == '/') {
+    return read_comment();
   }
 
   char ch = current_char.value();
@@ -583,11 +768,12 @@ Token Lexer::next_token() {
   // --- Token 解析分派 ---
   // 这是一个典型的词法分析器状态机分派逻辑。
 
-  if (std::isdigit(ch)) {
+  if (std::isdigit(static_cast<unsigned char>(ch))) {
     return read_number();
   }
 
-  if (std::isalpha(ch) || ch == '_' || uch >= 0x80) {
+  if (std::isalpha(static_cast<unsigned char>(ch)) || ch == '_' ||
+      uch >= 0x80) {
     // 特殊情况：`r"` 前缀表示原始字符串。
     if (ch == 'r' && peek(1) == '"') {
       return read_raw_string();

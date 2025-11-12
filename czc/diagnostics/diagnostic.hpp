@@ -2,18 +2,20 @@
  * @file diagnostic.hpp
  * @brief 定义了诊断系统的核心组件，包括 `Diagnostic`、`DiagnosticEngine` 等。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_DIAGNOSTIC_HPP
 #define CZC_DIAGNOSTIC_HPP
 
 #include "czc/utils/source_location.hpp"
-#include "diagnostic_code.hpp"
-#include "diagnostic_reporter.hpp"
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
+
+#include "diagnostic_code.hpp"
+#include "diagnostic_reporter.hpp"
 
 namespace czc {
 namespace diagnostics {
@@ -66,14 +68,14 @@ private:
    * @param[in] locale 要加载的语言环境标识符，例如 "en_US"。
    * @return 如果文件成功加载并解析，则返回 `true`，否则返回 `false`。
    */
-  bool load_from_file(const std::string &locale);
+  bool load_from_file(const std::string& locale);
 
 public:
   /**
    * @brief 构造并初始化一个国际化消息管理器。
    * @param[in] locale 初始的语言环境，默认为 "en_US"。
    */
-  I18nMessages(const std::string &locale = "en_US");
+  I18nMessages(const std::string& locale = "en_US");
 
   /**
    * @brief 切换当前的语言环境。
@@ -81,7 +83,7 @@ public:
    *   如果新的语言环境与当前不同，将尝试从对应的 .toml 文件加载新的消息模板。
    * @param[in] locale 新的语言环境标识符。
    */
-  void set_locale(const std::string &locale);
+  void set_locale(const std::string& locale);
 
   /**
    * @brief 根据诊断代码获取对应的消息模板。
@@ -89,7 +91,7 @@ public:
    * @return 返回一个指向消息模板的常量引用。
    * @exception std::runtime_error 如果找不到与 `code` 对应的消息模板。
    */
-  const MessageTemplate &get_message(DiagnosticCode code) const;
+  const MessageTemplate& get_message(DiagnosticCode code) const;
 
   /**
    * @brief 格式化一条诊断消息。
@@ -101,7 +103,7 @@ public:
    * @return 返回格式化后的完整消息字符串。
    */
   std::string format_message(DiagnosticCode code,
-                             const std::vector<std::string> &args) const;
+                             const std::vector<std::string>& args) const;
 };
 
 /**
@@ -143,45 +145,57 @@ public:
    * @param[in] arguments (可选) 格式化消息所需的参数。
    */
   Diagnostic(DiagnosticLevel lvl, DiagnosticCode c,
-             const utils::SourceLocation &loc,
-             const std::vector<std::string> &arguments = {})
+             const utils::SourceLocation& loc,
+             const std::vector<std::string>& arguments = {})
       : level(lvl), code(c), location(loc), args(arguments), source_line() {}
 
   /**
    * @brief 设置与此诊断相关的源代码行。
    * @param[in] line 包含诊断位置的完整源代码行。
    */
-  void set_source_line(const std::string &line) { source_line = line; }
+  void set_source_line(const std::string& line) {
+    source_line = line;
+  }
 
   /**
    * @brief 获取诊断的严重级别。
    * @return 返回诊断级别枚举值。
    */
-  DiagnosticLevel get_level() const { return level; }
+  DiagnosticLevel get_level() const {
+    return level;
+  }
 
   /**
    * @brief 获取唯一的诊断代码。
    * @return 返回诊断代码枚举值。
    */
-  DiagnosticCode get_code() const { return code; }
+  DiagnosticCode get_code() const {
+    return code;
+  }
 
   /**
    * @brief 获取诊断在源代码中的位置。
    * @return 返回对 SourceLocation 对象的常量引用。
    */
-  const utils::SourceLocation &get_location() const { return location; }
+  const utils::SourceLocation& get_location() const {
+    return location;
+  }
 
   /**
    * @brief 获取用于格式化消息的参数列表。
    * @return 返回对字符串向量的常量引用。
    */
-  const std::vector<std::string> &get_args() const { return args; }
+  const std::vector<std::string>& get_args() const {
+    return args;
+  }
 
   /**
    * @brief 获取相关的源代码行。
    * @return 返回对源代码行字符串的常量引用。
    */
-  const std::string &get_source_line() const { return source_line; }
+  const std::string& get_source_line() const {
+    return source_line;
+  }
 
   /**
    * @brief 将此诊断格式化为人类可读的字符串。
@@ -192,7 +206,7 @@ public:
    * @param[in] use_color 如果为 true，则在输出中使用 ANSI 颜色代码。
    * @return 返回格式化后的完整诊断报告字符串。
    */
-  std::string format(const I18nMessages &i18n, bool use_color = true) const;
+  std::string format(const I18nMessages& i18n, bool use_color = true) const;
 };
 
 /**
@@ -226,13 +240,15 @@ public:
    * @brief 构造一个新的诊断引擎。
    * @param[in] locale 初始的语言环境，默认为 "en_US"。
    */
-  DiagnosticEngine(const std::string &locale = "en_US");
+  DiagnosticEngine(const std::string& locale = "en_US");
 
   /**
    * @brief 更改诊断引擎的语言环境。
    * @param[in] locale 新的语言环境标识符。
    */
-  void set_locale(const std::string &locale) { i18n->set_locale(locale); }
+  void set_locale(const std::string& locale) {
+    i18n->set_locale(locale);
+  }
 
   /**
    * @brief 报告一个新的诊断事件。
@@ -248,7 +264,9 @@ public:
    * @details 这是 IDiagnosticReporter 接口的实现。
    * @return 如果 `error_count` 大于 0，则返回 `true`。
    */
-  bool has_errors() const override { return error_count > 0; }
+  bool has_errors() const override {
+    return error_count > 0;
+  }
 
   /**
    * @brief 将所有收集到的诊断信息打印到标准输出。
@@ -260,7 +278,9 @@ public:
    * @brief 获取对内部 I18nMessages 管理器的访问权限。
    * @return 对 I18nMessages 对象的常量引用。
    */
-  const I18nMessages &get_i18n() const { return *i18n; }
+  const I18nMessages& get_i18n() const {
+    return *i18n;
+  }
 };
 
 } // namespace diagnostics

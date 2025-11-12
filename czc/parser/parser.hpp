@@ -1,8 +1,8 @@
 /**
  * @file parser.hpp
- * @brief 定义了 `Parser` 类，负责将 Token 流转换为具体语法树（CST）。
+ * @brief 定义了 `Parser` 类，负责将词法单元序列转换为抽象语法树。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_PARSER_HPP
@@ -11,11 +11,13 @@
 #include "czc/cst/cst_node.hpp"
 #include "czc/diagnostics/diagnostic_reporter.hpp"
 #include "czc/lexer/token.hpp"
-#include "error_collector.hpp"
+
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "error_collector.hpp"
 
 namespace czc {
 namespace parser {
@@ -38,8 +40,10 @@ public:
   /**
    * @brief 构造一个语法分析器。
    * @param[in] tokens Token 序列。
+   * @param[in] filename 源文件名，用于错误报告（默认为 "<unknown>"）。
    */
-  explicit Parser(const std::vector<lexer::Token> &tokens);
+  explicit Parser(const std::vector<lexer::Token>& tokens,
+                  const std::string& filename = "<unknown>");
 
   /**
    * @brief 解析 Token 流并生成 CST。
@@ -51,7 +55,7 @@ public:
    * @brief 获取解析过程中收集的所有错误。
    * @return 错误列表的常量引用。
    */
-  const std::vector<ParserError> &get_errors() const {
+  const std::vector<ParserError>& get_errors() const {
     return error_collector.get_errors();
   }
 
@@ -59,7 +63,9 @@ public:
    * @brief 检查是否有解析错误。
    * @return 如果有错误返回 true，否则返回 false。
    */
-  bool has_errors() const { return error_collector.has_errors(); }
+  bool has_errors() const {
+    return error_collector.has_errors();
+  }
 
 private:
   // --- Token 流管理 ---
@@ -95,7 +101,7 @@ private:
    * @param[in] types 允许的 Token 类型列表。
    * @return 如果匹配并消费了某个类型返回 true，否则返回 false。
    */
-  bool match_token(const std::vector<lexer::TokenType> &types);
+  bool match_token(const std::vector<lexer::TokenType>& types);
 
   /**
    * @brief 消费一个指定类型的 Token，如果不匹配则报错。
@@ -114,8 +120,30 @@ private:
    * @param[in] args 用于格式化错误消息的参数。
    */
   void report_error(diagnostics::DiagnosticCode code,
-                    const utils::SourceLocation &location,
-                    const std::vector<std::string> &args = {});
+                    const utils::SourceLocation& location,
+                    const std::vector<std::string>& args = {});
+
+  /**
+   * @brief 错误恢复：同步到分号。
+   * @details
+   *   当遇到语法错误时，跳过 Token 直到找到分号或其他语句边界，
+   *   以便继续解析后续代码并报告更多错误。
+   */
+  void synchronize_to_semicolon();
+
+  /**
+   * @brief 错误恢复：同步到语句开始。
+   * @details
+   *   跳过 Token 直到找到可能的语句开始（如关键字）或代码块边界。
+   */
+  void synchronize_to_statement_start();
+
+  /**
+   * @brief 错误恢复：同步到代码块结束。
+   * @details
+   *   在代码块解析失败时，跳过直到找到右大括号或 EOF。
+   */
+  void synchronize_to_block_end();
 
   /**
    * @brief 从当前 Token 创建源码位置。
@@ -280,6 +308,9 @@ private:
 
   // 指向 `tokens` 向量中当前正在处理的 Token 的索引。
   size_t current;
+
+  // 源文件名，用于错误报告
+  std::string filename;
 
   // 用于收集在语法分析期间遇到的所有语法错误。
   ParserErrorCollector error_collector;

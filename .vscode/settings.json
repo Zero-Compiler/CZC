@@ -46,6 +46,18 @@
         "cwctype": "cpp",
         "execution": "cpp",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "__node_handle": "cpp",
+        "deque": "cpp",
+        "__hash_table": "cpp",
+        "memory": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp",
+        "algorithm": "cpp",
+        "__config": "cpp",
+        "forward_list": "cpp",
+        "functional": "cpp",
+        "cassert": "cpp",
+        "charconv": "cpp"
     }
 }

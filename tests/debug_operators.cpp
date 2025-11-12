@@ -2,10 +2,11 @@
  * @file debug_operators.cpp
  * @brief 一个简单的调试工具，用于测试运算符的词法分析。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/lexer.hpp"
+
 #include <iostream>
 
 /**

@@ -1,8 +1,8 @@
 /**
  * @file token_preprocessor.hpp
- * @brief 定义了 `TokenPreprocessor`，用于在语法分析前对 Token 流进行细化。
+ * @brief 定义了 `TokenPreprocessor` 类，用于预处理和分析词法单元。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_TOKEN_PREPROCESSOR_HPP
@@ -10,11 +10,13 @@
 
 #include "czc/diagnostics/diagnostic_reporter.hpp"
 #include "czc/lexer/token.hpp"
-#include "error_collector.hpp"
+
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "error_collector.hpp"
 
 namespace czc {
 namespace token_preprocessor {
@@ -25,7 +27,7 @@ namespace token_preprocessor {
  */
 constexpr int MAX_I64_MAGNITUDE = 18;
 /**
- * @brief IEEE 754 双精度浮点数 (double) 的最大指数约为 10^308。
+ * @brief IEEE 754 双精度浮点数 (float64) 的最大指数约为 10^308。
  * @details 用于在解析阶段检测潜在的浮点数溢出。
  */
 constexpr int MAX_F64_MAGNITUDE = 308;
@@ -67,11 +69,11 @@ struct ScientificNotationInfo {
  */
 struct AnalysisContext {
   // 当前分析的文件名。
-  const std::string &filename;
+  const std::string& filename;
   // 当前文件的完整源码内容。
-  const std::string &source_content;
+  const std::string& source_content;
   // 用于报告错误的收集器实例。
-  TPErrorCollector *error_collector;
+  TPErrorCollector* error_collector;
 
   /**
    * @brief 构造一个新的分析上下文。
@@ -83,8 +85,8 @@ struct AnalysisContext {
    * @warning 前两个参数都是字符串引用，容易混淆。
    *          正确顺序为: 文件名, 源码内容, 错误收集器。
    */
-  AnalysisContext(const std::string &fname, const std::string &source,
-                  TPErrorCollector *collector = nullptr)
+  AnalysisContext(const std::string& fname, const std::string& source,
+                  TPErrorCollector* collector = nullptr)
       : filename(fname), source_content(source), error_collector(collector) {}
 };
 
@@ -113,8 +115,8 @@ public:
    *         如果发生错误（如格式错误、溢出），则返回 `std::nullopt`。
    */
   static std::optional<ScientificNotationInfo>
-  analyze(const std::string &literal, const lexer::Token *token,
-          const AnalysisContext &context);
+  analyze(const std::string& literal, const lexer::Token* token,
+          const AnalysisContext& context);
 
 private:
   /**
@@ -124,22 +126,22 @@ private:
    * @param[out] exponent 解析出的指数。
    * @return 如果解析成功，返回 `true`。
    */
-  static bool parse_components(const std::string &literal,
-                               std::string &mantissa, int64_t &exponent);
+  static bool parse_components(const std::string& literal,
+                               std::string& mantissa, int64_t& exponent);
 
   /**
    * @brief 去除小数部分的尾随零。
    * @param[in] decimal_part 小数部分字符串。
    * @return 去除尾随零后的字符串。
    */
-  static std::string trim_trailing_zeros(const std::string &decimal_part);
+  static std::string trim_trailing_zeros(const std::string& decimal_part);
 
   /**
    * @brief 计算去除尾随零后的小数位数。
    * @param[in] mantissa 尾数字符串。
    * @return 小数位数。
    */
-  static size_t count_decimal_digits(const std::string &mantissa);
+  static size_t count_decimal_digits(const std::string& mantissa);
 
   /**
    * @brief 根据规则推断数值类型（INT64 或 FLOAT）。
@@ -148,9 +150,9 @@ private:
    * @param[in] context 分析上下文。
    * @return 推断出的数值类型。
    */
-  static InferredNumericType infer_type(const ScientificNotationInfo &info,
-                                        const lexer::Token *token,
-                                        const AnalysisContext &context);
+  static InferredNumericType infer_type(const ScientificNotationInfo& info,
+                                        const lexer::Token* token,
+                                        const AnalysisContext& context);
 
   /**
    * @brief 检查一个潜在的整数值是否在 `int64_t` 的表示范围内。
@@ -160,9 +162,9 @@ private:
    * @param[in] context  分析上下文。
    * @return 如果值适合 `int64_t`，则返回 `true`。
    */
-  static bool fits_in_int64(const std::string &mantissa, int64_t exponent,
-                            const lexer::Token *token,
-                            const AnalysisContext &context);
+  static bool fits_in_int64(const std::string& mantissa, int64_t exponent,
+                            const lexer::Token* token,
+                            const AnalysisContext& context);
 
   /**
    * @brief 计算数值的“数量级”（大致的位数）。
@@ -173,9 +175,9 @@ private:
    * @return 返回计算出的数量级。
    */
   static std::optional<int64_t>
-  calculate_magnitude(const std::string &mantissa, int64_t exponent,
-                      const lexer::Token *token,
-                      const AnalysisContext &context);
+  calculate_magnitude(const std::string& mantissa, int64_t exponent,
+                      const lexer::Token* token,
+                      const AnalysisContext& context);
 
   /**
    * @brief 报告一个数值溢出错误。
@@ -184,9 +186,9 @@ private:
    * @param[in] exponent 指数。
    * @param[in] context  分析上下文。
    */
-  static void report_overflow(const lexer::Token *token,
-                              const std::string &mantissa, int64_t exponent,
-                              const AnalysisContext &context);
+  static void report_overflow(const lexer::Token* token,
+                              const std::string& mantissa, int64_t exponent,
+                              const AnalysisContext& context);
 };
 
 /**
@@ -217,8 +219,8 @@ private:
    * @param[in] token 发生错误的 Token。
    * @param[in] args  (可选) 格式化错误消息所需的参数。
    */
-  void report_error(diagnostics::DiagnosticCode code, const lexer::Token *token,
-                    const std::vector<std::string> &args = {});
+  void report_error(diagnostics::DiagnosticCode code, const lexer::Token* token,
+                    const std::vector<std::string>& args = {});
 
 public:
   /**
@@ -236,9 +238,9 @@ public:
    * @param[in] source_content 完整的源代码内容。
    * @return 返回经过处理和类型调整的 Token 列表。
    */
-  std::vector<lexer::Token> process(const std::vector<lexer::Token> &tokens,
-                                    const std::string &filename,
-                                    const std::string &source_content);
+  std::vector<lexer::Token> process(const std::vector<lexer::Token>& tokens,
+                                    const std::string& filename,
+                                    const std::string& source_content);
 
   /**
    * @brief 分析并转换单个科学计数法 Token。
@@ -250,15 +252,17 @@ public:
    * @param[in] source_content 完整的源代码内容。
    * @return 返回类型被更新为 `Integer` 或 `Float` 的新 Token。
    */
-  lexer::Token process_scientific_token(const lexer::Token &token,
-                                        const std::string &filename,
-                                        const std::string &source_content);
+  lexer::Token process_scientific_token(const lexer::Token& token,
+                                        const std::string& filename,
+                                        const std::string& source_content);
 
   /**
    * @brief 获取对内部错误收集器的只读访问权限。
    * @return 对 TPErrorCollector 对象的常量引用。
    */
-  const TPErrorCollector &get_errors() const { return error_collector; }
+  const TPErrorCollector& get_errors() const {
+    return error_collector;
+  }
 
 private:
   /**

@@ -1,8 +1,8 @@
 /**
  * @file cst_node.hpp
- * @brief 定义了具体语法树（CST）的核心数据结构 `CSTNode` 及其相关类型。
+ * @brief 定义了具体语法树节点 `CSTNode` 及其相关类型。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_CST_NODE_HPP
@@ -10,6 +10,7 @@
 
 #include "czc/lexer/token.hpp"
 #include "czc/utils/source_location.hpp"
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -34,7 +35,8 @@ enum class CSTNodeType {
 
   // --- 语句 ---
   ReturnStmt, ///< 返回语句: return expr;
-  IfStmt,     ///< 条件语句: if expr { stmts } else { stmts }
+  IfStmt,     ///< 条件语句: if expr { stmts } [else if expr { stmts }]* [else {
+              ///< stmts }]
   WhileStmt,  ///< 循环语句: while expr { stmts }
   BlockStmt,  ///< 代码块: { stmts }
   ExprStmt,   ///< 表达式语句: expr;
@@ -72,6 +74,9 @@ enum class CSTNodeType {
 
   // --- 分隔符 ---
   Delimiter, ///< 分隔符（括号、分号等）
+
+  // --- 注释 ---
+  Comment, ///< 注释
 };
 
 /**
@@ -92,7 +97,7 @@ public:
    * @param[in] type 节点类型。
    * @param[in] location 节点在源码中的位置。
    */
-  CSTNode(CSTNodeType type, const utils::SourceLocation &location);
+  CSTNode(CSTNodeType type, const utils::SourceLocation& location);
 
   /**
    * @brief 虚析构函数。
@@ -103,13 +108,17 @@ public:
    * @brief 获取节点类型。
    * @return 节点的类型枚举值。
    */
-  CSTNodeType get_type() const { return node_type; }
+  CSTNodeType get_type() const {
+    return node_type;
+  }
 
   /**
    * @brief 获取节点的源码位置。
    * @return 节点的源码位置信息。
    */
-  const utils::SourceLocation &get_location() const { return location; }
+  const utils::SourceLocation& get_location() const {
+    return location;
+  }
 
   /**
    * @brief 添加一个子节点。
@@ -121,7 +130,7 @@ public:
    * @brief 获取所有子节点。
    * @return 子节点列表的常量引用。
    */
-  const std::vector<std::unique_ptr<CSTNode>> &get_children() const {
+  const std::vector<std::unique_ptr<CSTNode>>& get_children() const {
     return children;
   }
 
@@ -131,27 +140,15 @@ public:
    *   用于保留关键字、运算符、分隔符等语法符号的精确位置。
    * @param[in] token Token 对象。
    */
-  void set_token(const lexer::Token &token);
+  void set_token(const lexer::Token& token);
 
   /**
    * @brief 获取关联的 Token。
    * @return Token 的可选值。
    */
-  const std::optional<lexer::Token> &get_token() const { return token; }
-
-  /**
-   * @brief 设置节点的字符串值。
-   * @details
-   *   用于字面量节点（如整数、字符串、标识符）。
-   * @param[in] val 字符串值。
-   */
-  void set_value(const std::string &val) { value = val; }
-
-  /**
-   * @brief 获取节点的字符串值。
-   * @return 字符串值的可选引用。
-   */
-  const std::optional<std::string> &get_value() const { return value; }
+  const std::optional<lexer::Token>& get_token() const {
+    return token;
+  }
 
 protected:
   // 节点的具体语法类型。
@@ -166,9 +163,6 @@ protected:
   // 关联的单个 Token，用于表示关键字、运算符、分隔符等叶子节点。
   // @note 对于复合节点，此项通常为空。
   std::optional<lexer::Token> token;
-
-  // 节点的文本值，主要用于存储字面量（如 "hello", 42）和标识符的名称。
-  std::optional<std::string> value;
 };
 
 // --- 辅助函数 ---
@@ -187,7 +181,7 @@ std::string cst_node_type_to_string(CSTNodeType type);
  * @return 新创建的节点的智能指针。
  */
 std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
-                                       const utils::SourceLocation &location);
+                                       const utils::SourceLocation& location);
 
 /**
  * @brief 创建一个带 Token 的 CST 节点。
@@ -196,7 +190,7 @@ std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
  * @return 新创建的节点的智能指针。
  */
 std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
-                                       const lexer::Token &token);
+                                       const lexer::Token& token);
 
 } // namespace cst
 } // namespace czc
