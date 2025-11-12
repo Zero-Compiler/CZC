@@ -7,7 +7,7 @@
 
 #include "czc/diagnostics/diagnostic.hpp"
 
-#include "czc/diagnostics/color.hpp"
+#include "czc/utils/color.hpp"
 
 #include <cstdlib>
 #include <filesystem>
@@ -17,6 +17,7 @@
 #include <sstream>
 
 using namespace czc::diagnostics;
+using namespace czc::utils;
 
 I18nMessages::I18nMessages(const std::string& locale) : current_locale(locale) {
   // NOTE: 尝试加载用户指定的语言环境。如果失败（例如，文件不存在或格式错误），

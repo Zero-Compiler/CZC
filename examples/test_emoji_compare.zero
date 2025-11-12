@@ -1,4 +1,4 @@
 // 测试直接 UTF-8 emoji 和转义序列
 let direct = "直接😀emoji";
-let escaped = "转义\u{1F600}emoji";
+let escaped = "转义😀emoji";
 let chinese = "中文测试你好";

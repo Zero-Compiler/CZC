@@ -50,6 +50,8 @@ clean:
 	@echo "Build directory removed"
 	@cmake -E rm -f examples/*.tokens
 	@echo "Build directory and .tokens files removed"
+	@cmake -E rm -rf examples/*.formatted
+	@echo "Formatted example files removed"
 	@cmake -E rm -rf docs/html
 	@echo "Documentation directory removed"
 	@echo ""

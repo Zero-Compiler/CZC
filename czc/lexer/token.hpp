@@ -111,6 +111,11 @@ public:
   // Token 在源代码中的原始文本表示，例如 "my_var", "42", "+"。
   std::string value;
 
+  // 对于字符串字面量，保存原始的带引号的文本（如 "\"hello\""）。
+  // 这用于在格式化时保持原始格式（包括转义序列和多行字符串）。
+  // 对于非字符串 Token，此字段为空。
+  std::string raw_literal;
+
   // Token 在源代码中起始位置的行号（从 1 开始计数）。
   size_t line;
 
@@ -120,6 +125,10 @@ public:
   // 标记这是否是一个由解析器插入的虚拟 Token（用于错误恢复）。
   // 虚拟 Token 不对应源码中的实际文本，不应被格式化器输出。
   bool is_synthetic;
+
+  // 标记字符串字面量是否为原始字符串（r"..."）。
+  // 仅对 TokenType::String 有意义，其他类型忽略此字段。
+  bool is_raw_string;
 
   /**
    * @brief 构造一个新的 Token 对象。

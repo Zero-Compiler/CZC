@@ -1,31 +1,34 @@
 // Test else if chains
-
 let score = 85;
-
 if score >= 90 {
     print("Grade: A");
-} else if score >= 80 {
+}
+ else if score >= 80 {
     print("Grade: B");
-} else if score >= 70 {
+}
+ else if score >= 70 {
     print("Grade: C");
-} else if score >= 60 {
+}
+ else if score >= 60 {
     print("Grade: D");
-} else {
+}
+ else {
     print("Grade: F");
 }
-
 // Nested example
 let x = 5;
 let y = 10;
-
 if x > y {
     print("x is greater");
-} else if x < y {
+}
+ else if x < y {
     if y > 8 {
         print("x is less and y is large");
-    } else {
+    }
+ else {
         print("x is less and y is small");
     }
-} else {
+}
+ else {
     print("x equals y");
 }

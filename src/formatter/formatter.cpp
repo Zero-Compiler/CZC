@@ -7,6 +7,7 @@
 
 #include "czc/formatter/formatter.hpp"
 
+#include <cstdio>
 #include <sstream>
 
 namespace czc {
@@ -511,7 +512,9 @@ std::string Formatter::visit_float_literal(const cst::CSTNode* node) {
 
 std::string Formatter::visit_string_literal(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
-    return node->get_token()->value;
+    const auto& token = node->get_token().value();
+    // 直接使用原始字面量文本
+    return token.raw_literal;
   }
   return "";
 }

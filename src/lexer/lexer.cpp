@@ -405,7 +405,8 @@ std::string Lexer::parse_hex_escape() {
 Token Lexer::read_string() {
   size_t token_line = tracker.get_line();
   size_t token_column = tracker.get_column();
-  advance(); // 跳过开头的 "
+  size_t start_pos = tracker.get_position(); // 记录起始位置（包括开头的 "）
+  advance();                                 // 跳过开头的 "
 
   std::string value;
   value.reserve(64); // 预分配以提高性能
@@ -544,16 +545,29 @@ Token Lexer::read_string() {
   if (!terminated) {
     report_error(DiagnosticCode::L0007_UnterminatedString, token_line,
                  token_column, {});
-    return Token(TokenType::String, value, token_line, token_column);
+    Token token(TokenType::String, value, token_line, token_column);
+    // 提取原始字符串字面量文本（从起始位置到当前位置）
+    size_t end_pos = tracker.get_position();
+    const auto& input = tracker.get_input();
+    token.raw_literal =
+        std::string(input.begin() + start_pos, input.begin() + end_pos);
+    return token;
   }
 
   advance(); // 跳过结尾的 "
-  return Token(TokenType::String, value, token_line, token_column);
+  Token token(TokenType::String, value, token_line, token_column);
+  // 提取原始字符串字面量文本（包括两端的引号）
+  size_t end_pos = tracker.get_position();
+  const auto& input = tracker.get_input();
+  token.raw_literal =
+      std::string(input.begin() + start_pos, input.begin() + end_pos);
+  return token;
 }
 
 Token Lexer::read_raw_string() {
   size_t token_line = tracker.get_line();
   size_t token_column = tracker.get_column();
+  size_t start_pos = tracker.get_position(); // 记录起始位置（包括 'r'）
 
   advance(); // 跳过 'r'
 
@@ -603,7 +617,14 @@ Token Lexer::read_raw_string() {
     advance(); // 跳过结尾的 "
   }
 
-  return Token(TokenType::String, value, token_line, token_column);
+  Token token(TokenType::String, value, token_line, token_column);
+  token.is_raw_string = true; // 标记为原始字符串
+  // 提取原始字符串字面量文本（包括 r"..."）
+  size_t end_pos = tracker.get_position();
+  const auto& input = tracker.get_input();
+  token.raw_literal =
+      std::string(input.begin() + start_pos, input.begin() + end_pos);
+  return token;
 }
 
 std::optional<Token> Lexer::try_read_two_char_operator(char first_char,
