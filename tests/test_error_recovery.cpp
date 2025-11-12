@@ -1,6 +1,6 @@
 /**
  * @file test_error_recovery.cpp
- * @brief 测试语法分析器的错误恢复机制。
+ * @brief 测试语法分析器的错误恢复机制 (Google Test 版本)。
  * @author BegoniaHe
  * @date 2025-11-11
  */
@@ -8,17 +8,22 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
 
-#include <cassert>
-#include <iostream>
+#include <gtest/gtest.h>
 
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::cst;
 
-/**
- * @brief 测试多个错误能否被全部捕获（而非在第一个错误处停止）。
- */
-void test_multiple_errors() {
+// --- Test Fixtures ---
+
+class ErrorRecoveryTest : public ::testing::Test {
+protected:
+  // Empty for now, can add common setup if needed
+};
+
+// --- Multiple Errors Tests ---
+
+TEST_F(ErrorRecoveryTest, MultipleErrors) {
   std::string source = R"(
     let x = 10;
     let y  // 缺少分号
@@ -36,23 +41,18 @@ void test_multiple_errors() {
   auto tree = parser.parse();
 
   // 应该报告多个错误
-  assert(parser.has_errors());
+  EXPECT_TRUE(parser.has_errors());
   const auto& errors = parser.get_errors();
-
-  std::cout << "test_multiple_errors: Found " << errors.size()
-            << " errors as expected" << std::endl;
+  EXPECT_GT(errors.size(), 0);
 
   // 即使有错误，应该仍然解析出部分结构
-  assert(tree != nullptr);
-  assert(tree->get_type() == CSTNodeType::Program);
-
-  std::cout << "test_multiple_errors: Tree structure maintained" << std::endl;
+  ASSERT_NE(tree, nullptr);
+  EXPECT_EQ(tree->get_type(), CSTNodeType::Program);
 }
 
-/**
- * @brief 测试缺少分号的错误恢复。
- */
-void test_missing_semicolon() {
+// --- Missing Semicolon Tests ---
+
+TEST_F(ErrorRecoveryTest, MissingSemicolon) {
   std::string source = R"(
     let x = 10
     let y = 20;
@@ -64,20 +64,16 @@ void test_missing_semicolon() {
   Parser parser(tokens);
   auto tree = parser.parse();
 
-  assert(parser.has_errors());
+  EXPECT_TRUE(parser.has_errors());
 
   // 应该能继续解析第二个变量声明
-  assert(tree != nullptr);
-  assert(tree->get_children().size() >= 2); // 至少有两个声明
-
-  std::cout << "test_missing_semicolon: Recovered and parsed next statement"
-            << std::endl;
+  ASSERT_NE(tree, nullptr);
+  EXPECT_GE(tree->get_children().size(), 2); // 至少有两个声明
 }
 
-/**
- * @brief 测试缺少标识符的错误恢复。
- */
-void test_missing_identifier() {
+// --- Missing Identifier Tests ---
+
+TEST_F(ErrorRecoveryTest, MissingIdentifier) {
   std::string source = R"(
     let = 10;
     let y = 20;
@@ -89,19 +85,13 @@ void test_missing_identifier() {
   Parser parser(tokens);
   auto tree = parser.parse();
 
-  assert(parser.has_errors());
-
-  // 应该能继续解析第二个变量声明
-  assert(tree != nullptr);
-
-  std::cout << "test_missing_identifier: Recovered and parsed next statement"
-            << std::endl;
+  EXPECT_TRUE(parser.has_errors());
+  ASSERT_NE(tree, nullptr);
 }
 
-/**
- * @brief 测试函数声明中缺少括号的错误恢复。
- */
-void test_missing_function_paren() {
+// --- Missing Function Paren Tests ---
+
+TEST_F(ErrorRecoveryTest, MissingFunctionParen) {
   std::string source = R"(
     fn test {
       return 42;
@@ -117,19 +107,13 @@ void test_missing_function_paren() {
   Parser parser(tokens);
   auto tree = parser.parse();
 
-  assert(parser.has_errors());
-
-  // 应该能继续解析第二个函数
-  assert(tree != nullptr);
-
-  std::cout << "test_missing_function_paren: Recovered and parsed next function"
-            << std::endl;
+  EXPECT_TRUE(parser.has_errors());
+  ASSERT_NE(tree, nullptr);
 }
 
-/**
- * @brief 测试表达式错误的恢复。
- */
-void test_expression_error_recovery() {
+// --- Expression Error Recovery Tests ---
+
+TEST_F(ErrorRecoveryTest, ExpressionErrorRecovery) {
   std::string source = R"(
     let x = 10 + ;  // 表达式不完整
     let y = 20;
@@ -141,20 +125,13 @@ void test_expression_error_recovery() {
   Parser parser(tokens);
   auto tree = parser.parse();
 
-  assert(parser.has_errors());
-
-  // 应该能继续解析第二个变量
-  assert(tree != nullptr);
-
-  std::cout
-      << "test_expression_error_recovery: Recovered after expression error"
-      << std::endl;
+  EXPECT_TRUE(parser.has_errors());
+  ASSERT_NE(tree, nullptr);
 }
 
-/**
- * @brief 测试代码块错误的恢复。
- */
-void test_block_error_recovery() {
+// --- Block Error Recovery Tests ---
+
+TEST_F(ErrorRecoveryTest, BlockErrorRecovery) {
   std::string source = R"(
     fn test() {
       let x = ;  // 错误
@@ -170,19 +147,13 @@ void test_block_error_recovery() {
   Parser parser(tokens);
   auto tree = parser.parse();
 
-  assert(parser.has_errors());
-
-  // 应该能继续解析块内其他语句和后续声明
-  assert(tree != nullptr);
-
-  std::cout << "test_block_error_recovery: Recovered within and after block"
-            << std::endl;
+  EXPECT_TRUE(parser.has_errors());
+  ASSERT_NE(tree, nullptr);
 }
 
-/**
- * @brief 测试复杂的多重错误场景。
- */
-void test_complex_multiple_errors() {
+// --- Complex Multiple Errors Tests ---
+
+TEST_F(ErrorRecoveryTest, ComplexMultipleErrors) {
   std::string source = R"(
     let x = 10;
     let  = 20;      // 错误1: 缺少标识符
@@ -201,20 +172,16 @@ void test_complex_multiple_errors() {
   Parser parser(tokens);
   auto tree = parser.parse();
 
-  assert(parser.has_errors());
+  EXPECT_TRUE(parser.has_errors());
   const auto& errors = parser.get_errors();
 
   // 应该报告多个错误（至少2个）
-  assert(errors.size() >= 2);
-
-  std::cout << "test_complex_multiple_errors: Found " << errors.size()
-            << " errors, maintained parsing" << std::endl;
+  EXPECT_GE(errors.size(), 2);
 }
 
-/**
- * @brief 测试连续的错误恢复。
- */
-void test_consecutive_errors() {
+// --- Consecutive Errors Tests ---
+
+TEST_F(ErrorRecoveryTest, ConsecutiveErrors) {
   std::string source = R"(
     let x =
     let y =
@@ -227,33 +194,6 @@ void test_consecutive_errors() {
   Parser parser(tokens);
   auto tree = parser.parse();
 
-  assert(parser.has_errors());
-
-  // 应该能恢复并解析最后一个正确的声明
-  assert(tree != nullptr);
-
-  std::cout << "test_consecutive_errors: Recovered from consecutive errors"
-            << std::endl;
-}
-
-int main() {
-  std::cout << "\n=== Testing Enhanced Error Recovery ===" << std::endl;
-
-  try {
-    test_multiple_errors();
-    test_missing_semicolon();
-    test_missing_identifier();
-    test_missing_function_paren();
-    test_expression_error_recovery();
-    test_block_error_recovery();
-    test_complex_multiple_errors();
-    test_consecutive_errors();
-
-    std::cout << "\nAll error recovery tests passed!" << std::endl;
-  } catch (const std::exception& e) {
-    std::cerr << "\nTest failed with exception: " << e.what() << std::endl;
-    return 1;
-  }
-
-  return 0;
+  EXPECT_TRUE(parser.has_errors());
+  ASSERT_NE(tree, nullptr);
 }

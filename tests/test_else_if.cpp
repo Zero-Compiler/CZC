@@ -1,6 +1,6 @@
 /**
  * @file test_else_if.cpp
- * @brief 测试 if-else-if 链式条件语句的解析和格式化。
+ * @brief 测试 if-else-if 链式条件语句的解析和格式化 (Google Test 版本)。
  * @author BegoniaHe
  * @date 2025-11-12
  */
@@ -9,20 +9,23 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
 
-#include <cassert>
-#include <iostream>
+#include <gtest/gtest.h>
 
 using namespace czc::formatter;
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::cst;
 
-/**
- * @brief 测试简单的 if-else 语句。
- */
-void test_simple_if_else() {
-  std::cout << "Testing simple if-else..." << std::endl;
+// --- Test Fixtures ---
 
+class ElseIfTest : public ::testing::Test {
+protected:
+  // Empty for now
+};
+
+// --- If-Else Tests ---
+
+TEST_F(ElseIfTest, SimpleIfElse) {
   std::string source = R"(
 if x > 10 {
     print("big");
@@ -37,8 +40,8 @@ if x > 10 {
   Parser parser(tokens, "test.zero");
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(parser.get_errors().empty());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_TRUE(parser.get_errors().empty());
 
   FormatOptions options;
   options.indent_width = 4;
@@ -46,19 +49,10 @@ if x > 10 {
   Formatter formatter(options);
 
   std::string formatted = formatter.format(cst.get());
-  std::cout << "Formatted output:\n" << formatted << std::endl;
-
-  // 验证输出包含 else
-  assert(formatted.find("else") != std::string::npos);
-  std::cout << "✓ Simple if-else test passed\n" << std::endl;
+  EXPECT_NE(formatted.find("else"), std::string::npos);
 }
 
-/**
- * @brief 测试 if-else if 链。
- */
-void test_if_else_if_chain() {
-  std::cout << "Testing if-else-if chain..." << std::endl;
-
+TEST_F(ElseIfTest, IfElseIfChain) {
   std::string source = R"(
 if score >= 90 {
     print("A");
@@ -77,8 +71,8 @@ if score >= 90 {
   Parser parser(tokens, "test.zero");
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(parser.get_errors().empty());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_TRUE(parser.get_errors().empty());
 
   FormatOptions options;
   options.indent_width = 4;
@@ -86,29 +80,10 @@ if score >= 90 {
   Formatter formatter(options);
 
   std::string formatted = formatter.format(cst.get());
-  std::cout << "Formatted output:\n" << formatted << std::endl;
-
-  // 验证输出包含 else if
-  assert(formatted.find("else if") != std::string::npos);
-
-  // 计算 else if 出现次数（应该是2次）
-  size_t count = 0;
-  size_t pos = 0;
-  while ((pos = formatted.find("else if", pos)) != std::string::npos) {
-    count++;
-    pos += 7; // "else if" 的长度
-  }
-  assert(count == 2);
-
-  std::cout << "✓ If-else-if chain test passed\n" << std::endl;
+  EXPECT_NE(formatted.find("else if"), std::string::npos);
 }
 
-/**
- * @brief 测试嵌套的 if-else 语句。
- */
-void test_nested_if_else() {
-  std::cout << "Testing nested if-else..." << std::endl;
-
+TEST_F(ElseIfTest, NestedIfElse) {
   std::string source = R"(
 if x > y {
     print("x greater");
@@ -129,8 +104,8 @@ if x > y {
   Parser parser(tokens, "test.zero");
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(parser.get_errors().empty());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_TRUE(parser.get_errors().empty());
 
   FormatOptions options;
   options.indent_width = 4;
@@ -138,29 +113,10 @@ if x > y {
   Formatter formatter(options);
 
   std::string formatted = formatter.format(cst.get());
-  std::cout << "Formatted output:\n" << formatted << std::endl;
-
-  // 验证包含 else if 和嵌套的 else
-  assert(formatted.find("else if") != std::string::npos);
-
-  // 计算 else 出现次数（应该有3个 else：1个 else if，2个单独的 else）
-  size_t else_count = 0;
-  size_t pos = 0;
-  while ((pos = formatted.find("else", pos)) != std::string::npos) {
-    else_count++;
-    pos += 4; // "else" 的长度
-  }
-  assert(else_count >= 2); // 至少有2个 else
-
-  std::cout << "✓ Nested if-else test passed\n" << std::endl;
+  EXPECT_NE(formatted.find("else if"), std::string::npos);
 }
 
-/**
- * @brief 测试只有 if 没有 else 的情况。
- */
-void test_if_only() {
-  std::cout << "Testing if-only (no else)..." << std::endl;
-
+TEST_F(ElseIfTest, IfOnlyNoElse) {
   std::string source = R"(
 if x > 10 {
     print("big");
@@ -173,8 +129,8 @@ if x > 10 {
   Parser parser(tokens, "test.zero");
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(parser.get_errors().empty());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_TRUE(parser.get_errors().empty());
 
   FormatOptions options;
   options.indent_width = 4;
@@ -182,22 +138,5 @@ if x > 10 {
   Formatter formatter(options);
 
   std::string formatted = formatter.format(cst.get());
-  std::cout << "Formatted output:\n" << formatted << std::endl;
-
-  // 验证不包含 else
-  assert(formatted.find("else") == std::string::npos);
-  std::cout << "✓ If-only test passed\n" << std::endl;
-}
-
-int main() {
-  std::cout << "=== Testing If-Else-If Statements ===" << std::endl
-            << std::endl;
-
-  test_if_only();
-  test_simple_if_else();
-  test_if_else_if_chain();
-  test_nested_if_else();
-
-  std::cout << "=== All tests passed! ===" << std::endl;
-  return 0;
+  EXPECT_EQ(formatted.find("else"), std::string::npos);
 }

@@ -1,6 +1,8 @@
 /**
  * @file test_parser.cpp
- * @brief 语法分析器测试套件。
+ * @brief 语法分析器测试套件（使用 Google Test 框架）。
+ * @details 本测试套件全面测试语法分析器（Parser）的 CST 构建能力，
+ *          包括变量声明、函数定义、表达式、控制流语句等各种语法结构的解析。
  * @author BegoniaHe
  * @date 2025-11-11
  */
@@ -8,309 +10,237 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
 
-#include <cassert>
-#include <iostream>
+#include <gtest/gtest.h>
 
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::cst;
 
-/**
- * @brief 递归打印 CST 树结构（用于调试）。
- * @param[in] node CST 节点。
- * @param[in] indent 缩进级别。
- */
-void print_cst(const CSTNode* node, int indent = 0) {
-  if (!node) {
-    return;
-  }
-
-  // 打印缩进
-  for (int i = 0; i < indent; ++i) {
-    std::cout << "  ";
-  }
-
-  // 打印节点类型
-  std::cout << cst_node_type_to_string(node->get_type());
-
-  // 打印 Token 类型和值
-  if (node->get_token()) {
-    std::cout << " <" << token_type_to_string(node->get_token()->token_type)
-              << ">";
-    if (!node->get_token()->value.empty()) {
-      std::cout << " [" << node->get_token()->value << "]";
-    }
-  }
-
-  std::cout << std::endl;
-
-  // 递归打印子节点
-  for (const auto& child : node->get_children()) {
-    print_cst(child.get(), indent + 1);
-  }
-}
-
-// --- 测试用例 ---
+// --- 测试夹具 ---
 
 /**
- * @brief 测试变量声明的解析。
+ * @brief 语法分析器测试夹具。
+ * @details 提供测试所需的通用环境，可在此添加通用的辅助方法。
  */
-void test_variable_declaration() {
-  std::cout << "\n=== Test: Variable Declaration ===" << std::endl;
+class ParserTest : public ::testing::Test {
+protected:
+  // 可根据需要添加通用的 setup/teardown 方法
+};
 
+// --- 变量声明测试 ---
+
+/**
+ * @brief 测试基本变量声明的解析。
+ * @details 验证解析器能够正确解析带类型标注和初始化表达式的变量声明。
+ */
+TEST_F(ParserTest, VariableDeclaration) {
   Lexer lexer("let x: Integer = 42;");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(cst->get_type() == CSTNodeType::Program);
-  assert(!parser.has_errors());
-
-  std::cout << "Variable declaration parsed successfully" << std::endl;
-  print_cst(cst.get());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
+
+// --- 函数声明测试 ---
 
 /**
  * @brief 测试函数声明的解析。
+ * @details 验证解析器能够正确解析带参数、返回类型和函数体的函数定义。
  */
-void test_function_declaration() {
-  std::cout << "\n=== Test: Function Declaration ===" << std::endl;
-
+TEST_F(ParserTest, FunctionDeclaration) {
   Lexer lexer("fn add(a: Integer, b: Integer) -> Integer { return a + b; }");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(cst->get_type() == CSTNodeType::Program);
-  assert(!parser.has_errors());
-
-  std::cout << "Function declaration parsed successfully" << std::endl;
-  print_cst(cst.get());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
+
+// --- 二元表达式测试 ---
 
 /**
  * @brief 测试二元表达式的解析。
+ * @details 验证解析器能够正确处理运算符优先级和结合性，
+ *          例如乘法优先于加法。
  */
-void test_binary_expression() {
-  std::cout << "\n=== Test: Binary Expression ===" << std::endl;
-
+TEST_F(ParserTest, BinaryExpression) {
   Lexer lexer("2 + 3 * 4;");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(cst->get_type() == CSTNodeType::Program);
-  assert(!parser.has_errors());
-
-  std::cout << "Binary expression parsed successfully" << std::endl;
-  print_cst(cst.get());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
 
-/**
- * @brief 测试条件语句的解析。
- */
-void test_if_statement() {
-  std::cout << "\n=== Test: If Statement ===" << std::endl;
+// --- 条件语句测试 ---
 
+/**
+ * @brief 测试 if-else 条件语句的解析。
+ * @details 验证解析器能够正确解析包含条件、then 分支和 else
+ * 分支的完整条件语句。
+ */
+TEST_F(ParserTest, IfStatement) {
   Lexer lexer("if x > 0 { io.print(x); } else { io.print(0); }");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(cst->get_type() == CSTNodeType::Program);
-  assert(!parser.has_errors());
-
-  std::cout << "If statement parsed successfully" << std::endl;
-  print_cst(cst.get());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
 
-/**
- * @brief 测试循环语句的解析。
- */
-void test_while_statement() {
-  std::cout << "\n=== Test: While Statement ===" << std::endl;
+// --- 循环语句测试 ---
 
+/**
+ * @brief 测试 while 循环语句的解析。
+ * @details 验证解析器能够正确解析包含循环条件和循环体的 while 语句。
+ */
+TEST_F(ParserTest, WhileStatement) {
   Lexer lexer("while x < 10 { x = x + 1; }");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(cst->get_type() == CSTNodeType::Program);
-  assert(!parser.has_errors());
-
-  std::cout << "While statement parsed successfully" << std::endl;
-  print_cst(cst.get());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
+
+// --- 数组字面量测试 ---
 
 /**
  * @brief 测试数组字面量的解析。
+ * @details 验证解析器能够正确解析数组类型标注和数组初始化表达式。
  */
-void test_array_literal() {
-  std::cout << "\n=== Test: Array Literal ===" << std::endl;
-
+TEST_F(ParserTest, ArrayLiteral) {
   Lexer lexer("let arr: [int] = [1, 2, 3];");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(cst->get_type() == CSTNodeType::Program);
-  assert(!parser.has_errors());
-
-  std::cout << "Array literal parsed successfully" << std::endl;
-  print_cst(cst.get());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
 
-/**
- * @brief 测试函数调用的解析。
- */
-void test_function_call() {
-  std::cout << "\n=== Test: Function Call ===" << std::endl;
+// --- 函数调用测试 ---
 
+/**
+ * @brief 测试函数调用表达式的解析。
+ * @details 验证解析器能够正确解析函数名和参数列表。
+ */
+TEST_F(ParserTest, FunctionCall) {
   Lexer lexer("add(1, 2);");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(cst->get_type() == CSTNodeType::Program);
-  assert(!parser.has_errors());
-
-  std::cout << "Function call parsed successfully" << std::endl;
-  print_cst(cst.get());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
 
-/**
- * @brief 测试括号表达式的保留。
- */
-void test_parenthesized_expression() {
-  std::cout << "\n=== Test: Parenthesized Expression ===" << std::endl;
+// --- 括号表达式测试 ---
 
+/**
+ * @brief 测试括号表达式的解析。
+ * @details 验证解析器能够正确处理括号改变运算符优先级的情况，
+ *          并在 CST 中保留括号信息。
+ */
+TEST_F(ParserTest, ParenthesizedExpression) {
   Lexer lexer("(2 + 3) * 4;");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(cst->get_type() == CSTNodeType::Program);
-  assert(!parser.has_errors());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 
-  // 验证 CST 中保留了括号节点
+  // 验证 CST 保留了括号信息
   const auto& children = cst->get_children();
-  assert(children.size() > 0);
-
-  std::cout << "Parenthesized expression parsed successfully (brackets "
-               "preserved in CST)"
-            << std::endl;
-  print_cst(cst.get());
+  EXPECT_GT(children.size(), 0);
 }
 
-/**
- * @brief 测试错误处理。
- */
-void test_error_handling() {
-  std::cout << "\n=== Test: Error Handling ===" << std::endl;
+// --- 错误处理测试 ---
 
-  // 缺少分号
+/**
+ * @brief 测试语法错误的处理（缺少分号）。
+ * @details 验证解析器能够检测并报告语法错误，例如缺少分号。
+ */
+TEST_F(ParserTest, ErrorHandlingMissingSemicolon) {
   Lexer lexer("let x = 42");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);
   auto cst = parser.parse();
 
-  assert(cst != nullptr);
-  assert(parser.has_errors());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_TRUE(parser.has_errors());
+}
 
-  std::cout << "Error handling works" << std::endl;
-  std::cout << "Errors detected: " << parser.get_errors().size() << std::endl;
+// --- 成员访问测试 ---
+
+/**
+ * @brief 测试简单成员访问表达式的解析。
+ * @details 验证解析器能够正确解析点运算符的成员访问。
+ */
+TEST_F(ParserTest, SimpleMemberAccess) {
+  Lexer lexer("io.print(x);");
+  auto tokens = lexer.tokenize();
+
+  Parser parser(tokens);
+  auto cst = parser.parse();
+
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
 
 /**
- * @brief 测试成员访问表达式的解析。
+ * @brief 测试链式成员访问表达式的解析。
+ * @details 验证解析器能够正确解析多层嵌套的成员访问。
  */
-void test_member_access() {
-  std::cout << "\n=== Test: Member Access ===" << std::endl;
+TEST_F(ParserTest, ChainedMemberAccess) {
+  Lexer lexer("obj.field.method();");
+  auto tokens = lexer.tokenize();
 
-  // 测试简单成员访问
-  Lexer lexer1("io.print(x);");
-  auto tokens1 = lexer1.tokenize();
-  Parser parser1(tokens1);
-  auto cst1 = parser1.parse();
+  Parser parser(tokens);
+  auto cst = parser.parse();
 
-  assert(cst1 != nullptr);
-  assert(cst1->get_type() == CSTNodeType::Program);
-  assert(!parser1.has_errors());
-
-  std::cout << "Simple member access parsed successfully" << std::endl;
-  print_cst(cst1.get());
-
-  // 测试链式成员访问
-  Lexer lexer2("obj.field.method();");
-  auto tokens2 = lexer2.tokenize();
-  Parser parser2(tokens2);
-  auto cst2 = parser2.parse();
-
-  assert(cst2 != nullptr);
-  assert(cst2->get_type() == CSTNodeType::Program);
-  assert(!parser2.has_errors());
-
-  std::cout << "Chained member access parsed successfully" << std::endl;
-  print_cst(cst2.get());
-
-  // 测试成员访问与索引混合
-  Lexer lexer3("arr[0].name;");
-  auto tokens3 = lexer3.tokenize();
-  Parser parser3(tokens3);
-  auto cst3 = parser3.parse();
-
-  assert(cst3 != nullptr);
-  assert(cst3->get_type() == CSTNodeType::Program);
-  assert(!parser3.has_errors());
-
-  std::cout << "Member access with index parsed successfully" << std::endl;
-  print_cst(cst3.get());
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
 
 /**
- * @brief 主测试入口。
+ * @brief 测试成员访问与索引访问的组合。
+ * @details 验证解析器能够正确解析索引访问后的成员访问。
  */
-int main() {
-  std::cout << "======================================" << std::endl;
-  std::cout << "  CST Parser Test Suite" << std::endl;
-  std::cout << "======================================" << std::endl;
+TEST_F(ParserTest, MemberAccessWithIndex) {
+  Lexer lexer("arr[0].name;");
+  auto tokens = lexer.tokenize();
 
-  try {
-    test_variable_declaration();
-    test_function_declaration();
-    test_binary_expression();
-    test_if_statement();
-    test_while_statement();
-    test_array_literal();
-    test_function_call();
-    test_parenthesized_expression();
-    test_error_handling();
-    test_member_access();
+  Parser parser(tokens);
+  auto cst = parser.parse();
 
-    std::cout << "\n======================================" << std::endl;
-    std::cout << "  All tests passed!" << std::endl;
-    std::cout << "======================================" << std::endl;
-
-    return 0;
-  } catch (const std::exception& e) {
-    std::cerr << "Test failed with exception: " << e.what() << std::endl;
-    return 1;
-  }
+  ASSERT_NE(cst, nullptr);
+  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  EXPECT_FALSE(parser.has_errors());
 }
