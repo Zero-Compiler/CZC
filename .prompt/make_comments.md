@@ -8,8 +8,6 @@
 
 你要扮演的角色: 高级软件架构师
 
-目标: 制定一份权威的 C++ 注释风格指南，结合 Doxygen 和 Google C++ Style Guide 的注释规范，适用于经验丰富的开发团队。
-
 ## Role and Goal
 
 You are a senior software architect responsible for creating a definitive C++ commenting style guide for an experienced development team. Your goal is to produce a clear, professional, and practical document that establishes a unified commenting standard, blending the formal structure of Doxygen for API documentation with the pragmatic principles of the Google C++ Style Guide for implementation clarity.
@@ -49,7 +47,7 @@ a++;
 index++;
 ```
 
-***
+---
 
 ### 2. 基本注释风格
 
@@ -69,7 +67,7 @@ index++;
 // 初始化日志系统，必须在主线程调用
 ```
 
-***
+---
 
 ### 3. 文件头注释 (Doxygen)
 
@@ -90,7 +88,7 @@ index++;
 - `@brief` 简洁描述文件职责。
 - 文件头可额外包含模块说明或依赖关系简述。
 
-***
+---
 
 ### 4. 类与结构体注释 (Doxygen)
 
@@ -121,7 +119,7 @@ class ConfigFile { ... };
 - 生命周期/线程安全说明 (`@property`)
 - 明确性能特征与限制
 
-***
+---
 
 ### 5. 函数与方法注释 (Doxygen)
 
@@ -147,7 +145,7 @@ bool parseInt(const std::string& str, int& result);
 - 所有参数必须注明输入输出方向 `[in]`, `[out]`, `[in,out]`。
 - 对返回值、异常条件、性能陷阱做充足描述。
 
-***
+---
 
 ### 6. 实现注释（Implementation Comments）
 
@@ -214,7 +212,7 @@ if (last_char != std::string::npos)
     key.erase(last_char + 1);
 ```
 
-***
+---
 
 ### 7. 变量注释
 
@@ -226,31 +224,25 @@ if (last_char != std::string::npos)
     // 管理权归本类所有，销毁时自动释放。
     QueryResult* cache_ptr_ = nullptr;
   ```
-
 - **全局/静态变量:** 不推荐使用。若必须使用，必须充分说明：
+
   - 使用目的
   - 线程安全影响
   - 生命周期管理方式
 
-***
+---
 
 ### 8. 特殊注释标记 (状态追踪)
 
 特殊标记用于维护、审查与技术债跟踪，应保持一致格式。
 
-- **TODO:** 未完成任务、优化点  
-  `// TODO(BegoniaHe, JIRA-213): 使用无锁队列优化日志写入。`
-
-- **FIXME:** 已知缺陷，需尽快修正  
-  `// FIXME(BegoniaHe): 此分支在空输入时行为未定义。`
-
-- **DEPRECATED:** 弃用接口，提供替代说明  
-  `// DEPRECATED: 此函数将在v3.0删除，请使用 LogManager::WriteAsync()。`
-
-- **NOTE:** 记录背景或设计决策  
+- **TODO:** 未完成任务、优化点`// TODO(BegoniaHe, JIRA-213): 使用无锁队列优化日志写入。`
+- **FIXME:** 已知缺陷，需尽快修正`// FIXME(BegoniaHe): 此分支在空输入时行为未定义。`
+- **DEPRECATED:** 弃用接口，提供替代说明`// DEPRECATED: 此函数将在v3.0删除，请使用 LogManager::WriteAsync()。`
+- **NOTE:** 记录背景或设计决策
   `// NOTE: 此实现使用惰性加载，旨在减少初始化时延。`
 
-***
+---
 
 ### 9. 注释实践建议
 
@@ -269,7 +261,7 @@ if (input.empty()) {
 }
 ```
 
-***
+---
 
 ### 10. 注释审查与维护
 
