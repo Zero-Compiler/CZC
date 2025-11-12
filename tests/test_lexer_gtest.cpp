@@ -483,7 +483,8 @@ TEST_F(LexerTest, ConsecutiveOperators) {
  * @details 验证词法分析器能够识别所有语言关键字。
  */
 TEST_F(LexerTest, AllKeywords) {
-  auto tokens = tokenize("let var fn return if else while for in struct enum type trait true false");
+  auto tokens = tokenize("let var fn return if else while for in struct enum "
+                         "type trait true false");
 
   EXPECT_EQ(tokens[0].token_type, TokenType::Let);
   EXPECT_EQ(tokens[1].token_type, TokenType::Var);
@@ -510,14 +511,11 @@ TEST_F(LexerTest, SingleCharacterTokens) {
   auto tokens = tokenize("+ - * / % ( ) { } [ ] , ; : .");
 
   std::vector<TokenType> expected = {
-    TokenType::Plus, TokenType::Minus, TokenType::Star,
-    TokenType::Slash, TokenType::Percent,
-    TokenType::LeftParen, TokenType::RightParen,
-    TokenType::LeftBrace, TokenType::RightBrace,
-    TokenType::LeftBracket, TokenType::RightBracket,
-    TokenType::Comma, TokenType::Semicolon, TokenType::Colon,
-    TokenType::Dot
-  };
+      TokenType::Plus,        TokenType::Minus,        TokenType::Star,
+      TokenType::Slash,       TokenType::Percent,      TokenType::LeftParen,
+      TokenType::RightParen,  TokenType::LeftBrace,    TokenType::RightBrace,
+      TokenType::LeftBracket, TokenType::RightBracket, TokenType::Comma,
+      TokenType::Semicolon,   TokenType::Colon,        TokenType::Dot};
 
   ASSERT_EQ(tokens.size() - 1, expected.size()); // -1 for EOF
   for (size_t i = 0; i < expected.size(); ++i) {
@@ -668,9 +666,8 @@ TEST_F(LexerTest, WhitespaceHandling) {
 
   // Should skip whitespace and produce: let, x, =, 5, ;, EOF
   std::vector<TokenType> expected = {
-    TokenType::Let, TokenType::Identifier, TokenType::Equal,
-    TokenType::Integer, TokenType::Semicolon, TokenType::EndOfFile
-  };
+      TokenType::Let,     TokenType::Identifier, TokenType::Equal,
+      TokenType::Integer, TokenType::Semicolon,  TokenType::EndOfFile};
 
   ASSERT_EQ(tokens.size(), expected.size());
   for (size_t i = 0; i < expected.size(); ++i) {
@@ -698,7 +695,7 @@ TEST_F(LexerTest, NestedBrackets) {
 
   int left_count = 0, right_count = 0;
   for (const auto& tok : tokens) {
-    if (tok.token_type == TokenType::LeftParen || 
+    if (tok.token_type == TokenType::LeftParen ||
         tok.token_type == TokenType::LeftBracket ||
         tok.token_type == TokenType::LeftBrace) {
       left_count++;
@@ -732,7 +729,7 @@ TEST_F(LexerTest, KeywordVsIdentifierBoundary) {
  */
 TEST_F(LexerTest, InvalidUnicodeEscapeNotEnoughDigits) {
   auto tokens = tokenize("\"\\u12\""); // 只有2位而非4位
-  
+
   ASSERT_GE(tokens.size(), 1);
   // 应该产生错误,但仍然生成token
 }
@@ -743,7 +740,7 @@ TEST_F(LexerTest, InvalidUnicodeEscapeNotEnoughDigits) {
  */
 TEST_F(LexerTest, ValidUnicodeEscape) {
   auto tokens = tokenize("\"\\u0041\""); // \u0041 = 'A'
-  
+
   ASSERT_GE(tokens.size(), 1);
   EXPECT_EQ(tokens[0].token_type, TokenType::String);
 }
@@ -754,7 +751,7 @@ TEST_F(LexerTest, ValidUnicodeEscape) {
  */
 TEST_F(LexerTest, ValidLongUnicodeEscape) {
   auto tokens = tokenize("\"\\U00000041\""); // \U00000041 = 'A'
-  
+
   ASSERT_GE(tokens.size(), 1);
   EXPECT_EQ(tokens[0].token_type, TokenType::String);
 }
@@ -765,7 +762,7 @@ TEST_F(LexerTest, ValidLongUnicodeEscape) {
  */
 TEST_F(LexerTest, InvalidLongUnicodeEscape) {
   auto tokens = tokenize("\"\\U0000\""); // 只有4位而非8位
-  
+
   ASSERT_GE(tokens.size(), 1);
   // 应该产生错误
 }
@@ -776,7 +773,7 @@ TEST_F(LexerTest, InvalidLongUnicodeEscape) {
  */
 TEST_F(LexerTest, HexEscapeSequence) {
   auto tokens = tokenize("\"\\x41\""); // \x41 = 'A'
-  
+
   ASSERT_GE(tokens.size(), 1);
   EXPECT_EQ(tokens[0].token_type, TokenType::String);
 }
@@ -787,7 +784,7 @@ TEST_F(LexerTest, HexEscapeSequence) {
  */
 TEST_F(LexerTest, InvalidHexEscapeSequence) {
   auto tokens = tokenize("\"\\xGG\""); // G不是十六进制数字
-  
+
   ASSERT_GE(tokens.size(), 1);
   // 应该产生错误
 }
@@ -798,7 +795,7 @@ TEST_F(LexerTest, InvalidHexEscapeSequence) {
  */
 TEST_F(LexerTest, RawStringBasic) {
   auto tokens = tokenize("r\"hello\\nworld\""); // \n不应该被转义
-  
+
   ASSERT_GE(tokens.size(), 1);
   EXPECT_EQ(tokens[0].token_type, TokenType::String);
   // 原始字符串中\n应该保持为两个字符
@@ -810,7 +807,7 @@ TEST_F(LexerTest, RawStringBasic) {
  */
 TEST_F(LexerTest, RawStringSpecialChars) {
   auto tokens = tokenize("r\"\\t\\r\\\"\\\\\"");
-  
+
   ASSERT_GE(tokens.size(), 1);
   EXPECT_EQ(tokens[0].token_type, TokenType::String);
   // 所有转义序列应该保持原样
@@ -822,7 +819,7 @@ TEST_F(LexerTest, RawStringSpecialChars) {
  */
 TEST_F(LexerTest, UnterminatedRawString) {
   auto tokens = tokenize("r\"unterminated");
-  
+
   ASSERT_GE(tokens.size(), 1);
   // 应该产生错误
 }
@@ -833,7 +830,7 @@ TEST_F(LexerTest, UnterminatedRawString) {
  */
 TEST_F(LexerTest, MultilineRawString) {
   auto tokens = tokenize("r\"line1\nline2\nline3\"");
-  
+
   ASSERT_GE(tokens.size(), 1);
   EXPECT_EQ(tokens[0].token_type, TokenType::String);
 }
@@ -846,7 +843,7 @@ TEST_F(LexerTest, InvalidUtf8InIdentifier) {
   // 构造包含无效UTF-8序列的输入
   std::string invalid_utf8 = "test\xFF\xFE";
   auto tokens = tokenize(invalid_utf8);
-  
+
   // 应该能解析出某些token,可能包含错误
   ASSERT_GE(tokens.size(), 1);
 }
@@ -858,7 +855,7 @@ TEST_F(LexerTest, InvalidUtf8InIdentifier) {
 TEST_F(LexerTest, InvalidUtf8InString) {
   std::string invalid_str = "\"\xFF\xFE\"";
   auto tokens = tokenize(invalid_str);
-  
+
   ASSERT_GE(tokens.size(), 1);
   // 应该产生错误
 }
@@ -869,7 +866,7 @@ TEST_F(LexerTest, InvalidUtf8InString) {
  */
 TEST_F(LexerTest, Utf8InRawString) {
   auto tokens = tokenize("r\"你好世界🌍\"");
-  
+
   ASSERT_GE(tokens.size(), 1);
   EXPECT_EQ(tokens[0].token_type, TokenType::String);
 }
@@ -880,7 +877,7 @@ TEST_F(LexerTest, Utf8InRawString) {
  */
 TEST_F(LexerTest, RangeOperator) {
   auto tokens = tokenize("0..10");
-  
+
   ASSERT_GE(tokens.size(), 3);
   EXPECT_EQ(tokens[0].token_type, TokenType::Integer);
   EXPECT_EQ(tokens[1].token_type, TokenType::DotDot);
@@ -893,7 +890,7 @@ TEST_F(LexerTest, RangeOperator) {
  */
 TEST_F(LexerTest, ArrowOperatorInExpression) {
   auto tokens = tokenize("fn add(x) -> x + 1");
-  
+
   bool found_arrow = false;
   for (const auto& tok : tokens) {
     if (tok.token_type == TokenType::Arrow) {
@@ -910,7 +907,7 @@ TEST_F(LexerTest, ArrowOperatorInExpression) {
  */
 TEST_F(LexerTest, FloatWithOnlyDecimalPoint) {
   auto tokens = tokenize("3.");
-  
+
   ASSERT_GE(tokens.size(), 2);
   // 3. 会被解析为整数3和点.
   EXPECT_EQ(tokens[0].token_type, TokenType::Integer);
@@ -923,7 +920,7 @@ TEST_F(LexerTest, FloatWithOnlyDecimalPoint) {
  */
 TEST_F(LexerTest, FloatStartingWithDecimalPoint) {
   auto tokens = tokenize(".5");
-  
+
   ASSERT_GE(tokens.size(), 2);
   // .5 会被解析为点.和整数5
   EXPECT_EQ(tokens[0].token_type, TokenType::Dot);
@@ -936,7 +933,7 @@ TEST_F(LexerTest, FloatStartingWithDecimalPoint) {
  */
 TEST_F(LexerTest, MultipleDotsHandling) {
   auto tokens = tokenize("1...3"); // ..是range,第三个.是单独的
-  
+
   ASSERT_GE(tokens.size(), 3);
   // 应该有: 1, .., ., 3 或其他合理的分词
 }
@@ -947,7 +944,7 @@ TEST_F(LexerTest, MultipleDotsHandling) {
  */
 TEST_F(LexerTest, ContinuousErrors) {
   auto tokens = tokenize("@@## $$");
-  
+
   // 应该能够继续解析,尽管有错误
   ASSERT_GE(tokens.size(), 1);
 }
@@ -958,7 +955,7 @@ TEST_F(LexerTest, ContinuousErrors) {
  */
 TEST_F(LexerTest, AllSingleCharOperatorsCombined) {
   auto tokens = tokenize("+-*/%=<>!&|.,:;(){}[]");
-  
+
   EXPECT_GT(tokens.size(), 15);
   // 验证每个操作符都被正确识别
 }
@@ -969,14 +966,15 @@ TEST_F(LexerTest, AllSingleCharOperatorsCombined) {
  */
 TEST_F(LexerTest, DeeplyNestedExpression) {
   auto tokens = tokenize("((((a + b) * (c - d)) / (e % f)) && (g || h))");
-  
+
   EXPECT_GT(tokens.size(), 20);
   // 验证括号匹配
   int paren_count = 0;
   for (const auto& tok : tokens) {
-    if (tok.token_type == TokenType::LeftParen) paren_count++;
-    if (tok.token_type == TokenType::RightParen) paren_count--;
+    if (tok.token_type == TokenType::LeftParen)
+      paren_count++;
+    if (tok.token_type == TokenType::RightParen)
+      paren_count--;
   }
   EXPECT_EQ(paren_count, 0);
 }
-

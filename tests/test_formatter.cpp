@@ -562,4 +562,3 @@ TEST_F(FormatterTest, BooleanLiteralFormatting) {
   EXPECT_FALSE(formatted.empty());
   EXPECT_NE(formatted.find("true"), std::string::npos);
 }
-

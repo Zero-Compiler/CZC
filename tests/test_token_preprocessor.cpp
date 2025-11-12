@@ -323,7 +323,7 @@ TEST_F(TokenPreprocessorTest, LeadingZeroWithDecimal) {
                                                   make_test_context());
   ASSERT_TRUE(info.has_value());
   EXPECT_EQ(info->inferred_type, InferredNumericType::INT64);
-  
+
   // 0.001e2 = 0.1，应推断为 FLOAT
   auto info2 = ScientificNotationAnalyzer::analyze("0.001e2", nullptr,
                                                    make_test_context());
@@ -339,15 +339,15 @@ TEST_F(TokenPreprocessorTest, LeadingZeroWithDecimal) {
  */
 TEST_F(TokenPreprocessorTest, InvalidScientificFormat) {
   // 缺少指数部分
-  auto info1 = ScientificNotationAnalyzer::analyze("1.5e", nullptr,
-                                                   make_test_context());
+  auto info1 =
+      ScientificNotationAnalyzer::analyze("1.5e", nullptr, make_test_context());
   EXPECT_FALSE(info1.has_value());
-  
+
   // 缺少尾数部分
-  auto info2 = ScientificNotationAnalyzer::analyze("e10", nullptr,
-                                                   make_test_context());
+  auto info2 =
+      ScientificNotationAnalyzer::analyze("e10", nullptr, make_test_context());
   EXPECT_FALSE(info2.has_value());
-  
+
   // 没有 e 或 E
   auto info3 = ScientificNotationAnalyzer::analyze("123.456", nullptr,
                                                    make_test_context());
@@ -363,7 +363,7 @@ TEST_F(TokenPreprocessorTest, InvalidExponentFormat) {
   auto info1 = ScientificNotationAnalyzer::analyze("1.5eabc", nullptr,
                                                    make_test_context());
   EXPECT_FALSE(info1.has_value());
-  
+
   // 指数包含特殊字符
   auto info2 = ScientificNotationAnalyzer::analyze("1.5e@10", nullptr,
                                                    make_test_context());
@@ -384,7 +384,7 @@ TEST_F(TokenPreprocessorTest, FullProcessingPipeline) {
 
   // 验证错误收集器没有错误
   EXPECT_FALSE(preprocessor.get_errors().has_errors());
-  
+
   // 验证 Token 流长度合理
   EXPECT_GT(processed.size(), 0);
 }
@@ -395,10 +395,10 @@ TEST_F(TokenPreprocessorTest, FullProcessingPipeline) {
  */
 TEST_F(TokenPreprocessorTest, EmptyTokenStream) {
   std::vector<Token> empty_tokens;
-  
+
   TokenPreprocessor preprocessor;
   auto processed = preprocessor.process(empty_tokens, "<test>", "");
-  
+
   EXPECT_EQ(processed.size(), 0);
   EXPECT_FALSE(preprocessor.get_errors().has_errors());
 }
@@ -435,7 +435,7 @@ TEST_F(TokenPreprocessorTest, MixedTokenTypes) {
   // 查找并验证科学记数法 Token 被正确转换
   int integer_count = 0;
   int float_count = 0;
-  
+
   for (const auto& token : processed) {
     if (token.token_type == TokenType::Integer) {
       integer_count++;
@@ -443,7 +443,7 @@ TEST_F(TokenPreprocessorTest, MixedTokenTypes) {
       float_count++;
     }
   }
-  
+
   // 应该至少有一些数字 Token 被处理
   EXPECT_GT(integer_count + float_count, 0);
 }
@@ -454,21 +454,21 @@ TEST_F(TokenPreprocessorTest, MixedTokenTypes) {
  */
 TEST_F(TokenPreprocessorTest, DecimalPointPositions) {
   // 小数点在开头
-  auto info1 = ScientificNotationAnalyzer::analyze(".5e2", nullptr,
-                                                   make_test_context());
+  auto info1 =
+      ScientificNotationAnalyzer::analyze(".5e2", nullptr, make_test_context());
   if (info1.has_value()) {
     EXPECT_TRUE(info1->has_decimal_point);
   }
-  
+
   // 小数点在中间
   auto info2 = ScientificNotationAnalyzer::analyze("1.5e2", nullptr,
                                                    make_test_context());
   ASSERT_TRUE(info2.has_value());
   EXPECT_TRUE(info2->has_decimal_point);
-  
+
   // 没有小数点
-  auto info3 = ScientificNotationAnalyzer::analyze("15e2", nullptr,
-                                                   make_test_context());
+  auto info3 =
+      ScientificNotationAnalyzer::analyze("15e2", nullptr, make_test_context());
   ASSERT_TRUE(info3.has_value());
   EXPECT_FALSE(info3->has_decimal_point);
 }
@@ -483,19 +483,19 @@ TEST_F(TokenPreprocessorTest, ExponentNotationVariants) {
                                                    make_test_context());
   ASSERT_TRUE(info1.has_value());
   EXPECT_EQ(info1->exponent, 10);
-  
+
   // 大写 E
   auto info2 = ScientificNotationAnalyzer::analyze("1.5E10", nullptr,
                                                    make_test_context());
   ASSERT_TRUE(info2.has_value());
   EXPECT_EQ(info2->exponent, 10);
-  
+
   // 显式正号
   auto info3 = ScientificNotationAnalyzer::analyze("1.5e+10", nullptr,
                                                    make_test_context());
   ASSERT_TRUE(info3.has_value());
   EXPECT_EQ(info3->exponent, 10);
-  
+
   // 负号
   auto info4 = ScientificNotationAnalyzer::analyze("1.5e-10", nullptr,
                                                    make_test_context());
@@ -510,7 +510,7 @@ TEST_F(TokenPreprocessorTest, ExponentNotationVariants) {
 TEST_F(TokenPreprocessorTest, TypeToStringConversion) {
   std::string int_str = inferred_type_to_string(InferredNumericType::INT64);
   std::string float_str = inferred_type_to_string(InferredNumericType::FLOAT);
-  
+
   EXPECT_FALSE(int_str.empty());
   EXPECT_FALSE(float_str.empty());
   EXPECT_NE(int_str, float_str);

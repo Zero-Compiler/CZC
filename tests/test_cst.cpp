@@ -10,11 +10,13 @@
  */
 
 #include "czc/cst/cst_node.hpp"
-#include "czc/parser/parser.hpp"
 #include "czc/lexer/lexer.hpp"
 #include "czc/lexer/token.hpp"
-#include <gtest/gtest.h>
+#include "czc/parser/parser.hpp"
+
 #include <unordered_set>
+
+#include <gtest/gtest.h>
 
 using namespace czc;
 using namespace czc::cst;
@@ -48,16 +50,16 @@ protected:
  */
 TEST_F(CSTNodeTest, BasicNodeCreation) {
   auto loc = make_test_location();
-  
+
   // 测试创建Program节点
   auto program = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
   EXPECT_EQ(program->get_type(), CSTNodeType::Program);
-  
+
   // 测试创建ExprStmt节点
   auto stmt = std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc);
   ASSERT_NE(stmt, nullptr);
   EXPECT_EQ(stmt->get_type(), CSTNodeType::ExprStmt);
-  
+
   // 测试创建BinaryExpr节点
   auto expr = std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc);
   ASSERT_NE(expr, nullptr);
@@ -76,12 +78,12 @@ TEST_F(CSTNodeTest, BasicNodeCreation) {
 TEST_F(CSTNodeTest, AddChildren) {
   auto loc = make_test_location();
   auto parent = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
-  
+
   // 添加多个子节点
   parent->add_child(std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc));
   parent->add_child(std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc));
   parent->add_child(std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc));
-  
+
   const auto& children = parent->get_children();
   EXPECT_EQ(children.size(), 3);
   EXPECT_EQ(children[0]->get_type(), CSTNodeType::ExprStmt);
@@ -101,11 +103,11 @@ TEST_F(CSTNodeTest, AddChildren) {
 TEST_F(CSTNodeTest, AssociateToken) {
   auto loc = make_test_location();
   auto node = std::make_unique<CSTNode>(CSTNodeType::IntegerLiteral, loc);
-  
+
   // 创建Token并关联到节点
   Token tok(TokenType::Integer, "42", 1, 1);
   node->set_token(tok);
-  
+
   // 验证Token正确关联
   const auto& associated_token = node->get_token();
   ASSERT_TRUE(associated_token.has_value());
@@ -124,7 +126,7 @@ TEST_F(CSTNodeTest, AssociateToken) {
 TEST_F(CSTNodeTest, EmptyChildrenList) {
   auto loc = make_test_location();
   auto node = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
-  
+
   const auto& children = node->get_children();
   EXPECT_TRUE(children.empty());
   EXPECT_EQ(children.size(), 0);
@@ -140,10 +142,10 @@ TEST_F(CSTNodeTest, EmptyChildrenList) {
  */
 TEST_F(CSTNodeTest, LocationInfo) {
   SourceLocation loc("test.zero", 5, 10);
-  
+
   auto node = std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc);
   const auto& node_loc = node->get_location();
-  
+
   EXPECT_EQ(node_loc.filename, "test.zero");
   EXPECT_EQ(node_loc.line, 5);
   EXPECT_EQ(node_loc.column, 10);
@@ -159,41 +161,25 @@ TEST_F(CSTNodeTest, LocationInfo) {
  */
 TEST_F(CSTNodeTest, AllNodeTypes) {
   auto loc = make_test_location();
-  
+
   std::vector<CSTNodeType> all_types = {
-    CSTNodeType::Program,
-    CSTNodeType::VarDeclaration,
-    CSTNodeType::FnDeclaration,
-    CSTNodeType::ReturnStmt,
-    CSTNodeType::IfStmt,
-    CSTNodeType::WhileStmt,
-    CSTNodeType::BlockStmt,
-    CSTNodeType::ExprStmt,
-    CSTNodeType::BinaryExpr,
-    CSTNodeType::UnaryExpr,
-    CSTNodeType::CallExpr,
-    CSTNodeType::IndexExpr,
-    CSTNodeType::MemberExpr,
-    CSTNodeType::AssignExpr,
-    CSTNodeType::IndexAssignExpr,
-    CSTNodeType::ArrayLiteral,
-    CSTNodeType::IntegerLiteral,
-    CSTNodeType::FloatLiteral,
-    CSTNodeType::StringLiteral,
-    CSTNodeType::BooleanLiteral,
-    CSTNodeType::Identifier,
-    CSTNodeType::ParenExpr,
-    CSTNodeType::TypeAnnotation,
-    CSTNodeType::ArrayType,
-    CSTNodeType::Parameter,
-    CSTNodeType::ParameterList,
-    CSTNodeType::ArgumentList,
-    CSTNodeType::StatementList,
-    CSTNodeType::Operator,
-    CSTNodeType::Delimiter,
-    CSTNodeType::Comment
-  };
-  
+      CSTNodeType::Program,         CSTNodeType::VarDeclaration,
+      CSTNodeType::FnDeclaration,   CSTNodeType::ReturnStmt,
+      CSTNodeType::IfStmt,          CSTNodeType::WhileStmt,
+      CSTNodeType::BlockStmt,       CSTNodeType::ExprStmt,
+      CSTNodeType::BinaryExpr,      CSTNodeType::UnaryExpr,
+      CSTNodeType::CallExpr,        CSTNodeType::IndexExpr,
+      CSTNodeType::MemberExpr,      CSTNodeType::AssignExpr,
+      CSTNodeType::IndexAssignExpr, CSTNodeType::ArrayLiteral,
+      CSTNodeType::IntegerLiteral,  CSTNodeType::FloatLiteral,
+      CSTNodeType::StringLiteral,   CSTNodeType::BooleanLiteral,
+      CSTNodeType::Identifier,      CSTNodeType::ParenExpr,
+      CSTNodeType::TypeAnnotation,  CSTNodeType::ArrayType,
+      CSTNodeType::Parameter,       CSTNodeType::ParameterList,
+      CSTNodeType::ArgumentList,    CSTNodeType::StatementList,
+      CSTNodeType::Operator,        CSTNodeType::Delimiter,
+      CSTNodeType::Comment};
+
   for (const auto& type : all_types) {
     auto node = std::make_unique<CSTNode>(type, loc);
     EXPECT_EQ(node->get_type(), type);
@@ -211,13 +197,13 @@ TEST_F(CSTNodeTest, AllNodeTypes) {
 TEST_F(CSTNodeTest, NodeTypeToString) {
   std::string program_str = cst_node_type_to_string(CSTNodeType::Program);
   EXPECT_FALSE(program_str.empty());
-  
+
   std::string stmt_str = cst_node_type_to_string(CSTNodeType::ExprStmt);
   EXPECT_FALSE(stmt_str.empty());
-  
+
   std::string expr_str = cst_node_type_to_string(CSTNodeType::BinaryExpr);
   EXPECT_FALSE(expr_str.empty());
-  
+
   // 不同类型应该有不同的字符串
   EXPECT_NE(program_str, stmt_str);
   EXPECT_NE(stmt_str, expr_str);
@@ -234,28 +220,28 @@ TEST_F(CSTNodeTest, NodeTypeToString) {
  */
 TEST_F(CSTNodeTest, NestedStructure) {
   auto loc = make_test_location();
-  
+
   // 创建三层嵌套结构: Program -> BlockStmt -> ExprStmt -> BinaryExpr
   auto program = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
   auto block = std::make_unique<CSTNode>(CSTNodeType::BlockStmt, loc);
   auto stmt = std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc);
   auto expr = std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc);
-  
+
   // 构建嵌套关系
   stmt->add_child(std::move(expr));
   block->add_child(std::move(stmt));
   program->add_child(std::move(block));
-  
+
   // 验证结构
   EXPECT_EQ(program->get_children().size(), 1);
   const auto* block_ref = program->get_children()[0].get();
   EXPECT_EQ(block_ref->get_type(), CSTNodeType::BlockStmt);
   EXPECT_EQ(block_ref->get_children().size(), 1);
-  
+
   const auto* stmt_ref = block_ref->get_children()[0].get();
   EXPECT_EQ(stmt_ref->get_type(), CSTNodeType::ExprStmt);
   EXPECT_EQ(stmt_ref->get_children().size(), 1);
-  
+
   const auto* expr_ref = stmt_ref->get_children()[0].get();
   EXPECT_EQ(expr_ref->get_type(), CSTNodeType::BinaryExpr);
 }
@@ -273,10 +259,10 @@ TEST_F(CSTNodeTest, RealParserCST) {
   const char* source = "let x: int = 42;";
   lexer::Lexer lexer(source);
   auto tokens = lexer.tokenize();
-  
+
   parser::Parser parser(tokens);
   auto cst = parser.parse();
-  
+
   ASSERT_NE(cst, nullptr);
   EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
   EXPECT_FALSE(cst->get_children().empty());
@@ -292,21 +278,21 @@ TEST_F(CSTNodeTest, RealParserCST) {
  */
 TEST_F(CSTNodeTest, BinaryExpressionCST) {
   auto loc = make_test_location();
-  
+
   // 创建二元表达式: 1 + 2
   auto binary = std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc);
   auto left = std::make_unique<CSTNode>(CSTNodeType::IntegerLiteral, loc);
   auto right = std::make_unique<CSTNode>(CSTNodeType::IntegerLiteral, loc);
-  
+
   Token left_tok(TokenType::Integer, "1", 1, 1);
   Token right_tok(TokenType::Integer, "2", 1, 5);
-  
+
   left->set_token(left_tok);
   right->set_token(right_tok);
-  
+
   binary->add_child(std::move(left));
   binary->add_child(std::move(right));
-  
+
   EXPECT_EQ(binary->get_children().size(), 2);
   EXPECT_EQ(binary->get_children()[0]->get_token()->value, "1");
   EXPECT_EQ(binary->get_children()[1]->get_token()->value, "2");
@@ -322,14 +308,14 @@ TEST_F(CSTNodeTest, BinaryExpressionCST) {
  */
 TEST_F(CSTNodeTest, FunctionDeclCST) {
   auto loc = make_test_location();
-  
+
   auto fn_decl = std::make_unique<CSTNode>(CSTNodeType::FnDeclaration, loc);
   auto param_list = std::make_unique<CSTNode>(CSTNodeType::ParameterList, loc);
   auto body = std::make_unique<CSTNode>(CSTNodeType::BlockStmt, loc);
-  
+
   fn_decl->add_child(std::move(param_list));
   fn_decl->add_child(std::move(body));
-  
+
   EXPECT_EQ(fn_decl->get_type(), CSTNodeType::FnDeclaration);
   EXPECT_EQ(fn_decl->get_children().size(), 2);
   EXPECT_EQ(fn_decl->get_children()[0]->get_type(), CSTNodeType::ParameterList);
@@ -346,14 +332,16 @@ TEST_F(CSTNodeTest, FunctionDeclCST) {
  */
 TEST_F(CSTNodeTest, MultipleStatementsCST) {
   auto loc = make_test_location();
-  
+
   auto program = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
-  program->add_child(std::make_unique<CSTNode>(CSTNodeType::VarDeclaration, loc));
+  program->add_child(
+      std::make_unique<CSTNode>(CSTNodeType::VarDeclaration, loc));
   program->add_child(std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc));
   program->add_child(std::make_unique<CSTNode>(CSTNodeType::ReturnStmt, loc));
-  
+
   EXPECT_EQ(program->get_children().size(), 3);
-  EXPECT_EQ(program->get_children()[0]->get_type(), CSTNodeType::VarDeclaration);
+  EXPECT_EQ(program->get_children()[0]->get_type(),
+            CSTNodeType::VarDeclaration);
   EXPECT_EQ(program->get_children()[1]->get_type(), CSTNodeType::ExprStmt);
   EXPECT_EQ(program->get_children()[2]->get_type(), CSTNodeType::ReturnStmt);
 }
@@ -368,26 +356,26 @@ TEST_F(CSTNodeTest, MultipleStatementsCST) {
  */
 TEST_F(CSTNodeTest, ControlFlowCST) {
   auto loc = make_test_location();
-  
+
   // 创建if语句
   auto if_stmt = std::make_unique<CSTNode>(CSTNodeType::IfStmt, loc);
   auto condition = std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc);
   auto then_block = std::make_unique<CSTNode>(CSTNodeType::BlockStmt, loc);
-  
+
   if_stmt->add_child(std::move(condition));
   if_stmt->add_child(std::move(then_block));
-  
+
   EXPECT_EQ(if_stmt->get_type(), CSTNodeType::IfStmt);
   EXPECT_EQ(if_stmt->get_children().size(), 2);
-  
+
   // 创建while语句
   auto while_stmt = std::make_unique<CSTNode>(CSTNodeType::WhileStmt, loc);
   auto loop_cond = std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc);
   auto loop_body = std::make_unique<CSTNode>(CSTNodeType::BlockStmt, loc);
-  
+
   while_stmt->add_child(std::move(loop_cond));
   while_stmt->add_child(std::move(loop_body));
-  
+
   EXPECT_EQ(while_stmt->get_type(), CSTNodeType::WhileStmt);
   EXPECT_EQ(while_stmt->get_children().size(), 2);
 }
@@ -403,7 +391,7 @@ TEST_F(CSTNodeTest, ControlFlowCST) {
 TEST_F(CSTNodeTest, EmptyProgramCST) {
   auto loc = make_test_location();
   auto program = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
-  
+
   EXPECT_EQ(program->get_type(), CSTNodeType::Program);
   EXPECT_TRUE(program->get_children().empty());
 }
@@ -418,17 +406,17 @@ TEST_F(CSTNodeTest, EmptyProgramCST) {
  */
 TEST_F(CSTNodeTest, CSTWithComments) {
   auto loc = make_test_location();
-  
+
   auto program = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
-  
+
   // 添加注释节点
   auto comment = std::make_unique<CSTNode>(CSTNodeType::Comment, loc);
   Token comment_tok(TokenType::Comment, "// This is a comment", 1, 1);
   comment->set_token(comment_tok);
-  
+
   program->add_child(std::move(comment));
   program->add_child(std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc));
-  
+
   EXPECT_EQ(program->get_children().size(), 2);
   EXPECT_EQ(program->get_children()[0]->get_type(), CSTNodeType::Comment);
   EXPECT_EQ(program->get_children()[1]->get_type(), CSTNodeType::ExprStmt);
@@ -445,9 +433,9 @@ TEST_F(CSTNodeTest, CSTWithComments) {
  */
 TEST_F(CSTNodeTest, MakeCSTNodeWithLocation) {
   SourceLocation loc("helper_test.zero", 10, 20);
-  
+
   auto node = make_cst_node(CSTNodeType::VarDeclaration, loc);
-  
+
   ASSERT_NE(node, nullptr);
   EXPECT_EQ(node->get_type(), CSTNodeType::VarDeclaration);
   EXPECT_EQ(node->get_location().filename, "helper_test.zero");
@@ -467,14 +455,14 @@ TEST_F(CSTNodeTest, MakeCSTNodeWithLocation) {
  */
 TEST_F(CSTNodeTest, MakeCSTNodeWithToken) {
   Token tok(TokenType::Identifier, "myVar", 15, 25);
-  
+
   auto node = make_cst_node(CSTNodeType::Identifier, tok);
-  
+
   ASSERT_NE(node, nullptr);
   EXPECT_EQ(node->get_type(), CSTNodeType::Identifier);
   EXPECT_EQ(node->get_location().line, 15);
   EXPECT_EQ(node->get_location().column, 25);
-  
+
   const auto& token_opt = node->get_token();
   ASSERT_TRUE(token_opt.has_value());
   EXPECT_EQ(token_opt->token_type, TokenType::Identifier);
@@ -492,56 +480,40 @@ TEST_F(CSTNodeTest, MakeCSTNodeWithToken) {
  */
 TEST_F(CSTNodeTest, AllCSTNodeTypeStrings) {
   std::vector<CSTNodeType> all_types = {
-    CSTNodeType::Program,
-    CSTNodeType::VarDeclaration,
-    CSTNodeType::FnDeclaration,
-    CSTNodeType::ReturnStmt,
-    CSTNodeType::IfStmt,
-    CSTNodeType::WhileStmt,
-    CSTNodeType::BlockStmt,
-    CSTNodeType::ExprStmt,
-    CSTNodeType::BinaryExpr,
-    CSTNodeType::UnaryExpr,
-    CSTNodeType::CallExpr,
-    CSTNodeType::IndexExpr,
-    CSTNodeType::MemberExpr,
-    CSTNodeType::AssignExpr,
-    CSTNodeType::IndexAssignExpr,
-    CSTNodeType::ArrayLiteral,
-    CSTNodeType::IntegerLiteral,
-    CSTNodeType::FloatLiteral,
-    CSTNodeType::StringLiteral,
-    CSTNodeType::BooleanLiteral,
-    CSTNodeType::Identifier,
-    CSTNodeType::ParenExpr,
-    CSTNodeType::TypeAnnotation,
-    CSTNodeType::ArrayType,
-    CSTNodeType::Parameter,
-    CSTNodeType::ParameterList,
-    CSTNodeType::ArgumentList,
-    CSTNodeType::StatementList,
-    CSTNodeType::Operator,
-    CSTNodeType::Delimiter,
-    CSTNodeType::Comment
-  };
-  
+      CSTNodeType::Program,         CSTNodeType::VarDeclaration,
+      CSTNodeType::FnDeclaration,   CSTNodeType::ReturnStmt,
+      CSTNodeType::IfStmt,          CSTNodeType::WhileStmt,
+      CSTNodeType::BlockStmt,       CSTNodeType::ExprStmt,
+      CSTNodeType::BinaryExpr,      CSTNodeType::UnaryExpr,
+      CSTNodeType::CallExpr,        CSTNodeType::IndexExpr,
+      CSTNodeType::MemberExpr,      CSTNodeType::AssignExpr,
+      CSTNodeType::IndexAssignExpr, CSTNodeType::ArrayLiteral,
+      CSTNodeType::IntegerLiteral,  CSTNodeType::FloatLiteral,
+      CSTNodeType::StringLiteral,   CSTNodeType::BooleanLiteral,
+      CSTNodeType::Identifier,      CSTNodeType::ParenExpr,
+      CSTNodeType::TypeAnnotation,  CSTNodeType::ArrayType,
+      CSTNodeType::Parameter,       CSTNodeType::ParameterList,
+      CSTNodeType::ArgumentList,    CSTNodeType::StatementList,
+      CSTNodeType::Operator,        CSTNodeType::Delimiter,
+      CSTNodeType::Comment};
+
   std::unordered_set<std::string> seen_strings;
-  
+
   for (const auto& type : all_types) {
     std::string type_str = cst_node_type_to_string(type);
-    
+
     // 确保不是Unknown
     EXPECT_NE(type_str, "Unknown");
-    
+
     // 确保字符串非空
     EXPECT_FALSE(type_str.empty());
-    
+
     // 确保字符串唯一
-    EXPECT_EQ(seen_strings.count(type_str), 0) 
-      << "Duplicate string for type: " << type_str;
+    EXPECT_EQ(seen_strings.count(type_str), 0)
+        << "Duplicate string for type: " << type_str;
     seen_strings.insert(type_str);
   }
-  
+
   // 验证所有类型都被测试
   EXPECT_EQ(seen_strings.size(), all_types.size());
 }
@@ -557,7 +529,7 @@ TEST_F(CSTNodeTest, AllCSTNodeTypeStrings) {
  */
 TEST_F(CSTNodeTest, DeepNestedStructure) {
   auto loc = make_test_location();
-  
+
   // 创建5层嵌套结构
   auto root = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
   auto level1 = std::make_unique<CSTNode>(CSTNodeType::BlockStmt, loc);
@@ -565,27 +537,27 @@ TEST_F(CSTNodeTest, DeepNestedStructure) {
   auto level3 = std::make_unique<CSTNode>(CSTNodeType::BlockStmt, loc);
   auto level4 = std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc);
   auto level5 = std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc);
-  
+
   level4->add_child(std::move(level5));
   level3->add_child(std::move(level4));
   level2->add_child(std::move(level3));
   level1->add_child(std::move(level2));
   root->add_child(std::move(level1));
-  
+
   // 验证深层访问
   EXPECT_EQ(root->get_children().size(), 1);
   const auto* l1 = root->get_children()[0].get();
   EXPECT_EQ(l1->get_type(), CSTNodeType::BlockStmt);
-  
+
   const auto* l2 = l1->get_children()[0].get();
   EXPECT_EQ(l2->get_type(), CSTNodeType::IfStmt);
-  
+
   const auto* l3 = l2->get_children()[0].get();
   EXPECT_EQ(l3->get_type(), CSTNodeType::BlockStmt);
-  
+
   const auto* l4 = l3->get_children()[0].get();
   EXPECT_EQ(l4->get_type(), CSTNodeType::ExprStmt);
-  
+
   const auto* l5 = l4->get_children()[0].get();
   EXPECT_EQ(l5->get_type(), CSTNodeType::BinaryExpr);
 }
@@ -601,25 +573,25 @@ TEST_F(CSTNodeTest, DeepNestedStructure) {
  */
 TEST_F(CSTNodeTest, MultipleTokenAssociations) {
   auto loc = make_test_location();
-  
+
   // 创建多个节点并关联不同的Token
   auto node1 = std::make_unique<CSTNode>(CSTNodeType::IntegerLiteral, loc);
   auto node2 = std::make_unique<CSTNode>(CSTNodeType::StringLiteral, loc);
   auto node3 = std::make_unique<CSTNode>(CSTNodeType::Identifier, loc);
-  
+
   Token tok1(TokenType::Integer, "123", 1, 1);
   Token tok2(TokenType::String, "hello", 2, 5);
   Token tok3(TokenType::Identifier, "var", 3, 10);
-  
+
   node1->set_token(tok1);
   node2->set_token(tok2);
   node3->set_token(tok3);
-  
+
   // 验证每个节点的Token独立
   EXPECT_EQ(node1->get_token()->value, "123");
   EXPECT_EQ(node2->get_token()->value, "hello");
   EXPECT_EQ(node3->get_token()->value, "var");
-  
+
   EXPECT_EQ(node1->get_token()->token_type, TokenType::Integer);
   EXPECT_EQ(node2->get_token()->token_type, TokenType::String);
   EXPECT_EQ(node3->get_token()->token_type, TokenType::Identifier);
@@ -636,23 +608,23 @@ TEST_F(CSTNodeTest, MultipleTokenAssociations) {
  */
 TEST_F(CSTNodeTest, CSTNodeMoveSemantics) {
   auto loc = make_test_location();
-  
+
   auto parent = std::make_unique<CSTNode>(CSTNodeType::Program, loc);
   auto child1 = std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc);
   auto child2 = std::make_unique<CSTNode>(CSTNodeType::VarDeclaration, loc);
-  
+
   // 添加子节点前记录地址
   auto* child1_ptr = child1.get();
   auto* child2_ptr = child2.get();
-  
+
   // 移动子节点到父节点
   parent->add_child(std::move(child1));
   parent->add_child(std::move(child2));
-  
+
   // 验证子节点已被移动
   EXPECT_EQ(child1.get(), nullptr);
   EXPECT_EQ(child2.get(), nullptr);
-  
+
   // 验证父节点拥有子节点
   EXPECT_EQ(parent->get_children().size(), 2);
   EXPECT_EQ(parent->get_children()[0].get(), child1_ptr);
@@ -671,29 +643,29 @@ TEST_F(CSTNodeTest, CSTNodeMoveSemantics) {
 TEST_F(CSTNodeTest, LocationInfoPreservation) {
   SourceLocation parent_loc("test.zero", 10, 15);
   SourceLocation child_loc("test.zero", 11, 20);
-  
+
   auto parent = std::make_unique<CSTNode>(CSTNodeType::Program, parent_loc);
   auto child = std::make_unique<CSTNode>(CSTNodeType::ExprStmt, child_loc);
-  
+
   // 记录初始位置
   EXPECT_EQ(parent->get_location().line, 10);
   EXPECT_EQ(parent->get_location().column, 15);
-  
+
   // 添加子节点
   parent->add_child(std::move(child));
-  
+
   // 验证父节点位置未改变
   EXPECT_EQ(parent->get_location().line, 10);
   EXPECT_EQ(parent->get_location().column, 15);
-  
+
   // 验证子节点位置保留
   EXPECT_EQ(parent->get_children()[0]->get_location().line, 11);
   EXPECT_EQ(parent->get_children()[0]->get_location().column, 20);
-  
+
   // 关联Token
   Token tok(TokenType::Integer, "42", 5, 5);
   parent->set_token(tok);
-  
+
   // 验证位置仍然保持原值（不被Token覆盖）
   EXPECT_EQ(parent->get_location().line, 10);
   EXPECT_EQ(parent->get_location().column, 15);
