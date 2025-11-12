@@ -126,6 +126,12 @@ std::string token_type_to_string(TokenType type) {
     return "And";
   case TokenType::Or:
     return "Or";
+  case TokenType::AndAnd:
+    return "AndAnd";
+  case TokenType::OrOr:
+    return "OrOr";
+  case TokenType::Tilde:
+    return "Tilde";
   case TokenType::LeftParen:
     return "LeftParen";
   case TokenType::RightParen:

@@ -126,7 +126,7 @@ TEST_F(ParserTest, WhileStatement) {
  * @details 验证解析器能够正确解析数组类型标注和数组初始化表达式。
  */
 TEST_F(ParserTest, ArrayLiteral) {
-  Lexer lexer("let arr: [int] = [1, 2, 3];");
+  Lexer lexer("let arr: Integer[] = [1, 2, 3];");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);

@@ -1,0 +1,12 @@
+// Test array of function types
+let operations : ((Integer) -> Integer)[] = [
+    fn (x) {
+        return x + 1;
+    }
+    , fn (x) {
+        return x * 2;
+    }
+    , fn (x) {
+        return x - 1;
+    }
+];

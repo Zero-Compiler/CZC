@@ -31,6 +31,10 @@ std::string cst_node_type_to_string(CSTNodeType type) {
     return "VarDeclaration";
   case CSTNodeType::FnDeclaration:
     return "FnDeclaration";
+  case CSTNodeType::StructDeclaration:
+    return "StructDeclaration";
+  case CSTNodeType::TypeAliasDeclaration:
+    return "TypeAliasDeclaration";
   case CSTNodeType::ReturnStmt:
     return "ReturnStmt";
   case CSTNodeType::IfStmt:
@@ -55,8 +59,16 @@ std::string cst_node_type_to_string(CSTNodeType type) {
     return "AssignExpr";
   case CSTNodeType::IndexAssignExpr:
     return "IndexAssignExpr";
+  case CSTNodeType::MemberAssignExpr:
+    return "MemberAssignExpr";
   case CSTNodeType::ArrayLiteral:
     return "ArrayLiteral";
+  case CSTNodeType::TupleLiteral:
+    return "TupleLiteral";
+  case CSTNodeType::FunctionLiteral:
+    return "FunctionLiteral";
+  case CSTNodeType::StructLiteral:
+    return "StructLiteral";
   case CSTNodeType::IntegerLiteral:
     return "IntegerLiteral";
   case CSTNodeType::FloatLiteral:
@@ -73,6 +85,22 @@ std::string cst_node_type_to_string(CSTNodeType type) {
     return "TypeAnnotation";
   case CSTNodeType::ArrayType:
     return "ArrayType";
+  case CSTNodeType::SizedArrayType:
+    return "SizedArrayType";
+  case CSTNodeType::UnionType:
+    return "UnionType";
+  case CSTNodeType::IntersectionType:
+    return "IntersectionType";
+  case CSTNodeType::NegationType:
+    return "NegationType";
+  case CSTNodeType::TupleType:
+    return "TupleType";
+  case CSTNodeType::FunctionSignatureType:
+    return "FunctionSignatureType";
+  case CSTNodeType::AnonymousStructType:
+    return "AnonymousStructType";
+  case CSTNodeType::StructField:
+    return "StructField";
   case CSTNodeType::Parameter:
     return "Parameter";
   case CSTNodeType::ParameterList:

@@ -174,11 +174,54 @@ private:
   std::unique_ptr<cst::CSTNode> fn_declaration();
 
   /**
+   * @brief 解析结构体声明。
+   * @details 语法：struct identifier { field: type, ... };
+   * @return 结构体声明节点。
+   */
+  std::unique_ptr<cst::CSTNode> struct_declaration();
+
+  /**
+   * @brief 解析类型别名声明。
+   * @details 语法：type identifier = type_expression;
+   * @return 类型别名声明节点。
+   */
+  std::unique_ptr<cst::CSTNode> type_alias_declaration();
+
+  /**
    * @brief 解析类型注解。
    * @details 语法：int64 | float64 | string | bool | void | null | [type]
    * @return 类型注解节点。
    */
   std::unique_ptr<cst::CSTNode> parse_type();
+
+  /**
+   * @brief 解析类型表达式（支持联合、交集、否定等复杂类型）。
+   * @details 语法：type_union
+   * @return 类型表达式节点。
+   */
+  std::unique_ptr<cst::CSTNode> parse_type_expression();
+
+  /**
+   * @brief 解析联合类型表达式。
+   * @details 语法：type_intersection (| type_intersection)*
+   * @return 类型表达式节点。
+   */
+  std::unique_ptr<cst::CSTNode> parse_type_union();
+
+  /**
+   * @brief 解析交集类型表达式。
+   * @details 语法：type_primary (& type_primary)*
+   * @return 类型表达式节点。
+   */
+  std::unique_ptr<cst::CSTNode> parse_type_intersection();
+
+  /**
+   * @brief 解析基础类型表达式。
+   * @details 语法：identifier | array_type | tuple_type | function_signature |
+   * anonymous_struct | ~type | (type_expression)
+   * @return 类型表达式节点。
+   */
+  std::unique_ptr<cst::CSTNode> parse_type_primary();
 
   /**
    * @brief 解析语句。

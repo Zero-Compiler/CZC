@@ -68,9 +68,12 @@ enum class TokenType {
   GreaterEqual, // `>=`
 
   // === 逻辑运算符 ===
-  And,  // `&&`
-  Or,   // `||`
-  Bang, // `!`
+  And,    // `&` (类型交集或按位与)
+  Or,     // `|` (类型并集或按位或)
+  AndAnd, // `&&` (逻辑与)
+  OrOr,   // `||` (逻辑或)
+  Bang,   // `!` (逻辑非)
+  Tilde,  // `~` (类型否定或按位取反)
 
   // === 分隔符 ===
   LeftParen,    // `(`

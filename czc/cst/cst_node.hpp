@@ -30,8 +30,10 @@ enum class CSTNodeType {
   Program, ///< 程序根节点
 
   // --- 声明 ---
-  VarDeclaration, ///< 变量声明: let/var name: type = expr;
-  FnDeclaration,  ///< 函数声明: fn name(params) -> type { body }
+  VarDeclaration,       ///< 变量声明: let/var name: type = expr;
+  FnDeclaration,        ///< 函数声明: fn name(params) -> type { body }
+  StructDeclaration,    ///< 结构体声明: struct Name { field: Type, ... };
+  TypeAliasDeclaration, ///< 类型别名声明: type Name = TypeExpr;
 
   // --- 语句 ---
   ReturnStmt, ///< 返回语句: return expr;
@@ -42,24 +44,36 @@ enum class CSTNodeType {
   ExprStmt,   ///< 表达式语句: expr;
 
   // --- 表达式 ---
-  BinaryExpr,      ///< 二元表达式: left op right
-  UnaryExpr,       ///< 一元表达式: op operand
-  CallExpr,        ///< 函数调用: callee(args)
-  IndexExpr,       ///< 索引访问: object[index]
-  MemberExpr,      ///< 成员访问: object.member
-  AssignExpr,      ///< 赋值表达式: lvalue = rvalue
-  IndexAssignExpr, ///< 索引赋值: object[index] = value
-  ArrayLiteral,    ///< 数组字面量: [elem1, elem2, ...]
-  IntegerLiteral,  ///< 整数字面量: 42
-  FloatLiteral,    ///< 浮点数字面量: 3.14
-  StringLiteral,   ///< 字符串字面量: "hello"
-  BooleanLiteral,  ///< 布尔字面量: true | false
-  Identifier,      ///< 标识符: var_name
-  ParenExpr,       ///< 括号表达式: (expr)
+  BinaryExpr,       ///< 二元表达式: left op right
+  UnaryExpr,        ///< 一元表达式: op operand
+  CallExpr,         ///< 函数调用: callee(args)
+  IndexExpr,        ///< 索引访问: object[index]
+  MemberExpr,       ///< 成员访问: object.member
+  AssignExpr,       ///< 赋值表达式: lvalue = rvalue
+  IndexAssignExpr,  ///< 索引赋值: object[index] = value
+  MemberAssignExpr, ///< 成员赋值: object.member = value
+  ArrayLiteral,     ///< 数组字面量: [elem1, elem2, ...]
+  TupleLiteral,     ///< 元组字面量: (elem1, elem2, ...)
+  FunctionLiteral,  ///< 函数字面量: fn (params) { body }
+  StructLiteral,    ///< 结构体字面量: TypeName { field: value, ... }
+  IntegerLiteral,   ///< 整数字面量: 42
+  FloatLiteral,     ///< 浮点数字面量: 3.14
+  StringLiteral,    ///< 字符串字面量: "hello"
+  BooleanLiteral,   ///< 布尔字面量: true | false
+  Identifier,       ///< 标识符: var_name
+  ParenExpr,        ///< 括号表达式: (expr)
 
   // --- 类型 ---
-  TypeAnnotation, ///< 类型注解节点
-  ArrayType,      ///< 数组类型: [element_type]
+  TypeAnnotation,        ///< 类型注解节点
+  ArrayType,             ///< 数组类型: T[] (动态大小)
+  SizedArrayType,        ///< 固定大小数组类型: T[5]
+  UnionType,             ///< 联合类型: T1 | T2 | ...
+  IntersectionType,      ///< 交集类型: T1 & T2 & ...
+  NegationType,          ///< 否定类型: ~T
+  TupleType,             ///< 元组类型: (T1, T2, ...)
+  FunctionSignatureType, ///< 函数签名类型: (T1, T2) -> (T3, T4)
+  AnonymousStructType,   ///< 匿名结构体类型: struct { field: Type, ... }
+  StructField,           ///< 结构体字段: name: Type
 
   // --- 参数 ---
   Parameter,     ///< 函数参数: name: type

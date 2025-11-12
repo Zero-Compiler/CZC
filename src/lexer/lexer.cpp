@@ -685,11 +685,11 @@ std::optional<Token> Lexer::try_read_two_char_operator(char first_char,
     break;
   case '&':
     if (second_char == '&')
-      return make_two_char_token(TokenType::And, "&&");
+      return make_two_char_token(TokenType::AndAnd, "&&");
     break;
   case '|':
     if (second_char == '|')
-      return make_two_char_token(TokenType::Or, "||");
+      return make_two_char_token(TokenType::OrOr, "||");
     break;
   case '.':
     if (second_char == '.')
@@ -719,14 +719,16 @@ Token Lexer::read_single_char_token(char ch, size_t token_line,
     return Token(TokenType::Equal, "=", token_line, token_column);
   case '!':
     return Token(TokenType::Bang, "!", token_line, token_column);
+  case '~':
+    return Token(TokenType::Tilde, "~", token_line, token_column);
   case '<':
     return Token(TokenType::Less, "<", token_line, token_column);
   case '>':
     return Token(TokenType::Greater, ">", token_line, token_column);
   case '&':
-    return Token(TokenType::Unknown, "&", token_line, token_column);
+    return Token(TokenType::And, "&", token_line, token_column);
   case '|':
-    return Token(TokenType::Unknown, "|", token_line, token_column);
+    return Token(TokenType::Or, "|", token_line, token_column);
   case '(':
     return Token(TokenType::LeftParen, "(", token_line, token_column);
   case ')':
@@ -868,6 +870,9 @@ Token Lexer::next_token() {
                    Token(TokenType::BangEqual, "!=", token_line, token_column))
                 : Token(TokenType::Bang, "!", token_line, token_column);
     break;
+  case '~':
+    token = Token(TokenType::Tilde, "~", token_line, token_column);
+    break;
   case '<':
     token = peek(1) == '='
                 ? (advance(),
@@ -883,17 +888,17 @@ Token Lexer::next_token() {
   case '&':
     if (peek(1) == '&') {
       advance();
-      token = Token(TokenType::And, "&&", token_line, token_column);
+      token = Token(TokenType::AndAnd, "&&", token_line, token_column);
     } else {
-      token = Token(TokenType::Unknown, "&", token_line, token_column);
+      token = Token(TokenType::And, "&", token_line, token_column);
     }
     break;
   case '|':
     if (peek(1) == '|') {
       advance();
-      token = Token(TokenType::Or, "||", token_line, token_column);
+      token = Token(TokenType::OrOr, "||", token_line, token_column);
     } else {
-      token = Token(TokenType::Unknown, "|", token_line, token_column);
+      token = Token(TokenType::Or, "|", token_line, token_column);
     }
     break;
   case '(':

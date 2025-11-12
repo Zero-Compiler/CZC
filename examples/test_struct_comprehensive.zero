@@ -1,0 +1,63 @@
+// Test comprehensive struct system features
+// Basic struct declaration
+struct Person {
+    name: String,
+    age: Int,
+    email: String
+};
+// Struct with various types
+struct Employee {
+    id: Int,
+    person: Person,
+    salary: Float,
+    active: Bool
+};
+// Type aliases with union types
+type StringOrInt = String | Int;
+type Result = Success | Error;
+// Type aliases with intersection types
+type Admin = User & Permissions;
+type ReadOnly = Data & Immutable;
+// Type aliases with negation
+type NonNull = ~Null;
+type NonZero = ~Zero;
+// Complex nested types
+type ComplexType = (String | Int) & ~Null;
+type UnionIntersection = (A | B) & (C | D);
+// Tuple types
+type Pair = (Int, String);
+type Triple = (Float, Bool, String);
+type NestedTuple = ((Int, Int), (String, String));
+// Function signature types
+type UnaryFunc = (Int) -> Int;
+type BinaryFunc = (Int, Int) -> Int;
+type Callback = (String) -> Void;
+type ComplexFunc = ((Int, String), Bool) -> Result;
+// Anonymous struct types in type alias
+type Config = struct { host: String, port: Int, debug: Bool };
+// Struct literals
+let p = Person {
+    name: "Alice",
+    age: 30,
+    email: "alice@example.com"};
+let emp = Employee {
+    id: 1001,
+    person:     p,
+    salary: 75000.50,
+    active: true};   // Nested struct literals
+let nested = Employee {
+    id: 1002,
+    person: Person {
+        name: "Bob",
+        age: 25,
+        email: "bob@example.com"    },
+    salary: 65000.00,
+    active: true};   // Field access
+let name = p.name;
+let employee_age = emp.person.age;   // Field assignment
+p.name = "Alice Smith";
+emp.salary = 80000.00;
+emp.person.age = 31;  // Multiple operations
+let x = emp.person.name;
+emp.person.email = "newemail@example.com";
+let isActive = emp.active;

@@ -1,0 +1,10 @@
+// Test function literal with type and if-else
+let test : (Bool) -> String = fn (flag) {
+    if flag {
+        return "yes";
+    }
+ else {
+        return "no";
+    }
+}
+;

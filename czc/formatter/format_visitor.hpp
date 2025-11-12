@@ -81,6 +81,33 @@ public:
    */
   virtual std::string visit_fn_declaration(const cst::CSTNode* node) = 0;
 
+  /**
+   * @brief 访问结构体声明节点。
+   * @param[in] node 结构体声明节点。
+   * @return 格式化后的字符串。
+   * @details 格式化结构体定义，包括名称和字段列表。
+   * @note 格式: struct Name { field: Type, ... };
+   * @example
+   *   struct Person {
+   *     name: String,
+   *     age: Integer
+   *   };
+   */
+  virtual std::string visit_struct_declaration(const cst::CSTNode* node) = 0;
+
+  /**
+   * @brief 访问类型别名声明节点。
+   * @param[in] node 类型别名声明节点。
+   * @return 格式化后的字符串。
+   * @details 格式化类型别名定义，支持复杂类型表达式。
+   * @note 格式: type Name = TypeExpr;
+   * @example
+   *   type User = Person;
+   *   type NumberOrString = Integer | String;
+   */
+  virtual std::string
+  visit_type_alias_declaration(const cst::CSTNode* node) = 0;
+
   // --- 语句 ---
 
   /**
@@ -282,6 +309,18 @@ public:
   virtual std::string visit_index_assign_expr(const cst::CSTNode* node) = 0;
 
   /**
+   * @brief 访问成员赋值表达式节点。
+   * @param[in] node 成员赋值表达式节点。
+   * @return 格式化后的字符串。
+   * @details 格式化对结构体成员的赋值操作。
+   * @note 格式: object.member = value
+   * @example
+   *   person.age = 31
+   *   obj.field = new_value
+   */
+  virtual std::string visit_member_assign_expr(const cst::CSTNode* node) = 0;
+
+  /**
    * @brief 访问数组字面量节点。
    * @param[in] node 数组字面量节点。
    * @return 格式化后的字符串。
@@ -296,6 +335,17 @@ public:
    *   [x + 1, y * 2, z - 3]
    */
   virtual std::string visit_array_literal(const cst::CSTNode* node) = 0;
+
+  /**
+   * @brief 访问结构体字面量节点。
+   * @param[in] node 结构体字面量节点。
+   * @return 格式化后的字符串。
+   * @details 格式化结构体实例化表达式，包含字段初始化列表。
+   * @note 格式: TypeName { field: value, ... }
+   * @example
+   *   Person { name: "Alice", age: 30 }
+   */
+  virtual std::string visit_struct_literal(const cst::CSTNode* node) = 0;
 
   /**
    * @brief 访问括号表达式节点。
@@ -322,6 +372,17 @@ public:
   // --- 类型 ---
   virtual std::string visit_type_annotation(const cst::CSTNode* node) = 0;
   virtual std::string visit_array_type(const cst::CSTNode* node) = 0;
+  virtual std::string visit_sized_array_type(const cst::CSTNode* node) = 0;
+  virtual std::string visit_tuple_literal(const cst::CSTNode* node) = 0;
+  virtual std::string visit_function_literal(const cst::CSTNode* node) = 0;
+  virtual std::string visit_union_type(const cst::CSTNode* node) = 0;
+  virtual std::string visit_intersection_type(const cst::CSTNode* node) = 0;
+  virtual std::string visit_negation_type(const cst::CSTNode* node) = 0;
+  virtual std::string visit_tuple_type(const cst::CSTNode* node) = 0;
+  virtual std::string
+  visit_function_signature_type(const cst::CSTNode* node) = 0;
+  virtual std::string visit_anonymous_struct_type(const cst::CSTNode* node) = 0;
+  virtual std::string visit_struct_field(const cst::CSTNode* node) = 0;
 
   // --- 参数和列表 ---
   virtual std::string visit_parameter(const cst::CSTNode* node) = 0;

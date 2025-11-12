@@ -127,5 +127,70 @@ source = "parser"
 
 [P0013]
 message = "invalid assignment target"
-help = "only identifiers and array indices can be assigned to"
+help = "only identifiers, member access, and array indices can be assigned to"
+source = "parser"
+
+[S0001]
+message = "expected struct name after 'struct' keyword, found {0}"
+help = "a valid identifier is required as the struct name"
+source = "parser"
+
+[S0002]
+message = "expected '{{' to start struct field definitions, found {0}"
+help = "struct definitions must begin with a left brace"
+source = "parser"
+
+[S0003]
+message = "expected field name, found {0}"
+help = "struct fields must have valid identifier names"
+source = "parser"
+
+[S0004]
+message = "expected ':' after field name '{0}', found {1}"
+help = "field declarations require a colon before the type"
+source = "parser"
+
+[S0005]
+message = "expected field type after ':', found {0}"
+help = "a valid type is required for each struct field"
+source = "parser"
+
+[S0006]
+message = "expected ',' or '}}' after field definition, found {0}"
+help = "fields must be separated by commas, and the struct must end with '}}'"
+source = "parser"
+
+[S0007]
+message = "expected type name after 'type' keyword, found {0}"
+help = "a valid identifier is required as the type alias name"
+source = "parser"
+
+[S0008]
+message = "expected '=' in type alias declaration, found {0}"
+help = "type aliases require '=' before the type expression"
+source = "parser"
+
+[S0009]
+message = "expected type expression after '=', found {0}"
+help = "a valid type expression is required after '=' in type alias"
+source = "parser"
+
+[S0010]
+message = "expected ')' to close tuple type, found {0}"
+help = "tuple types must be enclosed in parentheses"
+source = "parser"
+
+[S0011]
+message = "expected ')' before '->' in function signature, found {0}"
+help = "function signature parameter list must be enclosed in parentheses"
+source = "parser"
+
+[S0012]
+message = "duplicate field name '{0}' in struct definition"
+help = "each field in a struct must have a unique name"
+source = "parser"
+
+[S0013]
+message = "expected field initialization in struct literal, found {0}"
+help = "struct literals require field: value pairs inside braces"
 source = "parser"

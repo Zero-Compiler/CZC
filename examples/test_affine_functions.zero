@@ -1,0 +1,46 @@
+type AffineSet = struct {
+    matrix: Float[][],
+    vector: Float[]
+};
+
+type AffineFunction = (AffineSet) -> AffineSet; // an affine function should map an AffineSet to another AffineSet
+
+let applyAffine : AffineFunction = fn (input) {
+    let resultMatrix : Float[][] = [];
+    for i in 0 .. input.matrix.length {
+        let row : Float[] = [];
+        for j in 0 .. input.matrix[i].length {
+            row = row + [input.matrix[i][j] * 2.0];
+        }
+        resultMatrix = resultMatrix + [row];
+    }
+    let resultVector : Float[] = [];
+    for k in 0 .. input.vector.length {
+        resultVector = resultVector + [input.vector[k] + 1.0];
+    }
+    return AffineSet {
+        matrix: resultMatrix,
+        vector: resultVector
+    };
+};
+
+fn main() {
+    let inputSet : AffineSet = AffineSet {
+        matrix: [[1.0, 2.0], [3.0, 4.0]],
+        vector: [5.0, 6.0]
+    };
+    let outputSet : AffineSet = applyAffine(inputSet);
+    // Output the results
+    for i in 0 .. outputSet.matrix.length {
+        for j in 0 .. outputSet.matrix[i].length {
+            print(outputSet.matrix[i][j]);
+            print(" ");
+        }
+        print("\n");
+    }
+    for k in 0 .. outputSet.vector.length {
+        print(outputSet.vector[k]);
+        print(" ");
+    }
+    print("\n");
+}

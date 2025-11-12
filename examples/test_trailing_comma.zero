@@ -1,0 +1,39 @@
+// 测试尾随逗号支持
+
+// 数组字面量支持尾随逗号
+let numbers: Integer[] = [1, 2, 3, 4, 5,];
+let empty_array: String[] = [];
+let nested: Integer[][] = [
+    [1, 2,],
+    [3, 4,],
+    [5, 6,],
+];
+
+// 元组字面量支持尾随逗号
+let point: (Integer, Integer) = (10, 20,);
+let triple: (String, Integer, Boolean) = ("hello", 42, true,);
+
+// 结构体声明支持尾随逗号
+struct Person {
+    name: String,
+    age: Integer,
+    active: Boolean,
+};
+
+// 结构体字面量支持尾随逗号
+let person: Person = Person {
+    name: "Alice",
+    age: 30,
+    active: true,
+};
+
+// 复杂的嵌套结构
+struct Data {
+    items: Integer[],
+    metadata: (String, Integer),
+};
+
+let data: Data = Data {
+    items: [1, 2, 3,],
+    metadata: ("info", 42,),
+};
