@@ -497,15 +497,25 @@ std::unique_ptr<CSTNode> Parser::if_statement() {
     node->add_child(std::move(then_branch));
   }
 
-  // 解析可选的 else 分支
+  // 解析可选的 else 或 else if 分支
   if (match_token({TokenType::Else})) {
     Token else_keyword = tokens[current - 1];
     auto else_node = make_cst_node(CSTNodeType::Delimiter, else_keyword);
     node->add_child(std::move(else_node));
 
-    auto else_branch = block_statement();
-    if (else_branch) {
-      node->add_child(std::move(else_branch));
+    // 检查是否是 else if
+    if (match_token({TokenType::If})) {
+      // else if: 递归解析为嵌套的 if 语句
+      auto else_if_branch = if_statement();
+      if (else_if_branch) {
+        node->add_child(std::move(else_if_branch));
+      }
+    } else {
+      // 普通 else: 解析代码块
+      auto else_branch = block_statement();
+      if (else_branch) {
+        node->add_child(std::move(else_branch));
+      }
     }
   }
 

@@ -195,23 +195,38 @@ std::string Formatter::visit_return_stmt(const cst::CSTNode* node) {
 
 std::string Formatter::visit_if_stmt(const cst::CSTNode* node) {
   std::ostringstream result;
-  result << get_indent() << "if";
+  result << get_indent();
 
-  // if 语句结构: if condition { block } [else { block }]
+  // if 语句结构: if condition { block } [else if condition { block }]* [else {
+  // block }]
   const auto& children = node->get_children();
+
   for (size_t i = 0; i < children.size(); ++i) {
     const auto& child = children[i];
 
     if (child->get_type() == cst::CSTNodeType::Delimiter) {
       const auto& token = child->get_token();
       if (token.has_value()) {
-        if (token->token_type == lexer::TokenType::LeftParen) {
+        if (token->token_type == lexer::TokenType::If) {
+          // if 关键字
+          result << "if";
+          result << ONE_WIDTH_SPACE_STRING;
+        } else if (token->token_type == lexer::TokenType::LeftParen) {
           if (options.space_before_paren) {
             result << ONE_WIDTH_SPACE_STRING;
           }
           result << "(";
         } else if (token->token_type == lexer::TokenType::RightParen) {
           result << ")";
+        } else if (token->token_type == lexer::TokenType::Else) {
+          // else 关键字前添加空格
+          result << ONE_WIDTH_SPACE_STRING << "else";
+
+          // 检查下一个子节点是否是 if 语句 (else if 情况)
+          if (i + 1 < children.size() &&
+              children[i + 1]->get_type() == cst::CSTNodeType::IfStmt) {
+            result << ONE_WIDTH_SPACE_STRING;
+          }
         } else {
           result << format_node(child.get());
         }
@@ -221,6 +236,16 @@ std::string Formatter::visit_if_stmt(const cst::CSTNode* node) {
         result << ONE_WIDTH_SPACE_STRING;
       }
       result << format_node(child.get());
+    } else if (child->get_type() == cst::CSTNodeType::IfStmt) {
+      // else if 语句：不添加缩进，因为它是同一级别的
+      std::string nested_if = visit_if_stmt(child.get());
+      // 移除嵌套 if 语句的缩进（因为它已经在 else 后面）
+      size_t first_non_space = nested_if.find_first_not_of(" \t");
+      if (first_non_space != std::string::npos) {
+        result << nested_if.substr(first_non_space);
+      } else {
+        result << nested_if;
+      }
     } else {
       result << format_node(child.get());
     }

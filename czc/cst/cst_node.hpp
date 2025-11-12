@@ -35,7 +35,8 @@ enum class CSTNodeType {
 
   // --- 语句 ---
   ReturnStmt, ///< 返回语句: return expr;
-  IfStmt,     ///< 条件语句: if expr { stmts } else { stmts }
+  IfStmt,     ///< 条件语句: if expr { stmts } [else if expr { stmts }]* [else {
+              ///< stmts }]
   WhileStmt,  ///< 循环语句: while expr { stmts }
   BlockStmt,  ///< 代码块: { stmts }
   ExprStmt,   ///< 表达式语句: expr;

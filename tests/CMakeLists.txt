@@ -35,6 +35,11 @@ add_executable(test_token_preprocessor
 )
 target_link_libraries(test_token_preprocessor PRIVATE czc)
 
+add_executable(test_else_if
+    test_else_if.cpp
+)
+target_link_libraries(test_else_if PRIVATE czc)
+
 add_executable(test_error_recovery
     test_error_recovery.cpp
 )

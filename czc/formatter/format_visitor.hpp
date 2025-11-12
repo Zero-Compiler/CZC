@@ -67,12 +67,12 @@ public:
    *   fn add(a: Integer, b: Integer) -> Integer {
    *     return a + b;
    *   }
-   *   
-   *   fn greet(name: string) {
+   *
+   *   fn greet(name: String) {
    *     print("Hello, " + name);
    *   }
-   *   
-   *   fn calculate(x: float, y: float, op: string) -> float {
+   *
+   *   fn calculate(x: Float, y: Float, op: String) -> Float {
    *     if (op == "+") {
    *       return x + y;
    *     }
@@ -82,7 +82,7 @@ public:
   virtual std::string visit_fn_declaration(const cst::CSTNode* node) = 0;
 
   // --- 语句 ---
-  
+
   /**
    * @brief 访问返回语句节点。
    * @param[in] node 返回语句节点。
@@ -96,7 +96,7 @@ public:
    *   return calculate(x, y);
    */
   virtual std::string visit_return_stmt(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问条件语句节点。
    * @param[in] node 条件语句节点。
@@ -109,7 +109,7 @@ public:
    *   if (x > 0) {
    *     print(x);
    *   }
-   *   
+   *
    *   if (a == b) {
    *     return true;
    *   } else {
@@ -117,7 +117,7 @@ public:
    *   }
    */
   virtual std::string visit_if_stmt(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问循环语句节点。
    * @param[in] node 循环语句节点。
@@ -133,7 +133,7 @@ public:
    *   }
    */
   virtual std::string visit_while_stmt(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问代码块语句节点。
    * @param[in] node 代码块节点。
@@ -151,7 +151,7 @@ public:
    *   }
    */
   virtual std::string visit_block_stmt(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问表达式语句节点。
    * @param[in] node 表达式语句节点。
@@ -170,7 +170,7 @@ public:
   virtual std::string visit_expr_stmt(const cst::CSTNode* node) = 0;
 
   // --- 表达式 ---
-  
+
   /**
    * @brief 访问二元表达式节点。
    * @param[in] node 二元表达式节点。
@@ -188,7 +188,7 @@ public:
    *   isValid && isActive
    */
   virtual std::string visit_binary_expr(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问一元表达式节点。
    * @param[in] node 一元表达式节点。
@@ -204,7 +204,7 @@ public:
    *   !isEnabled
    */
   virtual std::string visit_unary_expr(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问函数调用表达式节点。
    * @param[in] node 函数调用节点。
@@ -219,7 +219,7 @@ public:
    *   math.sqrt(16)
    */
   virtual std::string visit_call_expr(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问索引访问表达式节点。
    * @param[in] node 索引访问节点。
@@ -234,7 +234,7 @@ public:
    *   data[count - 1]
    */
   virtual std::string visit_index_expr(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问成员访问表达式节点。
    * @param[in] node 成员访问节点。
@@ -249,7 +249,7 @@ public:
    *   config.settings.timeout
    */
   virtual std::string visit_member_expr(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问赋值表达式节点。
    * @param[in] node 赋值表达式节点。
@@ -265,7 +265,7 @@ public:
    *   result = a + b
    */
   virtual std::string visit_assign_expr(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问索引赋值表达式节点。
    * @param[in] node 索引赋值节点。
@@ -280,7 +280,7 @@ public:
    *   data[key] = "value"
    */
   virtual std::string visit_index_assign_expr(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问数组字面量节点。
    * @param[in] node 数组字面量节点。
@@ -296,7 +296,7 @@ public:
    *   [x + 1, y * 2, z - 3]
    */
   virtual std::string visit_array_literal(const cst::CSTNode* node) = 0;
-  
+
   /**
    * @brief 访问括号表达式节点。
    * @param[in] node 括号表达式节点。
