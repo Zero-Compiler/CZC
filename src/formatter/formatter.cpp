@@ -151,8 +151,7 @@ std::string Formatter::visit_var_declaration(const cst::CSTNode* node) {
 std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
   std::ostringstream result;
   // FnDeclaration: fn func_name(params) [-> return_type] { body }
-  // 参考 Rust 风格的函数声明格式化
-  // 
+  //
   // 结构解析：
   // - Delimiter(fn) - fn 关键字
   // - Identifier - 函数名
@@ -164,7 +163,7 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
   // - BlockStmt - 函数体
 
   result << get_indent();
-  
+
   const auto& children = node->get_children();
   for (size_t i = 0; i < children.size(); ++i) {
     const auto& child = children[i];
@@ -186,7 +185,7 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
             const auto& next = children[i + 1];
             if (next->get_type() == cst::CSTNodeType::Delimiter) {
               const auto& next_token = next->get_token();
-              if (next_token.has_value() && 
+              if (next_token.has_value() &&
                   next_token->token_type == lexer::TokenType::Arrow) {
                 result << ONE_WIDTH_SPACE_STRING;
               }
@@ -212,7 +211,7 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
       // 返回类型
       result << format_node(child.get());
       // 返回类型后面如果有代码块，加空格
-      if (i + 1 < children.size() && 
+      if (i + 1 < children.size() &&
           children[i + 1]->get_type() == cst::CSTNodeType::BlockStmt) {
         result << ONE_WIDTH_SPACE_STRING;
       }
@@ -224,7 +223,7 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
       result << format_node(child.get());
     }
   }
-  
+
   return result.str();
 }
 
