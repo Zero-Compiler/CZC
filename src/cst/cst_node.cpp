@@ -2,7 +2,7 @@
  * @file cst_node.cpp
  * @brief `CSTNode` 类及相关工具函数的实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/cst/cst_node.hpp"
@@ -10,7 +10,7 @@
 namespace czc {
 namespace cst {
 
-CSTNode::CSTNode(CSTNodeType type, const utils::SourceLocation &location)
+CSTNode::CSTNode(CSTNodeType type, const utils::SourceLocation& location)
     : node_type(type), location(location), children(), token() {}
 
 void CSTNode::add_child(std::unique_ptr<CSTNode> child) {
@@ -19,7 +19,9 @@ void CSTNode::add_child(std::unique_ptr<CSTNode> child) {
   children.emplace_back(std::move(child));
 }
 
-void CSTNode::set_token(const lexer::Token &tok) { token = tok; }
+void CSTNode::set_token(const lexer::Token& tok) {
+  token = tok;
+}
 
 std::string cst_node_type_to_string(CSTNodeType type) {
   switch (type) {
@@ -91,12 +93,12 @@ std::string cst_node_type_to_string(CSTNodeType type) {
 }
 
 std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
-                                       const utils::SourceLocation &location) {
+                                       const utils::SourceLocation& location) {
   return std::make_unique<CSTNode>(type, location);
 }
 
 std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
-                                       const lexer::Token &token) {
+                                       const lexer::Token& token) {
   // NOTE: 从 Token 创建 CST 节点时，我们只关心其起始位置。
   //       文件名此时未知，因此留空，将在更高层级的组件中填充。
   auto location = utils::SourceLocation("", token.line, token.column);

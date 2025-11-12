@@ -2,7 +2,7 @@
  * @file diagnostic_reporter.hpp
  * @brief 定义了 `IDiagnosticReporter` 接口，用于报告诊断事件。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-11
  */
 
 #ifndef CZC_DIAGNOSTIC_REPORTER_HPP

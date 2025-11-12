@@ -2,13 +2,14 @@
  * @file diagnostic_code.hpp
  * @brief 定义了诊断消息的严重级别、唯一的诊断代码以及相关工具函数。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_DIAGNOSTIC_CODE_HPP
 #define CZC_DIAGNOSTIC_CODE_HPP
 
 #include "czc/utils/source_location.hpp"
+
 #include <string>
 
 namespace czc {

@@ -2,11 +2,13 @@
  * @file parser.cpp
  * @brief `Parser` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/parser/parser.hpp"
+
 #include "czc/diagnostics/diagnostic_code.hpp"
+
 #include <algorithm>
 
 namespace czc {
@@ -17,7 +19,8 @@ using namespace czc::diagnostics;
 using namespace czc::lexer;
 using namespace czc::utils;
 
-Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {}
+Parser::Parser(const std::vector<Token>& tokens, const std::string& filename)
+    : tokens(tokens), current(0), filename(filename) {}
 
 Token Parser::current_token() const {
   if (current < tokens.size()) {
@@ -48,8 +51,8 @@ bool Parser::check(TokenType type) const {
   return current_token().token_type == type;
 }
 
-bool Parser::match_token(const std::vector<TokenType> &types) {
-  for (const auto &type : types) {
+bool Parser::match_token(const std::vector<TokenType>& types) {
+  for (const auto& type : types) {
     if (check(type)) {
       advance();
       return true;
@@ -153,14 +156,14 @@ void Parser::synchronize_to_block_end() {
   }
 }
 
-void Parser::report_error(DiagnosticCode code, const SourceLocation &location,
-                          const std::vector<std::string> &args) {
+void Parser::report_error(DiagnosticCode code, const SourceLocation& location,
+                          const std::vector<std::string>& args) {
   error_collector.add(code, location, args);
 }
 
 SourceLocation Parser::make_location() const {
   Token token = current_token();
-  return SourceLocation("", token.line, token.column);
+  return SourceLocation(filename, token.line, token.column);
 }
 
 std::unique_ptr<CSTNode> Parser::parse() {
@@ -296,9 +299,10 @@ std::unique_ptr<CSTNode> Parser::fn_declaration() {
     auto lparen_node = make_cst_node(CSTNodeType::Delimiter, *left_paren);
     node->add_child(std::move(lparen_node));
   } else {
-    // 错误恢复：左括号缺失，但尝试继续解析参数
-    // consume 已经报告了错误并插入了虚拟 token
-    auto lparen_node = make_cst_node(CSTNodeType::Delimiter, *left_paren);
+    // 错误恢复：左括号缺失，插入虚拟 token 继续解析
+    Token synthetic_lparen(TokenType::LeftParen, "(", current_token().line,
+                           current_token().column, true);
+    auto lparen_node = make_cst_node(CSTNodeType::Delimiter, synthetic_lparen);
     node->add_child(std::move(lparen_node));
   }
 
@@ -537,8 +541,11 @@ std::unique_ptr<CSTNode> Parser::block_statement() {
       auto lbrace_node = make_cst_node(CSTNodeType::Delimiter, *left_brace);
       node->add_child(std::move(lbrace_node));
     } else {
-      // 左大括号缺失，尝试继续解析内容
-      auto lbrace_node = make_cst_node(CSTNodeType::Delimiter, *left_brace);
+      // 左大括号缺失，插入虚拟 token 继续解析
+      Token synthetic_lbrace(TokenType::LeftBrace, "{", current_token().line,
+                             current_token().column, true);
+      auto lbrace_node =
+          make_cst_node(CSTNodeType::Delimiter, synthetic_lbrace);
       node->add_child(std::move(lbrace_node));
     }
   } else {
@@ -611,7 +618,9 @@ std::unique_ptr<CSTNode> Parser::expression_statement() {
 //       优先级的 `assignment` 开始，逐级向下，直到最高优先级的 `primary`。
 //       例如，`term`（加减）会调用 `factor`（乘除），确保了乘除法
 //       会先于加减法被组合成子树。
-std::unique_ptr<CSTNode> Parser::expression() { return assignment(); }
+std::unique_ptr<CSTNode> Parser::expression() {
+  return assignment();
+}
 
 std::unique_ptr<CSTNode> Parser::assignment() {
   auto expr = logical_or();
@@ -622,6 +631,14 @@ std::unique_ptr<CSTNode> Parser::assignment() {
     // NOTE: 赋值操作符是右结合的。例如 `a = b = c` 被解析为 `a = (b = c)`。
     //       这是通过在 `assignment` 函数中递归调用 `assignment()` 来解析
     //       右侧表达式实现的。
+
+    // 检查左侧表达式是否成功解析
+    if (!expr) {
+      // 左侧表达式解析失败，报告错误并返回空节点
+      report_error(DiagnosticCode::P0001_UnexpectedToken, make_location(),
+                   {token_type_to_string(current_token().token_type)});
+      return nullptr;
+    }
 
     // 检查左侧是否为有效的左值（l-value），即可以被赋值的东西。
     // 在当前语言中，只有变量名（Identifier）和数组成员（IndexExpr）是有效的左值。

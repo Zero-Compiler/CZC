@@ -2,10 +2,11 @@
  * @file file_collector.cpp
  * @brief 文件收集器功能实现。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-11
  */
 
 #include "czc/utils/file_collector.hpp"
+
 #include <algorithm>
 #include <filesystem>
 
@@ -13,10 +14,10 @@ namespace czc {
 namespace utils {
 
 std::vector<std::string>
-FileCollector::collect_files(const std::vector<std::string> &patterns) {
+FileCollector::collect_files(const std::vector<std::string>& patterns) {
   std::vector<std::string> files_to_process;
 
-  for (const auto &arg : patterns) {
+  for (const auto& arg : patterns) {
     // 检查参数是否包含通配符
     if (arg.find('*') != std::string::npos ||
         arg.find('?') != std::string::npos) {
@@ -34,7 +35,7 @@ FileCollector::collect_files(const std::vector<std::string> &patterns) {
       if (std::filesystem::exists(parent_path) &&
           std::filesystem::is_directory(parent_path)) {
         try {
-          for (const auto &entry :
+          for (const auto& entry :
                std::filesystem::directory_iterator(parent_path)) {
             // 只对常规文件进行模式匹配，忽略目录等
             if (entry.is_regular_file()) {
@@ -44,7 +45,7 @@ FileCollector::collect_files(const std::vector<std::string> &patterns) {
               }
             }
           }
-        } catch (const std::filesystem::filesystem_error &e) {
+        } catch (const std::filesystem::filesystem_error& e) {
           // 目录遍历错误（权限不足、I/O错误等），跳过该目录
           // 可以考虑记录警告日志
           continue;
@@ -65,8 +66,8 @@ FileCollector::collect_files(const std::vector<std::string> &patterns) {
   return files_to_process;
 }
 
-bool FileCollector::matches_pattern(const std::string &filename,
-                                    const std::string &pattern) {
+bool FileCollector::matches_pattern(const std::string& filename,
+                                    const std::string& pattern) {
   // 边界检查：空模式和空文件名的处理
   if (pattern.empty()) {
     return filename.empty();

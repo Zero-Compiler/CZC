@@ -2,3 +2,5 @@
 make clean
 make fmt
 make build
+make test
+make docs

@@ -2,21 +2,22 @@
  * @file token.cpp
  * @brief `Token` 类及相关工具函数的实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/token.hpp"
+
 #include <unordered_map>
 
 namespace czc {
 namespace lexer {
 
-Token::Token(TokenType type, const std::string &val, size_t line, size_t column,
+Token::Token(TokenType type, const std::string& val, size_t line, size_t column,
              bool synthetic)
     : token_type(type), value(val), line(line), column(column),
       is_synthetic(synthetic) {}
 
-std::optional<TokenType> get_keyword(const std::string &word) {
+std::optional<TokenType> get_keyword(const std::string& word) {
   // NOTE: 使用静态哈希表优化关键字查找性能。
   //       相比线性搜索，哈希表查找的时间复杂度从 O(n) 降低到 O(1)。
   //       对于 15+ 个关键字的场景，这能带来明显的性能提升。

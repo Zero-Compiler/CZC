@@ -2,7 +2,7 @@
  * @file formatter.hpp
  * @brief 定义了 `Formatter` 类，用于格式化 CST 生成美化的源代码。
  * @author BegoniaHe
- * @date 2025-11-06
+ * @date 2025-11-11
  */
 
 #ifndef CZC_FORMATTER_HPP
@@ -12,6 +12,7 @@
 #include "czc/formatter/error_collector.hpp"
 #include "czc/formatter/format_options.hpp"
 #include "czc/formatter/format_visitor.hpp"
+
 #include <memory>
 #include <string>
 
@@ -38,7 +39,7 @@ public:
    * @brief 构造一个新的 Formatter 实例。
    * @param[in] options 格式化选项，用于控制缩进、空格等。
    */
-  explicit Formatter(const FormatOptions &options = FormatOptions());
+  explicit Formatter(const FormatOptions& options = FormatOptions());
 
   /**
    * @brief 格式化给定的 CST 树。
@@ -47,54 +48,56 @@ public:
    * @param[in] root 指向 CST 根节点的指针。
    * @return 格式化后的源代码字符串。如果根节点为空，则返回空字符串。
    */
-  std::string format(const cst::CSTNode *root);
+  std::string format(const cst::CSTNode* root);
 
   /**
    * @brief 获取对内部错误收集器的访问权限。
    * @return 对 FormatterErrorCollector 对象的引用。
    */
-  FormatterErrorCollector &get_error_collector() { return error_collector; }
+  FormatterErrorCollector& get_error_collector() {
+    return error_collector;
+  }
 
   /**
    * @brief 获取对内部错误收集器的只读访问权限。
    * @return 对 FormatterErrorCollector 对象的常量引用。
    */
-  const FormatterErrorCollector &get_error_collector() const {
+  const FormatterErrorCollector& get_error_collector() const {
     return error_collector;
   }
 
   // --- FormatVisitor 接口实现 ---
-  std::string visit_program(const cst::CSTNode *node) override;
-  std::string visit_var_declaration(const cst::CSTNode *node) override;
-  std::string visit_fn_declaration(const cst::CSTNode *node) override;
-  std::string visit_return_stmt(const cst::CSTNode *node) override;
-  std::string visit_if_stmt(const cst::CSTNode *node) override;
-  std::string visit_while_stmt(const cst::CSTNode *node) override;
-  std::string visit_block_stmt(const cst::CSTNode *node) override;
-  std::string visit_expr_stmt(const cst::CSTNode *node) override;
-  std::string visit_binary_expr(const cst::CSTNode *node) override;
-  std::string visit_unary_expr(const cst::CSTNode *node) override;
-  std::string visit_call_expr(const cst::CSTNode *node) override;
-  std::string visit_index_expr(const cst::CSTNode *node) override;
-  std::string visit_member_expr(const cst::CSTNode *node) override;
-  std::string visit_assign_expr(const cst::CSTNode *node) override;
-  std::string visit_index_assign_expr(const cst::CSTNode *node) override;
-  std::string visit_array_literal(const cst::CSTNode *node) override;
-  std::string visit_paren_expr(const cst::CSTNode *node) override;
-  std::string visit_integer_literal(const cst::CSTNode *node) override;
-  std::string visit_float_literal(const cst::CSTNode *node) override;
-  std::string visit_string_literal(const cst::CSTNode *node) override;
-  std::string visit_boolean_literal(const cst::CSTNode *node) override;
-  std::string visit_identifier(const cst::CSTNode *node) override;
-  std::string visit_type_annotation(const cst::CSTNode *node) override;
-  std::string visit_array_type(const cst::CSTNode *node) override;
-  std::string visit_parameter(const cst::CSTNode *node) override;
-  std::string visit_parameter_list(const cst::CSTNode *node) override;
-  std::string visit_argument_list(const cst::CSTNode *node) override;
-  std::string visit_statement_list(const cst::CSTNode *node) override;
-  std::string visit_operator(const cst::CSTNode *node) override;
-  std::string visit_delimiter(const cst::CSTNode *node) override;
-  std::string visit_comment(const cst::CSTNode *node) override;
+  std::string visit_program(const cst::CSTNode* node) override;
+  std::string visit_var_declaration(const cst::CSTNode* node) override;
+  std::string visit_fn_declaration(const cst::CSTNode* node) override;
+  std::string visit_return_stmt(const cst::CSTNode* node) override;
+  std::string visit_if_stmt(const cst::CSTNode* node) override;
+  std::string visit_while_stmt(const cst::CSTNode* node) override;
+  std::string visit_block_stmt(const cst::CSTNode* node) override;
+  std::string visit_expr_stmt(const cst::CSTNode* node) override;
+  std::string visit_binary_expr(const cst::CSTNode* node) override;
+  std::string visit_unary_expr(const cst::CSTNode* node) override;
+  std::string visit_call_expr(const cst::CSTNode* node) override;
+  std::string visit_index_expr(const cst::CSTNode* node) override;
+  std::string visit_member_expr(const cst::CSTNode* node) override;
+  std::string visit_assign_expr(const cst::CSTNode* node) override;
+  std::string visit_index_assign_expr(const cst::CSTNode* node) override;
+  std::string visit_array_literal(const cst::CSTNode* node) override;
+  std::string visit_paren_expr(const cst::CSTNode* node) override;
+  std::string visit_integer_literal(const cst::CSTNode* node) override;
+  std::string visit_float_literal(const cst::CSTNode* node) override;
+  std::string visit_string_literal(const cst::CSTNode* node) override;
+  std::string visit_boolean_literal(const cst::CSTNode* node) override;
+  std::string visit_identifier(const cst::CSTNode* node) override;
+  std::string visit_type_annotation(const cst::CSTNode* node) override;
+  std::string visit_array_type(const cst::CSTNode* node) override;
+  std::string visit_parameter(const cst::CSTNode* node) override;
+  std::string visit_parameter_list(const cst::CSTNode* node) override;
+  std::string visit_argument_list(const cst::CSTNode* node) override;
+  std::string visit_statement_list(const cst::CSTNode* node) override;
+  std::string visit_operator(const cst::CSTNode* node) override;
+  std::string visit_delimiter(const cst::CSTNode* node) override;
+  std::string visit_comment(const cst::CSTNode* node) override;
 
 private:
   // 格式化选项
@@ -111,7 +114,7 @@ private:
    * @param[in] node 要格式化的节点。
    * @return 该节点及其子节点格式化后的字符串。
    */
-  std::string format_node(const cst::CSTNode *node);
+  std::string format_node(const cst::CSTNode* node);
 
   /**
    * @brief 根据当前缩进级别和选项生成缩进字符串。
@@ -122,7 +125,9 @@ private:
   /**
    * @brief 增加缩进级别。
    */
-  void increase_indent() { ++indent_level; }
+  void increase_indent() {
+    ++indent_level;
+  }
 
   /**
    * @brief 减少缩进级别，确保不小于0。
@@ -139,7 +144,7 @@ private:
    * @param[in] comment 注释节点。
    * @return 格式化后的注释字符串，前置两个空格。
    */
-  std::string format_inline_comment(const cst::CSTNode *comment);
+  std::string format_inline_comment(const cst::CSTNode* comment);
 
   /**
    * @brief 格式化独立行注释。
@@ -147,7 +152,7 @@ private:
    * @param[in] comment 注释节点。
    * @return 格式化后的注释字符串，带缩进和换行。
    */
-  std::string format_standalone_comment(const cst::CSTNode *comment);
+  std::string format_standalone_comment(const cst::CSTNode* comment);
 };
 
 } // namespace formatter

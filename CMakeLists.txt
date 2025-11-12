@@ -4,11 +4,19 @@ project(CZC VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Code coverage options
+option(ENABLE_COVERAGE "Enable code coverage" OFF)
 
 if(MSVC)
     add_compile_options(/W4)
 else()
     add_compile_options(-Wall -Wextra -pedantic)
+    if(ENABLE_COVERAGE)
+        add_compile_options(--coverage -O0 -g)
+        add_link_options(--coverage)
+    endif()
 endif()
 
 add_library(czc STATIC
@@ -43,12 +51,18 @@ install(TARGETS czc czc-cli
     RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY include/czc
-    DESTINATION include
+install(DIRECTORY czc/
+    DESTINATION include/czc
+    FILES_MATCHING PATTERN "*.hpp"
 )
 
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+option(BUILD_BENCHMARKS "Build benchmarks" OFF)
+if(BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
 endif()

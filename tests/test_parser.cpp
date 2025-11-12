@@ -2,11 +2,12 @@
  * @file test_parser.cpp
  * @brief 语法分析器测试套件。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
+
 #include <cassert>
 #include <iostream>
 
@@ -19,7 +20,7 @@ using namespace czc::cst;
  * @param[in] node CST 节点。
  * @param[in] indent 缩进级别。
  */
-void print_cst(const CSTNode *node, int indent = 0) {
+void print_cst(const CSTNode* node, int indent = 0) {
   if (!node) {
     return;
   }
@@ -44,7 +45,7 @@ void print_cst(const CSTNode *node, int indent = 0) {
   std::cout << std::endl;
 
   // 递归打印子节点
-  for (const auto &child : node->get_children()) {
+  for (const auto& child : node->get_children()) {
     print_cst(child.get(), indent + 1);
   }
 }
@@ -208,7 +209,7 @@ void test_parenthesized_expression() {
   assert(!parser.has_errors());
 
   // 验证 CST 中保留了括号节点
-  const auto &children = cst->get_children();
+  const auto& children = cst->get_children();
   assert(children.size() > 0);
 
   std::cout << "Parenthesized expression parsed successfully (brackets "
@@ -308,7 +309,7 @@ int main() {
     std::cout << "======================================" << std::endl;
 
     return 0;
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     std::cerr << "Test failed with exception: " << e.what() << std::endl;
     return 1;
   }

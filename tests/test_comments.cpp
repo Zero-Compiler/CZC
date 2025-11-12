@@ -2,12 +2,13 @@
  * @file test_comments.cpp
  * @brief 测试注释功能
  * @author BegoniaHe
- * @date 2025-11-06
+ * @date 2025-11-11
  */
 
 #include "czc/formatter/formatter.hpp"
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -37,7 +38,7 @@ int main() {
   Lexer lexer(source);
   auto tokens = lexer.tokenize();
 
-  for (const auto &token : tokens) {
+  for (const auto& token : tokens) {
     std::cout << token_type_to_string(token.token_type) << ": \"" << token.value
               << "\" "
               << "(Line " << token.line << ", Col " << token.column << ")"
@@ -48,7 +49,7 @@ int main() {
 
   // 统计注释数量
   int comment_count = 0;
-  for (const auto &token : tokens) {
+  for (const auto& token : tokens) {
     if (token.token_type == TokenType::Comment) {
       comment_count++;
     }
@@ -71,7 +72,7 @@ int main() {
 
   // 统计CST中的注释节点
   int cst_comment_count = 0;
-  for (const auto &child : cst->get_children()) {
+  for (const auto& child : cst->get_children()) {
     if (child->get_type() == CSTNodeType::Comment) {
       cst_comment_count++;
     }

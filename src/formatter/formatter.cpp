@@ -2,19 +2,20 @@
  * @file formatter.cpp
  * @brief `Formatter` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-06
+ * @date 2025-11-11
  */
 
 #include "czc/formatter/formatter.hpp"
+
 #include <sstream>
 
 namespace czc {
 namespace formatter {
 
-Formatter::Formatter(const FormatOptions &options)
+Formatter::Formatter(const FormatOptions& options)
     : options(options), error_collector(), indent_level(0) {}
 
-std::string Formatter::format(const cst::CSTNode *root) {
+std::string Formatter::format(const cst::CSTNode* root) {
   if (!root) {
     return "";
   }
@@ -23,7 +24,7 @@ std::string Formatter::format(const cst::CSTNode *root) {
   return format_node(root);
 }
 
-std::string Formatter::format_node(const cst::CSTNode *node) {
+std::string Formatter::format_node(const cst::CSTNode* node) {
   if (!node) {
     return "";
   }
@@ -95,7 +96,7 @@ std::string Formatter::format_node(const cst::CSTNode *node) {
   default:
     // 未处理的节点类型，递归格式化子节点
     std::ostringstream result;
-    for (const auto &child : node->get_children()) {
+    for (const auto& child : node->get_children()) {
       result << format_node(child.get());
     }
     return result.str();
@@ -104,10 +105,10 @@ std::string Formatter::format_node(const cst::CSTNode *node) {
 
 // --- 访问者方法实现 ---
 
-std::string Formatter::visit_program(const cst::CSTNode *node) {
+std::string Formatter::visit_program(const cst::CSTNode* node) {
   std::ostringstream result;
   // Program: 顶层节点，逐个格式化其子节点（通常是声明或语句）
-  for (const auto &child : node->get_children()) {
+  for (const auto& child : node->get_children()) {
     if (child->get_type() == cst::CSTNodeType::Comment) {
       result << format_standalone_comment(child.get());
     } else {
@@ -117,12 +118,12 @@ std::string Formatter::visit_program(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_var_declaration(const cst::CSTNode *node) {
+std::string Formatter::visit_var_declaration(const cst::CSTNode* node) {
   std::ostringstream result;
   // VarDeclaration: let a = b; // comment
   result << get_indent();
   for (size_t i = 0; i < node->get_children().size(); ++i) {
-    const auto &child = node->get_children()[i];
+    const auto& child = node->get_children()[i];
 
     if (child->get_type() == cst::CSTNodeType::Comment) {
       // 行内注释前加两个空格
@@ -134,7 +135,7 @@ std::string Formatter::visit_var_declaration(const cst::CSTNode *node) {
 
     // 在关键字、标识符和值之间添加空格
     if (i + 1 < node->get_children().size()) {
-      const auto &next = node->get_children()[i + 1];
+      const auto& next = node->get_children()[i + 1];
       if (next->get_type() != cst::CSTNodeType::Delimiter ||
           (next->get_token().has_value() &&
            next->get_token()->token_type != lexer::TokenType::Semicolon)) {
@@ -146,15 +147,15 @@ std::string Formatter::visit_var_declaration(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_fn_declaration(const cst::CSTNode *node) {
+std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
   std::ostringstream result;
   // FnDeclaration: fn add(a, b) { ... }
   result << get_indent();
   for (size_t i = 0; i < node->get_children().size(); ++i) {
-    const auto &child = node->get_children()[i];
+    const auto& child = node->get_children()[i];
 
     if (child->get_type() == cst::CSTNodeType::Delimiter) {
-      const auto &token = child->get_token();
+      const auto& token = child->get_token();
       if (token.has_value()) {
         result << token->value;
         // `fn` 关键字后加空格
@@ -173,11 +174,11 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_return_stmt(const cst::CSTNode *node) {
+std::string Formatter::visit_return_stmt(const cst::CSTNode* node) {
   std::ostringstream result;
   // ReturnStmt: return a + b;
   result << get_indent() << "return" << ONE_WIDTH_SPACE_STRING;
-  for (const auto &child : node->get_children()) {
+  for (const auto& child : node->get_children()) {
     if (child->get_type() != cst::CSTNodeType::Delimiter ||
         (child->get_token().has_value() &&
          child->get_token()->token_type != lexer::TokenType::Return &&
@@ -192,30 +193,84 @@ std::string Formatter::visit_return_stmt(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_if_stmt(const cst::CSTNode *node) {
-  // TODO: 实现 if 语句格式化
+std::string Formatter::visit_if_stmt(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  result << get_indent() << "if";
+
+  // if 语句结构: if condition { block } [else { block }]
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::LeftParen) {
+          if (options.space_before_paren) {
+            result << ONE_WIDTH_SPACE_STRING;
+          }
+          result << "(";
+        } else if (token->token_type == lexer::TokenType::RightParen) {
+          result << ")";
+        } else {
+          result << format_node(child.get());
+        }
+      }
+    } else if (child->get_type() == cst::CSTNodeType::BlockStmt) {
+      if (!options.newline_before_brace) {
+        result << ONE_WIDTH_SPACE_STRING;
+      }
+      result << format_node(child.get());
+    } else {
+      result << format_node(child.get());
+    }
   }
+
   return result.str();
 }
 
-std::string Formatter::visit_while_stmt(const cst::CSTNode *node) {
-  // TODO: 实现 while 语句格式化
+std::string Formatter::visit_while_stmt(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  result << get_indent() << "while";
+
+  // while 语句结构: while condition { block }
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::LeftParen) {
+          if (options.space_before_paren) {
+            result << ONE_WIDTH_SPACE_STRING;
+          }
+          result << "(";
+        } else if (token->token_type == lexer::TokenType::RightParen) {
+          result << ")";
+        } else {
+          result << format_node(child.get());
+        }
+      }
+    } else if (child->get_type() == cst::CSTNodeType::BlockStmt) {
+      if (!options.newline_before_brace) {
+        result << ONE_WIDTH_SPACE_STRING;
+      }
+      result << format_node(child.get());
+    } else {
+      result << format_node(child.get());
+    }
   }
+
   return result.str();
 }
 
-std::string Formatter::visit_block_stmt(const cst::CSTNode *node) {
+std::string Formatter::visit_block_stmt(const cst::CSTNode* node) {
   std::ostringstream result;
   // BlockStmt: { statements }
-  for (const auto &child : node->get_children()) {
+  for (const auto& child : node->get_children()) {
     if (child->get_type() == cst::CSTNodeType::Delimiter) {
-      const auto &token = child->get_token();
+      const auto& token = child->get_token();
       if (token.has_value() &&
           token->token_type == lexer::TokenType::LeftBrace) {
         result << "{\n";
@@ -232,12 +287,12 @@ std::string Formatter::visit_block_stmt(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_expr_stmt(const cst::CSTNode *node) {
+std::string Formatter::visit_expr_stmt(const cst::CSTNode* node) {
   std::ostringstream result;
   // ExprStmt: 表达式语句，通常是一个函数调用或赋值
   result << get_indent();
   for (size_t i = 0; i < node->get_children().size(); ++i) {
-    const auto &child = node->get_children()[i];
+    const auto& child = node->get_children()[i];
 
     if (child->get_type() == cst::CSTNodeType::Comment) {
       result << format_inline_comment(child.get());
@@ -250,11 +305,11 @@ std::string Formatter::visit_expr_stmt(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_binary_expr(const cst::CSTNode *node) {
+std::string Formatter::visit_binary_expr(const cst::CSTNode* node) {
   std::ostringstream result;
   // BinaryExpr: a + b
   for (size_t i = 0; i < node->get_children().size(); ++i) {
-    const auto &child = node->get_children()[i];
+    const auto& child = node->get_children()[i];
 
     if (child->get_type() == cst::CSTNodeType::Operator) {
       result << ONE_WIDTH_SPACE_STRING << format_node(child.get())
@@ -266,116 +321,193 @@ std::string Formatter::visit_binary_expr(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_unary_expr(const cst::CSTNode *node) {
+std::string Formatter::visit_unary_expr(const cst::CSTNode* node) {
   // UnaryExpr: 简单地格式化所有子节点
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
+  for (const auto& child : node->get_children()) {
     result << format_node(child.get());
   }
   return result.str();
 }
 
-std::string Formatter::visit_call_expr(const cst::CSTNode *node) {
+std::string Formatter::visit_call_expr(const cst::CSTNode* node) {
   // CallExpr: 简单地格式化所有子节点
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
+  for (const auto& child : node->get_children()) {
     result << format_node(child.get());
   }
   return result.str();
 }
 
-std::string Formatter::visit_index_expr(const cst::CSTNode *node) {
-  // TODO: 实现索引表达式格式化
+std::string Formatter::visit_index_expr(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  // IndexExpr: array[index]
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        result << token->value;
+      }
+    } else {
+      result << format_node(child.get());
+    }
   }
   return result.str();
 }
 
-std::string Formatter::visit_member_expr(const cst::CSTNode *node) {
-  // TODO: 实现成员访问格式化
+std::string Formatter::visit_member_expr(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  // MemberExpr: object.member
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Operator) {
+      const auto& token = child->get_token();
+      if (token.has_value() && token->token_type == lexer::TokenType::Dot) {
+        result << ".";
+      } else {
+        result << format_node(child.get());
+      }
+    } else {
+      result << format_node(child.get());
+    }
   }
   return result.str();
 }
 
-std::string Formatter::visit_assign_expr(const cst::CSTNode *node) {
-  // TODO: 实现赋值表达式格式化
+std::string Formatter::visit_assign_expr(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  // AssignExpr: lvalue = rvalue
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Operator) {
+      const auto& token = child->get_token();
+      if (token.has_value() && token->token_type == lexer::TokenType::Equal) {
+        result << ONE_WIDTH_SPACE_STRING << "=" << ONE_WIDTH_SPACE_STRING;
+      } else {
+        result << format_node(child.get());
+      }
+    } else {
+      result << format_node(child.get());
+    }
   }
   return result.str();
 }
 
-std::string Formatter::visit_index_assign_expr(const cst::CSTNode *node) {
-  // TODO: 实现索引赋值格式化
+std::string Formatter::visit_index_assign_expr(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  // IndexAssignExpr: array[index] = value
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Operator) {
+      const auto& token = child->get_token();
+      if (token.has_value() && token->token_type == lexer::TokenType::Equal) {
+        result << ONE_WIDTH_SPACE_STRING << "=" << ONE_WIDTH_SPACE_STRING;
+      } else {
+        result << format_node(child.get());
+      }
+    } else {
+      result << format_node(child.get());
+    }
   }
   return result.str();
 }
 
-std::string Formatter::visit_array_literal(const cst::CSTNode *node) {
-  // TODO: 实现数组字面量格式化
+std::string Formatter::visit_array_literal(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  // ArrayLiteral: [elem1, elem2, elem3]
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::LeftBracket) {
+          result << "[";
+        } else if (token->token_type == lexer::TokenType::RightBracket) {
+          result << "]";
+        } else if (token->token_type == lexer::TokenType::Comma) {
+          result << ",";
+          if (options.space_after_comma) {
+            result << ONE_WIDTH_SPACE_STRING;
+          }
+        } else {
+          result << token->value;
+        }
+      }
+    } else {
+      result << format_node(child.get());
+    }
   }
   return result.str();
 }
 
-std::string Formatter::visit_paren_expr(const cst::CSTNode *node) {
-  // TODO: 实现括号表达式格式化
+std::string Formatter::visit_paren_expr(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  // ParenExpr: (expression)
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        result << token->value;
+      }
+    } else {
+      result << format_node(child.get());
+    }
   }
   return result.str();
 }
 
-std::string Formatter::visit_integer_literal(const cst::CSTNode *node) {
+std::string Formatter::visit_integer_literal(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
     return node->get_token()->value;
   }
   return "";
 }
 
-std::string Formatter::visit_float_literal(const cst::CSTNode *node) {
+std::string Formatter::visit_float_literal(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
     return node->get_token()->value;
   }
   return "";
 }
 
-std::string Formatter::visit_string_literal(const cst::CSTNode *node) {
+std::string Formatter::visit_string_literal(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
     return node->get_token()->value;
   }
   return "";
 }
 
-std::string Formatter::visit_boolean_literal(const cst::CSTNode *node) {
+std::string Formatter::visit_boolean_literal(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
     return node->get_token()->value;
   }
   return "";
 }
 
-std::string Formatter::visit_identifier(const cst::CSTNode *node) {
+std::string Formatter::visit_identifier(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
     return node->get_token()->value;
   }
   return "";
 }
 
-std::string Formatter::visit_operator(const cst::CSTNode *node) {
+std::string Formatter::visit_operator(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
-    const auto &token = node->get_token().value();
+    const auto& token = node->get_token().value();
     // 跳过虚拟 Token
     if (token.is_synthetic) {
       return "";
@@ -385,9 +517,9 @@ std::string Formatter::visit_operator(const cst::CSTNode *node) {
   return "";
 }
 
-std::string Formatter::visit_comment(const cst::CSTNode *node) {
+std::string Formatter::visit_comment(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
-    const auto &token = node->get_token().value();
+    const auto& token = node->get_token().value();
     // 虚拟 Token 不会是注释，但为了一致性还是检查
     if (token.is_synthetic) {
       return "";
@@ -397,38 +529,69 @@ std::string Formatter::visit_comment(const cst::CSTNode *node) {
   return "";
 }
 
-std::string Formatter::visit_type_annotation(const cst::CSTNode *node) {
-  // TODO: 实现类型注解格式化
-  if (node->get_token().has_value()) {
+std::string Formatter::visit_type_annotation(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // TypeAnnotation: : type
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value() && token->token_type == lexer::TokenType::Colon) {
+        result << ":" << ONE_WIDTH_SPACE_STRING;
+      } else if (token.has_value()) {
+        result << token->value;
+      }
+    } else {
+      result << format_node(child.get());
+    }
+  }
+
+  // Fallback to token value if no children
+  if (children.empty() && node->get_token().has_value()) {
     return node->get_token()->value;
   }
-  return "";
+
+  return result.str();
 }
 
-std::string Formatter::visit_array_type(const cst::CSTNode *node) {
-  // TODO: 实现数组类型格式化
+std::string Formatter::visit_array_type(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
+  // ArrayType: Type[]
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        result << token->value;
+      }
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_parameter(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // Parameter: name or name: type
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
     result << format_node(child.get());
   }
   return result.str();
 }
 
-std::string Formatter::visit_parameter(const cst::CSTNode *node) {
-  // TODO: 实现参数格式化
-  std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
-  }
-  return result.str();
-}
-
-std::string Formatter::visit_parameter_list(const cst::CSTNode *node) {
+std::string Formatter::visit_parameter_list(const cst::CSTNode* node) {
   std::ostringstream result;
   // ParameterList: a, b, c (不包含括号)
-  const auto &children = node->get_children();
+  const auto& children = node->get_children();
   for (size_t i = 0; i < children.size(); ++i) {
-    const auto &child = children[i];
+    const auto& child = children[i];
     if (child->get_type() == cst::CSTNodeType::Delimiter) {
       if (child->get_token().has_value() &&
           child->get_token()->token_type == lexer::TokenType::Comma) {
@@ -441,19 +604,34 @@ std::string Formatter::visit_parameter_list(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_argument_list(const cst::CSTNode *node) {
-  // TODO: 实现实参列表格式化
+std::string Formatter::visit_argument_list(const cst::CSTNode* node) {
   std::ostringstream result;
-  for (const auto &child : node->get_children()) {
-    result << format_node(child.get());
+  // ArgumentList: arg1, arg2, arg3 (不包含括号)
+  const auto& children = node->get_children();
+  for (size_t i = 0; i < children.size(); ++i) {
+    const auto& child = children[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value() && token->token_type == lexer::TokenType::Comma) {
+        result << ",";
+        if (options.space_after_comma) {
+          result << ONE_WIDTH_SPACE_STRING;
+        }
+      } else if (token.has_value()) {
+        result << token->value;
+      }
+    } else {
+      result << format_node(child.get());
+    }
   }
   return result.str();
 }
 
-std::string Formatter::visit_statement_list(const cst::CSTNode *node) {
+std::string Formatter::visit_statement_list(const cst::CSTNode* node) {
   std::ostringstream result;
   // StatementList: 格式化块内的语句列表
-  for (const auto &child : node->get_children()) {
+  for (const auto& child : node->get_children()) {
     if (child->get_type() == cst::CSTNodeType::Comment) {
       result << format_standalone_comment(child.get());
     } else {
@@ -463,9 +641,9 @@ std::string Formatter::visit_statement_list(const cst::CSTNode *node) {
   return result.str();
 }
 
-std::string Formatter::visit_delimiter(const cst::CSTNode *node) {
+std::string Formatter::visit_delimiter(const cst::CSTNode* node) {
   if (node->get_token().has_value()) {
-    const auto &token = node->get_token().value();
+    const auto& token = node->get_token().value();
     // 跳过虚拟 Token（用于错误恢复的占位符）
     if (token.is_synthetic) {
       return "";
@@ -483,7 +661,7 @@ std::string Formatter::get_indent() const {
   }
 }
 
-std::string Formatter::format_inline_comment(const cst::CSTNode *comment) {
+std::string Formatter::format_inline_comment(const cst::CSTNode* comment) {
   if (!comment) {
     return "";
   }
@@ -495,7 +673,7 @@ std::string Formatter::format_inline_comment(const cst::CSTNode *comment) {
   return result.str();
 }
 
-std::string Formatter::format_standalone_comment(const cst::CSTNode *comment) {
+std::string Formatter::format_standalone_comment(const cst::CSTNode* comment) {
   if (!comment) {
     return "";
   }

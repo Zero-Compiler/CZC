@@ -2,7 +2,7 @@
  * @file error_collector.hpp
  * @brief 定义了用于收集语法分析错误的 `ParserError` 和 `ParserErrorCollector`。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_PARSER_ERROR_COLLECTOR_HPP
@@ -11,6 +11,7 @@
 #include "czc/diagnostics/diagnostic_code.hpp"
 #include "czc/utils/error_collector.hpp"
 #include "czc/utils/source_location.hpp"
+
 #include <string>
 #include <vector>
 
@@ -41,8 +42,8 @@ struct ParserError {
    * @param[in] loc       源码位置。
    * @param[in] arguments (可选) 消息参数列表。
    */
-  ParserError(diagnostics::DiagnosticCode c, const utils::SourceLocation &loc,
-              const std::vector<std::string> &arguments = {})
+  ParserError(diagnostics::DiagnosticCode c, const utils::SourceLocation& loc,
+              const std::vector<std::string>& arguments = {})
       : code(c), location(loc), args(arguments) {}
 };
 

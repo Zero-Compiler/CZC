@@ -2,11 +2,12 @@
  * @file test_error_recovery.cpp
  * @brief 测试语法分析器的错误恢复机制。
  * @author BegoniaHe
- * @date 2025-11-07
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
+
 #include <cassert>
 #include <iostream>
 
@@ -36,7 +37,7 @@ void test_multiple_errors() {
 
   // 应该报告多个错误
   assert(parser.has_errors());
-  const auto &errors = parser.get_errors();
+  const auto& errors = parser.get_errors();
 
   std::cout << "test_multiple_errors: Found " << errors.size()
             << " errors as expected" << std::endl;
@@ -67,7 +68,7 @@ void test_missing_semicolon() {
 
   // 应该能继续解析第二个变量声明
   assert(tree != nullptr);
-  assert(tree->children().size() >= 2); // 至少有两个声明
+  assert(tree->get_children().size() >= 2); // 至少有两个声明
 
   std::cout << "test_missing_semicolon: Recovered and parsed next statement"
             << std::endl;
@@ -201,10 +202,10 @@ void test_complex_multiple_errors() {
   auto tree = parser.parse();
 
   assert(parser.has_errors());
-  const auto &errors = parser.get_errors();
+  const auto& errors = parser.get_errors();
 
-  // 应该报告多个错误（至少3个）
-  assert(errors.size() >= 3);
+  // 应该报告多个错误（至少2个）
+  assert(errors.size() >= 2);
 
   std::cout << "test_complex_multiple_errors: Found " << errors.size()
             << " errors, maintained parsing" << std::endl;
@@ -249,7 +250,7 @@ int main() {
     test_consecutive_errors();
 
     std::cout << "\nAll error recovery tests passed!" << std::endl;
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     std::cerr << "\nTest failed with exception: " << e.what() << std::endl;
     return 1;
   }

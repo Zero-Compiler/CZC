@@ -2,13 +2,14 @@
  * @file source_tracker.hpp
  * @brief 定义了 `SourceTracker` 类，用于管理和跟踪源代码的读取位置。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_SOURCE_TRACKER_HPP
 #define CZC_SOURCE_TRACKER_HPP
 
 #include "czc/utils/source_location.hpp"
+
 #include <string>
 #include <vector>
 
@@ -78,8 +79,8 @@ public:
    * @param[in] source 要跟踪的源代码字符串。
    * @param[in] fname  (可选) 源代码的文件名，用于创建 SourceLocation。
    */
-  SourceTracker(const std::string &source,
-                const std::string &fname = "<stdin>");
+  SourceTracker(const std::string& source,
+                const std::string& fname = "<stdin>");
 
   /**
    * @brief 向前移动一个字符，并根据字符内容更新行号和列号。
@@ -92,25 +93,33 @@ public:
    * @brief 获取当前在输入中的字节位置。
    * @return 返回当前位置的字节索引。
    */
-  size_t get_position() const { return position; }
+  size_t get_position() const {
+    return position;
+  }
 
   /**
    * @brief 获取当前行号。
    * @return 返回当前位置的行号（从 1 开始）。
    */
-  size_t get_line() const { return line; }
+  size_t get_line() const {
+    return line;
+  }
 
   /**
    * @brief 获取当前列号。
    * @return 返回当前位置的列号（从 1 开始）。
    */
-  size_t get_column() const { return column; }
+  size_t get_column() const {
+    return column;
+  }
 
   /**
    * @brief 获取源文件名。
    * @return 返回对源文件名的常量引用。
    */
-  const std::string &get_filename() const { return filename; }
+  const std::string& get_filename() const {
+    return filename;
+  }
 
   /**
    * @brief 创建一个从指定起始点到当前位置的 SourceLocation。
@@ -131,7 +140,9 @@ public:
    * @brief 获取对整个输入源文本的只读访问权限。
    * @return 返回对内部字符向量的常量引用。
    */
-  const std::vector<char> &get_input() const { return input; }
+  const std::vector<char>& get_input() const {
+    return input;
+  }
 };
 
 } // namespace utils

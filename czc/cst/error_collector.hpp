@@ -11,6 +11,7 @@
 #include "czc/diagnostics/diagnostic_code.hpp"
 #include "czc/utils/error_collector.hpp"
 #include "czc/utils/source_location.hpp"
+
 #include <string>
 #include <vector>
 
@@ -42,8 +43,8 @@ struct CSTError {
    * @param[in] loc       源码位置。
    * @param[in] arguments (可选) 消息参数列表。
    */
-  CSTError(diagnostics::DiagnosticCode c, const utils::SourceLocation &loc,
-           const std::vector<std::string> &arguments = {})
+  CSTError(diagnostics::DiagnosticCode c, const utils::SourceLocation& loc,
+           const std::vector<std::string>& arguments = {})
       : code(c), location(loc), args(arguments) {}
 };
 

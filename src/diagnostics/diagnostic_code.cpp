@@ -2,10 +2,11 @@
  * @file diagnostic_code.cpp
  * @brief `DiagnosticCode` 相关工具函数的实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/diagnostics/diagnostic_code.hpp"
+
 #include <iomanip>
 #include <sstream>
 

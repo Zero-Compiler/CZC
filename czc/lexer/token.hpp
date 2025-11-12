@@ -2,7 +2,7 @@
  * @file token.hpp
  * @brief 定义了词法单元 `Token` 及其相关类型 `TokenType`。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_LEXER_TOKEN_HPP
@@ -129,7 +129,7 @@ public:
    * @param[in] column Token 开始的列号。
    * @param[in] synthetic 是否为虚拟 Token（默认为 false）。
    */
-  Token(TokenType type, const std::string &val, size_t line = 0,
+  Token(TokenType type, const std::string& val, size_t line = 0,
         size_t column = 0, bool synthetic = false);
 };
 
@@ -139,7 +139,7 @@ public:
  * @return 如果 `word` 是一个关键字，则返回对应的 `TokenType`；
  *         否则返回 `std::nullopt`。
  */
-std::optional<TokenType> get_keyword(const std::string &word);
+std::optional<TokenType> get_keyword(const std::string& word);
 
 /**
  * @brief 将 TokenType 枚举转换为人类可读的字符串表示。

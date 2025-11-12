@@ -2,7 +2,7 @@
  * @file main.cpp
  * @brief CZC 编译器命令行工具入口。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/diagnostics/diagnostic.hpp"
@@ -11,6 +11,7 @@
 #include "czc/token_preprocessor/token_preprocessor.hpp"
 #include "czc/utils/file_collector.hpp"
 #include "czc/utils/source_tracker.hpp"
+
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -30,7 +31,7 @@ using namespace czc::utils;
  * @brief 打印命令行工具的使用说明。
  * @param[in] program_name 程序的名称。
  */
-void print_usage(const std::string &program_name) {
+void print_usage(const std::string& program_name) {
   std::cout << "Usage: " << program_name << " [options] <command> <file>..."
             << std::endl;
   std::cout << "\nOptions:" << std::endl;
@@ -73,7 +74,7 @@ void print_usage(const std::string &program_name) {
  * @param[in] s 待转义的原始字符串。
  * @return 包含转义序列的新字符串。
  */
-static std::string escape_for_output(const std::string &s) {
+static std::string escape_for_output(const std::string& s) {
   std::ostringstream oss;
   for (unsigned char c : s) {
     switch (c) {
@@ -129,7 +130,7 @@ static std::string escape_for_output(const std::string &s) {
  *
  * @return 如果所有阶段都成功，返回 `true`，否则返回 `false`。
  */
-bool tokenize_file(const std::string &input_path, const std::string &locale) {
+bool tokenize_file(const std::string& input_path, const std::string& locale) {
   // --- 1. 文件校验和读取 ---
   if (input_path.empty()) {
     std::cerr << "Error: Input file path is empty" << std::endl;
@@ -160,6 +161,7 @@ bool tokenize_file(const std::string &input_path, const std::string &locale) {
   std::cout << "Tokenizing file: " << input_path << std::endl;
 
   DiagnosticEngine diagnostics(locale);
+  SourceTracker source_tracker(content, input_path);
 
   // --- 2. 词法分析 ---
   Lexer lexer(content, input_path);
@@ -174,11 +176,11 @@ bool tokenize_file(const std::string &input_path, const std::string &locale) {
     //       最后将这个完整的诊断对象交给 `DiagnosticEngine`
     //       进行统一处理和报告。
     //       这种分层设计使得错误收集和错误报告的逻辑相互分离。
-    for (const auto &error : lexer.get_errors().get_errors()) {
+    for (const auto& error : lexer.get_errors().get_errors()) {
       auto diag = std::make_shared<Diagnostic>(
           DiagnosticLevel::Error, error.code, error.location, error.args);
-      SourceTracker temp_tracker(content, input_path);
-      diag->set_source_line(temp_tracker.get_source_line(error.location.line));
+      diag->set_source_line(
+          source_tracker.get_source_line(error.location.line));
       diagnostics.report(diag);
     }
   }
@@ -195,11 +197,11 @@ bool tokenize_file(const std::string &input_path, const std::string &locale) {
 
   // --- 5. 报告 Token 预处理错误 ---
   if (preprocessor.get_errors().has_errors()) {
-    for (const auto &error : preprocessor.get_errors().get_errors()) {
+    for (const auto& error : preprocessor.get_errors().get_errors()) {
       auto diag = std::make_shared<Diagnostic>(
           DiagnosticLevel::Error, error.code, error.location, error.args);
-      SourceTracker temp_tracker(content, input_path);
-      diag->set_source_line(temp_tracker.get_source_line(error.location.line));
+      diag->set_source_line(
+          source_tracker.get_source_line(error.location.line));
       diagnostics.report(diag);
     }
   }
@@ -258,7 +260,7 @@ bool tokenize_file(const std::string &input_path, const std::string &locale) {
  * @param[in] locale     用于诊断消息的语言环境代码。
  * @return 如果没有错误返回 `true`，否则返回 `false`。
  */
-bool parse_file(const std::string &input_path, const std::string &locale) {
+bool parse_file(const std::string& input_path, const std::string& locale) {
   // --- 1. 文件校验和读取 ---
   if (input_path.empty()) {
     std::cerr << "Error: Input file path is empty" << std::endl;
@@ -297,7 +299,7 @@ bool parse_file(const std::string &input_path, const std::string &locale) {
 
   // --- 3. 报告词法分析错误 ---
   if (lexer.get_errors().has_errors()) {
-    for (const auto &error : lexer.get_errors().get_errors()) {
+    for (const auto& error : lexer.get_errors().get_errors()) {
       auto diag = std::make_shared<Diagnostic>(
           DiagnosticLevel::Error, error.code, error.location, error.args);
       diag->set_source_line(
@@ -318,7 +320,7 @@ bool parse_file(const std::string &input_path, const std::string &locale) {
 
   // --- 5. 报告 Token 预处理错误 ---
   if (preprocessor.get_errors().has_errors()) {
-    for (const auto &error : preprocessor.get_errors().get_errors()) {
+    for (const auto& error : preprocessor.get_errors().get_errors()) {
       auto diag = std::make_shared<Diagnostic>(
           DiagnosticLevel::Error, error.code, error.location, error.args);
       diag->set_source_line(
@@ -339,7 +341,7 @@ bool parse_file(const std::string &input_path, const std::string &locale) {
 
   // --- 7. 报告语法分析错误 ---
   if (parser.has_errors()) {
-    for (const auto &error : parser.get_errors()) {
+    for (const auto& error : parser.get_errors()) {
       auto diag = std::make_shared<Diagnostic>(
           DiagnosticLevel::Error, error.code, error.location, error.args);
       diag->set_source_line(
@@ -365,7 +367,7 @@ bool parse_file(const std::string &input_path, const std::string &locale) {
  * @param[in] argv 命令行参数数组。
  * @return 程序退出码 (0 表示成功, 1 表示失败)。
  */
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // 将 argv 转换为 std::vector<std::string> 以避免指针算术
   std::vector<std::string> args(argv, argv + argc);
 
@@ -383,7 +385,7 @@ int main(int argc, char *argv[]) {
   //       使用专门的参数解析库（如 `cxxopts` 或 `Boost.Program_options`）。
   while (arg_offset < args.size() && !args[arg_offset].empty() &&
          args[arg_offset][0] == '-') {
-    const std::string &option = args[arg_offset];
+    const std::string& option = args[arg_offset];
     if (option == "--locale") {
       if (arg_offset + 1 >= args.size()) {
         std::cerr << "Error: --locale requires an argument" << std::endl;
@@ -406,7 +408,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  const std::string &command = args[arg_offset];
+  const std::string& command = args[arg_offset];
   if (command == "tokenize") {
     if (arg_offset + 1 >= args.size()) {
       std::cerr << "Error: Missing input file argument" << std::endl;

@@ -2,7 +2,7 @@
  * @file source_tracker.cpp
  * @brief `SourceTracker` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/utils/source_tracker.hpp"
@@ -10,8 +10,8 @@
 namespace czc {
 namespace utils {
 
-SourceTracker::SourceTracker(const std::string &source,
-                             const std::string &fname)
+SourceTracker::SourceTracker(const std::string& source,
+                             const std::string& fname)
     : filename(fname), position(0), line(1), column(1) {
   // NOTE(BegoniaHe): 将输入的 std::string 复制到内部的 std::vector<char>。
   // 使用 vector<char> 而非 string 是一个设计选择。虽然 string

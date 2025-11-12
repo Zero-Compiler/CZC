@@ -2,11 +2,12 @@
  * @file test_token_preprocessor.cpp
  * @brief Token 预处理器测试套件。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/lexer.hpp"
 #include "czc/token_preprocessor/token_preprocessor.hpp"
+
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -22,8 +23,8 @@ static AnalysisContext make_test_context() {
 }
 
 // Helper to print analysis results for debugging.
-void print_analysis(const std::string &literal,
-                    const ScientificNotationInfo &info) {
+void print_analysis(const std::string& literal,
+                    const ScientificNotationInfo& info) {
   std::cout << "Literal: " << literal << std::endl;
   std::cout << "  Mantissa: " << info.mantissa << std::endl;
   std::cout << "  Exponent: " << info.exponent << std::endl;
@@ -149,7 +150,7 @@ void test_token_processing() {
   TokenPreprocessor preprocessor;
   auto processed = preprocessor.process(tokens, "<test>", code);
 
-  for (const auto &token : processed) {
+  for (const auto& token : processed) {
     if (token.value == "1e10") {
       assert(token.token_type == TokenType::Integer);
       std::cout << "1e10 processed as Integer" << std::endl;
@@ -170,7 +171,7 @@ void test_detailed_analysis() {
   std::vector<std::string> test_cases = {
       "1e10", "3.14e-5", "1.5e2", "2.718e0", "9.999e18", "1.23456789e10"};
 
-  for (const auto &literal : test_cases) {
+  for (const auto& literal : test_cases) {
     auto info = ScientificNotationAnalyzer::analyze(literal, nullptr,
                                                     make_test_context());
     if (info.has_value()) {
@@ -228,7 +229,7 @@ int main() {
     std::cout << "\n===================================" << std::endl;
     std::cout << "All tests passed! ✓" << std::endl;
     std::cout << "===================================" << std::endl;
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     std::cerr << "\n===================================" << std::endl;
     std::cerr << "Test failed: " << e.what() << std::endl;
     std::cerr << "===================================" << std::endl;

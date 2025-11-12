@@ -2,7 +2,7 @@
  * @file lexer.hpp
  * @brief 定义了 `Lexer` 类，负责将源代码文本流转换为词法单元序列。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_LEXER_HPP
@@ -10,12 +10,14 @@
 
 #include "czc/diagnostics/diagnostic_code.hpp"
 #include "czc/utils/source_tracker.hpp"
-#include "error_collector.hpp"
-#include "token.hpp"
+
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "error_collector.hpp"
+#include "token.hpp"
 
 namespace czc {
 namespace lexer {
@@ -111,8 +113,8 @@ private:
    * @param[in] error_code  如果缺少数字部分时要报告的错误代码。
    * @return 返回一个表示该数字的 Token。
    */
-  Token read_prefixed_number(const std::string &valid_chars,
-                             const std::string &prefix_str,
+  Token read_prefixed_number(const std::string& valid_chars,
+                             const std::string& prefix_str,
                              diagnostics::DiagnosticCode error_code);
 
   /**
@@ -124,7 +126,27 @@ private:
    */
   void report_error(diagnostics::DiagnosticCode code, size_t error_line,
                     size_t error_column,
-                    const std::vector<std::string> &args = {});
+                    const std::vector<std::string>& args = {});
+
+  /**
+   * @brief 尝试读取双字符运算符。
+   * @param[in] first_char 第一个字符
+   * @param[in] token_line Token 开始的行号
+   * @param[in] token_column Token 开始的列号
+   * @return 如果成功匹配双字符运算符，返回对应的 Token；否则返回 std::nullopt
+   */
+  std::optional<Token> try_read_two_char_operator(char first_char,
+                                                  size_t token_line,
+                                                  size_t token_column);
+
+  /**
+   * @brief 读取单字符分隔符或运算符。
+   * @param[in] ch 要处理的字符
+   * @param[in] token_line Token 开始的行号
+   * @param[in] token_column Token 开始的列号
+   * @return 对应的 Token
+   */
+  Token read_single_char_token(char ch, size_t token_line, size_t token_column);
 
 public:
   /**
@@ -132,7 +154,7 @@ public:
    * @param[in] input_str 要进行词法分析的源代码字符串。
    * @param[in] fname (可选) 源代码的文件名，用于错误报告。
    */
-  Lexer(const std::string &input_str, const std::string &fname = "<stdin>");
+  Lexer(const std::string& input_str, const std::string& fname = "<stdin>");
 
   /**
    * @brief 从输入流中获取并返回下一个 Token。
@@ -151,7 +173,9 @@ public:
    * @brief 获取对内部错误收集器的只读访问权限。
    * @return 对 LexErrorCollector 对象的常量引用。
    */
-  const LexErrorCollector &get_errors() const { return error_collector; }
+  const LexErrorCollector& get_errors() const {
+    return error_collector;
+  }
 };
 
 } // namespace lexer

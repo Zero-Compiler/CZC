@@ -2,11 +2,13 @@
  * @file diagnostic.cpp
  * @brief 诊断系统核心组件的实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/diagnostics/diagnostic.hpp"
+
 #include "czc/diagnostics/color.hpp"
+
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -16,7 +18,7 @@
 
 using namespace czc::diagnostics;
 
-I18nMessages::I18nMessages(const std::string &locale) : current_locale(locale) {
+I18nMessages::I18nMessages(const std::string& locale) : current_locale(locale) {
   // NOTE: 尝试加载用户指定的语言环境。如果失败（例如，文件不存在或格式错误），
   //       则立即回退到默认的 "en_US" 语言环境。这种“失败安全” (fail-safe)
   //       的设计确保了诊断系统在任何情况下都能正常工作，至少能提供英文的
@@ -26,7 +28,7 @@ I18nMessages::I18nMessages(const std::string &locale) : current_locale(locale) {
   }
 }
 
-bool I18nMessages::load_from_file(const std::string &locale) {
+bool I18nMessages::load_from_file(const std::string& locale) {
   std::vector<std::string> search_paths;
 
   // --- 建立本地化文件的搜索路径 ---
@@ -38,7 +40,7 @@ bool I18nMessages::load_from_file(const std::string &locale) {
   //          大多数本地开发和标准构建输出的场景。
 
   // 1. 检查环境变量 `ZERO_LOCALE_PATH`
-  const char *env_path = std::getenv("ZERO_LOCALE_PATH");
+  const char* env_path = std::getenv("ZERO_LOCALE_PATH");
   if (env_path != nullptr && env_path[0] != '\0') {
     std::string base_path(env_path);
     // 规范化路径，移除末尾可能存在的斜杠，以确保路径拼接的正确性。
@@ -56,7 +58,7 @@ bool I18nMessages::load_from_file(const std::string &locale) {
 
   // --- 查找并打开文件 ---
   std::string filepath;
-  for (const auto &path : search_paths) {
+  for (const auto& path : search_paths) {
     if (std::filesystem::exists(path)) {
       filepath = path;
       break; // NOTE: 找到第一个有效文件后立即停止搜索，确保了搜索路径的优先级。
@@ -150,14 +152,14 @@ bool I18nMessages::load_from_file(const std::string &locale) {
   return !messages.empty();
 }
 
-void I18nMessages::set_locale(const std::string &locale) {
+void I18nMessages::set_locale(const std::string& locale) {
   current_locale = locale;
   if (!load_from_file(locale)) {
     load_from_file("en_US"); // Fallback to English
   }
 }
 
-const MessageTemplate &I18nMessages::get_message(DiagnosticCode code) const {
+const MessageTemplate& I18nMessages::get_message(DiagnosticCode code) const {
   std::string code_str = diagnostic_code_to_string(code);
   auto it = messages.find(code_str);
 
@@ -176,8 +178,8 @@ const MessageTemplate &I18nMessages::get_message(DiagnosticCode code) const {
 
 std::string
 I18nMessages::format_message(DiagnosticCode code,
-                             const std::vector<std::string> &args) const {
-  const auto &tmpl = get_message(code);
+                             const std::vector<std::string>& args) const {
+  const auto& tmpl = get_message(code);
   std::string result = tmpl.message;
 
   // --- 替换占位符 {0}, {1}, ... ---
@@ -200,9 +202,9 @@ I18nMessages::format_message(DiagnosticCode code,
   return result;
 }
 
-std::string Diagnostic::format(const I18nMessages &i18n, bool use_color) const {
+std::string Diagnostic::format(const I18nMessages& i18n, bool use_color) const {
   std::ostringstream oss;
-  const auto &tmpl = i18n.get_message(code);
+  const auto& tmpl = i18n.get_message(code);
 
   // --- 1. 构造诊断信息的标题行 ---
   // 示例: error[L0007]: unterminated string (from: lexer)
@@ -318,7 +320,7 @@ std::string Diagnostic::format(const I18nMessages &i18n, bool use_color) const {
   return oss.str();
 }
 
-DiagnosticEngine::DiagnosticEngine(const std::string &locale)
+DiagnosticEngine::DiagnosticEngine(const std::string& locale)
     : i18n(std::make_shared<I18nMessages>(locale)) {}
 
 void DiagnosticEngine::report(std::shared_ptr<Diagnostic> diag) {
@@ -339,7 +341,7 @@ void DiagnosticEngine::report(std::shared_ptr<Diagnostic> diag) {
 }
 
 void DiagnosticEngine::print_all(bool use_color) const {
-  for (const auto &diag : diagnostics) {
+  for (const auto& diag : diagnostics) {
     std::cerr << diag->format(*i18n, use_color);
   }
 

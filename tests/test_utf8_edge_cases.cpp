@@ -2,11 +2,12 @@
  * @file test_utf8_edge_cases.cpp
  * @brief 测试 UTF-8 编码边界情况和错误处理。
  * @author BegoniaHe
- * @date 2025-11-10
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/lexer.hpp"
 #include "czc/lexer/utf8_handler.hpp"
+
 #include <cassert>
 #include <iostream>
 
@@ -21,11 +22,11 @@ void test_4_byte_emoji() {
   Lexer lexer(source);
   auto tokens = lexer.tokenize();
 
-  assert(!lexer.has_errors() && "4字节emoji应该正确解析");
+  assert(!lexer.get_errors().has_errors() && "4字节emoji应该正确解析");
 
   // 检查字符串字面量
   bool found_string = false;
-  for (const auto &token : tokens) {
+  for (const auto& token : tokens) {
     if (token.token_type == TokenType::String) {
       assert(token.value == "\"🚀\"" && "Emoji应该被正确保留");
       found_string = true;
@@ -51,7 +52,7 @@ void test_various_unicode_characters() {
   Lexer lexer(source);
   auto tokens = lexer.tokenize();
 
-  assert(!lexer.has_errors() && "各种Unicode字符应该正确解析");
+  assert(!lexer.get_errors().has_errors() && "各种Unicode字符应该正确解析");
 
   std::cout << "✓ test_various_unicode_characters: 多种Unicode字符正确处理"
             << std::endl;
@@ -71,11 +72,11 @@ void test_utf8_identifiers() {
   Lexer lexer(source);
   auto tokens = lexer.tokenize();
 
-  assert(!lexer.has_errors() && "UTF-8标识符应该正确解析");
+  assert(!lexer.get_errors().has_errors() && "UTF-8标识符应该正确解析");
 
   // 检查是否识别为标识符
   int identifier_count = 0;
-  for (const auto &token : tokens) {
+  for (const auto& token : tokens) {
     if (token.token_type == TokenType::Identifier) {
       identifier_count++;
     }
@@ -96,7 +97,7 @@ void test_invalid_utf8_start_byte() {
   auto tokens = lexer.tokenize();
 
   // 应该产生错误
-  assert(lexer.has_errors() && "无效UTF-8起始字节应该产生错误");
+  assert(lexer.get_errors().has_errors() && "无效UTF-8起始字节应该产生错误");
 
   std::cout << "✓ test_invalid_utf8_start_byte: 检测到无效UTF-8起始字节"
             << std::endl;
@@ -113,7 +114,7 @@ void test_incomplete_utf8_sequence() {
   auto tokens = lexer.tokenize();
 
   // 应该产生错误
-  assert(lexer.has_errors() && "不完整UTF-8序列应该产生错误");
+  assert(lexer.get_errors().has_errors() && "不完整UTF-8序列应该产生错误");
 
   std::cout << "✓ test_incomplete_utf8_sequence: 检测到不完整UTF-8序列"
             << std::endl;
@@ -130,7 +131,7 @@ void test_invalid_utf8_continuation() {
   auto tokens = lexer.tokenize();
 
   // 应该产生错误
-  assert(lexer.has_errors() && "无效UTF-8续字节应该产生错误");
+  assert(lexer.get_errors().has_errors() && "无效UTF-8续字节应该产生错误");
 
   std::cout << "✓ test_invalid_utf8_continuation: 检测到无效UTF-8续字节"
             << std::endl;
@@ -147,7 +148,7 @@ void test_utf8_bom() {
   auto tokens = lexer.tokenize();
 
   // BOM应该被跳过，不产生错误
-  assert(!lexer.has_errors() && "UTF-8 BOM应该被正确处理");
+  assert(!lexer.get_errors().has_errors() && "UTF-8 BOM应该被正确处理");
 
   // 检查第一个token是否为 let
   assert(tokens.size() > 0 && tokens[0].token_type == TokenType::Let &&
@@ -168,7 +169,7 @@ void test_zero_width_characters() {
 
   // 零宽字符可能被当作空白或标识符的一部分，具体取决于实现
   // 这里主要测试不崩溃
-  assert(!lexer.has_errors() && "零宽度字符不应该导致崩溃");
+  assert(!lexer.get_errors().has_errors() && "零宽度字符不应该导致崩溃");
 
   std::cout << "✓ test_zero_width_characters: 零宽度字符处理正常" << std::endl;
 }
@@ -206,19 +207,19 @@ void test_utf8_at_boundaries() {
   std::string source1 = "你好世界";
   Lexer lexer1(source1);
   auto tokens1 = lexer1.tokenize();
-  assert(!lexer1.has_errors() && "文件开头的UTF-8应该正确处理");
+  assert(!lexer1.get_errors().has_errors() && "文件开头的UTF-8应该正确处理");
 
   // 文件结尾的UTF-8字符
   std::string source2 = "let x = \"世界\"";
   Lexer lexer2(source2);
   auto tokens2 = lexer2.tokenize();
-  assert(!lexer2.has_errors() && "文件结尾的UTF-8应该正确处理");
+  assert(!lexer2.get_errors().has_errors() && "文件结尾的UTF-8应该正确处理");
 
   // 注释中的UTF-8字符
   std::string source3 = "let x = 10; // 这是注释 🎉";
   Lexer lexer3(source3);
   auto tokens3 = lexer3.tokenize();
-  assert(!lexer3.has_errors() && "注释中的UTF-8应该正确处理");
+  assert(!lexer3.get_errors().has_errors() && "注释中的UTF-8应该正确处理");
 
   std::cout << "✓ test_utf8_at_boundaries: 边界位置UTF-8字符正确处理"
             << std::endl;
@@ -234,7 +235,7 @@ void test_mixed_encoding_scenarios() {
   Lexer lexer(source);
   auto tokens = lexer.tokenize();
 
-  assert(!lexer.has_errors() && "ASCII和UTF-8混合应该正确处理");
+  assert(!lexer.get_errors().has_errors() && "ASCII和UTF-8混合应该正确处理");
 
   std::cout << "✓ test_mixed_encoding_scenarios: 混合编码场景正确处理"
             << std::endl;
@@ -261,7 +262,7 @@ int main() {
     std::cout << "   1. 多字节字符（2-4字节）正确处理" << std::endl;
     std::cout << "   2. 无效序列能够被检测" << std::endl;
     std::cout << "   3. 边界情况稳定处理" << std::endl;
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     std::cerr << "\nTest failed with exception: " << e.what() << std::endl;
     return 1;
   }

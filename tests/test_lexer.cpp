@@ -2,10 +2,11 @@
  * @file test_lexer.cpp
  * @brief 词法分析器测试套件。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/lexer.hpp"
+
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -13,7 +14,7 @@
 using namespace czc::lexer;
 
 // Helper function to print a token for debugging.
-void print_token(const Token &token) {
+void print_token(const Token& token) {
   std::cout << "Token(" << token_type_to_string(token.token_type) << ", \""
             << token.value << "\")" << std::endl;
 }
@@ -163,19 +164,20 @@ void test_delimiters() {
   std::cout << "Delimiter test passed" << std::endl;
 }
 
-// Tests that comments are correctly ignored.
+// Tests that comments are correctly tokenized.
 void test_comments() {
   std::cout << "\n=== Test: Comments ===" << std::endl;
   Lexer lexer("let x = 5; // this is a comment\nlet y = 10;");
   auto tokens = lexer.tokenize();
 
-  assert(tokens.size() == 11); // let x = 5 ; let y = 10 ; EOF
+  assert(tokens.size() == 12); // let x = 5 ; comment let y = 10 ; EOF
   assert(tokens[0].token_type == TokenType::Let);
   assert(tokens[1].value == "x");
   assert(tokens[4].token_type == TokenType::Semicolon);
-  assert(tokens[5].token_type == TokenType::Let);
-  assert(tokens[6].value == "y");
-  assert(tokens[9].token_type == TokenType::Semicolon);
+  assert(tokens[5].token_type == TokenType::Comment);
+  assert(tokens[6].token_type == TokenType::Let);
+  assert(tokens[7].value == "y");
+  assert(tokens[10].token_type == TokenType::Semicolon);
 
   std::cout << "Comment test passed" << std::endl;
 }
@@ -436,7 +438,7 @@ int main() {
     std::cout << "======================" << std::endl;
 
     return 0;
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     std::cerr << "\nTest failed with exception: " << e.what() << std::endl;
     return 1;
   }

@@ -2,7 +2,7 @@
  * @file source_location.hpp
  * @brief 定义了用于表示源代码位置的 `SourceLocation` 结构体。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-11
  */
 
 #ifndef CZC_SOURCE_LOCATION_HPP
@@ -52,7 +52,7 @@ struct SourceLocation {
    *   // 创建跨越范围的 SourceLocation
    *   SourceLocation range("file.cpp", 10, 5, 10, 15);
    */
-  SourceLocation(const std::string &file = "<stdin>", size_t ln = 1,
+  SourceLocation(const std::string& file = "<stdin>", size_t ln = 1,
                  size_t col = 1, size_t end_ln = 0, size_t end_col = 0)
       : filename(file), line(ln), column(col), end_line(end_ln ? end_ln : ln),
         end_column(end_col ? end_col : col) {}

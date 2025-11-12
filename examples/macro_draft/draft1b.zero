@@ -1,0 +1,202 @@
+/* ============================================
+   示例：几何图形库
+   ============================================ */
+
+// ========== 1. 声明式宏：简化重复代码 ==========
+macro !vec2(x, y) {
+    Vector2 { x: x, y: y }
+}
+
+macro !area_formula(shape, formula) {
+    fn area(&self) -> Float {
+        formula
+    }
+}
+
+// ========== 2. 过程宏：自动实现 trait ==========
+macro #derive_debug(T: Type) {
+    impl Debug for T {
+        fn fmt(self, f: Formatter) -> Result {
+            let type_name = !stringify(T);
+            let fields = @get_fields(T);  // 编译期求值展开
+            /* 例如这里对Vector2展开后相当于：
+               let fields = [
+                   { name: "x", value: self.x },
+                   { name: "y", value: self.y }
+               ];
+               这部分由编译期宏@get_fields实现
+            */
+            !write(f, "{} {{ ", type_name)?;
+            for field in fields {
+                !write(f, "{}: {:?}, ", field.name, field.value)?;
+            }
+            !write(f, "}}")
+        }
+    }
+}
+
+macro #derive_clone(T: Type) {
+    impl Clone for T {
+        fn clone(&self) -> T {
+            let fields = get_fields(T);
+            T {
+                // 遍历所有字段并克隆
+                ..fields.map(|f| f.clone())
+            }
+        }
+    }
+}
+
+// ========== 3. 编译期宏：编译期求值解决 ==========
+macro @ensure_numeric(T: Type) -> Boolean {
+    T == Integer || T == Float || T == Double
+}
+
+macro @max_size_type(T1: Type, T2: Type) -> Type {
+    if sizeof(T1) >= sizeof(T2) {
+        T1
+    } else {
+        T2
+    }
+}
+
+// ========== 类型定义 ==========
+type Vector2 = struct {
+    x: Float,
+    y: Float
+}
+
+type Circle = struct {
+    center: Vector2,
+    radius: Float
+}
+
+type Rectangle = struct {
+    top_left: Vector2,
+    width: Float,
+    height: Float
+}
+
+type Triangle = struct {
+    p1: Vector2,
+    p2: Vector2,
+    p3: Vector2
+}
+
+// ========== 使用过程宏自动实现 trait ==========
+// 方式1：函数式调用
+#derive_debug(Circle);
+#derive_debug(Rectangle);
+#derive_debug(Triangle);
+
+// 方式2：方法式调用（可选语法）
+Vector2.#derive_debug();
+Vector2.#derive_clone();
+
+// 批量 derive
+Circle.#derive_debug().#derive_clone();
+
+// ========== 为图形实现面积计算 ==========
+impl Circle {
+    !area_formula(Circle, 3.14159 * self.radius * self.radius)
+}
+
+impl Rectangle {
+    !area_formula(Rectangle, self.width * self.height)
+}
+
+impl Triangle {
+    fn area(self) -> Float {
+        // 使用海伦公式
+        let a = distance(self.p1, self.p2);
+        let b = distance(self.p2, self.p3);
+        let c = distance(self.p3, self.p1);
+        let s = (a + b + c) / 2.0;
+        return sqrt(s * (s - a) * (s - b) * (s - c));
+    }
+}
+
+// ========== 泛型函数使用编译期宏 ==========
+fn max<T>(a: T, b: T) -> T 
+    where @ensure_numeric(T)  // 编译期类型约束
+{
+    if a > b { a } else { b }
+}
+
+fn add_with_promotion<T1, T2>(a: T1, b: T2) -> @max_size_type(T1, T2) {
+    // 自动提升到更大的类型
+    return (a as @max_size_type(T1, T2)) + (b as @max_size_type(T1, T2));
+}
+
+// ========== 辅助函数 ==========
+fn distance(p1: Vector2, p2: Vector2) -> Float {
+    let dx = p2.x - p1.x;
+    let dy = p2.y - p1.y;
+    return sqrt(dx * dx + dy * dy);
+}
+
+// ========== 主程序 ==========
+pub fn main() -> Integer {
+    // 使用声明式宏创建向量
+    let center = !vec2(0.0, 0.0);
+    let p1 = !vec2(0.0, 0.0);
+    let p2 = !vec2(4.0, 0.0);
+    let p3 = !vec2(2.0, 3.0);
+    
+    // 创建图形
+    let circle = Circle { 
+        center: center, 
+        radius: 5.0 
+    };
+    
+    let rect = Rectangle { 
+        top_left: !vec2(0.0, 0.0), 
+        width: 4.0, 
+        height: 3.0 
+    };
+    
+    let triangle = Triangle { 
+        p1: p1, 
+        p2: p2, 
+        p3: p3 
+    };
+    
+    // 使用自动生成的 Debug 实现打印
+    print("Circle: {:?}", circle);
+    // 输出: Circle { center: Vector2 { x: 0.0, y: 0.0 }, radius: 5.0 }
+    
+    print("Rectangle: {:?}", rect);
+    // 输出: Rectangle { top_left: Vector2 { x: 0.0, y: 0.0 }, width: 4.0, height: 3.0 }
+    
+    // 计算面积
+    print("Circle area: {}", circle.area());        // 78.54
+    print("Rectangle area: {}", rect.area());       // 12.0
+    print("Triangle area: {}", triangle.area());    // 6.0
+    
+    // 使用编译期类型约束的泛型函数
+    let max_int = max(10, 20);           // T = Integer
+    let max_float = max(3.14, 2.71);     // T = Float
+    
+    // 编译期类型提升
+    let result = add_with_promotion(100, 3.14);
+    // 返回类型自动推导为 Float
+    print("Result: {}", result);  // 103.14
+    
+    // 使用 Clone
+    let circle2 = circle.clone();
+    print("Cloned circle: {:?}", circle2);
+    
+    return 0;
+}
+
+/* ============================================
+   输出示例：
+   ============================================
+   Circle: Circle { center: Vector2 { x: 0.0, y: 0.0 }, radius: 5.0 }
+   Rectangle: Rectangle { top_left: Vector2 { x: 0.0, y: 0.0 }, width: 4.0, height: 3.0 }
+   Circle area: 78.53975
+   Rectangle area: 12.0
+   Triangle area: 6.0
+   Result: 103.14
+   Cloned circle: Circle { center: Vector2 { x: 0.0, y: 0.0 }, radius: 5.0 }
+*/

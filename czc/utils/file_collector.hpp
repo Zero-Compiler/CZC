@@ -2,7 +2,7 @@
  * @file file_collector.hpp
  * @brief 提供基于通配符模式的文件收集功能。
  * @author BegoniaHe
- * @date 2025-11-04
+ * @date 2025-11-11
  */
 
 #ifndef CZC_FILE_COLLECTOR_HPP
@@ -32,7 +32,7 @@ public:
    *         如果没有找到匹配的文件，则返回空向量。
    */
   static std::vector<std::string>
-  collect_files(const std::vector<std::string> &patterns);
+  collect_files(const std::vector<std::string>& patterns);
 
 private:
   /**
@@ -41,8 +41,8 @@ private:
    * @param[in] pattern 包含 `*` 和/或 `?` 的通配符模式。
    * @return 如果文件名与模式匹配，则返回 `true`，否则返回 `false`。
    */
-  static bool matches_pattern(const std::string &filename,
-                              const std::string &pattern);
+  static bool matches_pattern(const std::string& filename,
+                              const std::string& pattern);
 };
 
 } // namespace utils

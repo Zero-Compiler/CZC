@@ -2,12 +2,13 @@
  * @file test_synthetic_tokens.cpp
  * @brief 测试虚拟 Token（synthetic tokens）的处理。
  * @author BegoniaHe
- * @date 2025-11-07
+ * @date 2025-11-11
  */
 
 #include "czc/formatter/formatter.hpp"
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
+
 #include <cassert>
 #include <iostream>
 
@@ -185,7 +186,7 @@ int main() {
     test_mixed_tokens();
 
     std::cout << "\nAll synthetic token tests passed!" << std::endl;
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     std::cerr << "\nTest failed with exception: " << e.what() << std::endl;
     return 1;
   }

@@ -2,13 +2,14 @@
  * @file utf8_handler.hpp
  * @brief 定义了 `Utf8Handler` 类，提供处理 UTF-8 编码文本的静态工具函数。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #ifndef CZC_UTF8_HANDLER_HPP
 #define CZC_UTF8_HANDLER_HPP
 
 #include <string>
+#include <vector>
 
 namespace czc {
 namespace lexer {
@@ -60,8 +61,19 @@ public:
    * @param[out]    dest 读取到的 UTF-8 字符将被追加到此字符串。
    * @return 如果成功读取一个有效的 UTF-8 字符，则返回 `true`。
    */
-  static bool read_char(const std::string &input, size_t &pos,
-                        std::string &dest);
+  static bool read_char(const std::string& input, size_t& pos,
+                        std::string& dest);
+
+  /**
+   * @brief 从输入字符向量的指定位置读取一个完整的 UTF-8 字符（重载版本）。
+   * @param[in]     input 从中读取的源字符向量。
+   * @param[in,out] pos
+   *   输入时，为开始读取的字节位置；成功读取后，将更新为下一个字符的起始位置。
+   * @param[out]    dest 读取到的 UTF-8 字符将被追加到此字符串。
+   * @return 如果成功读取一个有效的 UTF-8 字符，则返回 `true`。
+   */
+  static bool read_char(const std::vector<char>& input, size_t& pos,
+                        std::string& dest);
 };
 
 } // namespace lexer

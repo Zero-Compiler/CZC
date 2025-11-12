@@ -2,13 +2,15 @@
  * @file token_preprocessor.cpp
  * @brief `TokenPreprocessor` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/token_preprocessor/token_preprocessor.hpp"
+
 #include "czc/diagnostics/diagnostic.hpp"
 #include "czc/diagnostics/diagnostic_code.hpp"
 #include "czc/utils/source_tracker.hpp"
+
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -24,9 +26,9 @@ using namespace czc::lexer;
 using namespace czc::utils;
 
 std::optional<ScientificNotationInfo>
-ScientificNotationAnalyzer::analyze(const std::string &literal,
-                                    const Token *token,
-                                    const AnalysisContext &context) {
+ScientificNotationAnalyzer::analyze(const std::string& literal,
+                                    const Token* token,
+                                    const AnalysisContext& context) {
   ScientificNotationInfo info;
   info.original_literal = literal;
 
@@ -55,9 +57,9 @@ ScientificNotationAnalyzer::analyze(const std::string &literal,
   return info;
 }
 
-bool ScientificNotationAnalyzer::parse_components(const std::string &literal,
-                                                  std::string &mantissa,
-                                                  int64_t &exponent) {
+bool ScientificNotationAnalyzer::parse_components(const std::string& literal,
+                                                  std::string& mantissa,
+                                                  int64_t& exponent) {
   // 科学计数法的核心是 'e' 或 'E' 分隔符。
   size_t e_pos = literal.find_first_of("eE");
   if (e_pos == std::string::npos) {
@@ -82,9 +84,9 @@ bool ScientificNotationAnalyzer::parse_components(const std::string &literal,
   //       通过捕获这些异常，我们可以稳健地处理格式错误的科学计数法。
   try {
     exponent = std::stoll(exp_str);
-  } catch (const std::invalid_argument &) {
+  } catch (const std::invalid_argument&) {
     return false;
-  } catch (const std::out_of_range &) {
+  } catch (const std::out_of_range&) {
     return false;
   }
 
@@ -92,7 +94,7 @@ bool ScientificNotationAnalyzer::parse_components(const std::string &literal,
 }
 
 std::string ScientificNotationAnalyzer::trim_trailing_zeros(
-    const std::string &decimal_part) {
+    const std::string& decimal_part) {
   if (decimal_part.empty()) {
     return decimal_part;
   }
@@ -104,7 +106,7 @@ std::string ScientificNotationAnalyzer::trim_trailing_zeros(
 }
 
 size_t
-ScientificNotationAnalyzer::count_decimal_digits(const std::string &mantissa) {
+ScientificNotationAnalyzer::count_decimal_digits(const std::string& mantissa) {
   size_t dot_pos = mantissa.find('.');
   if (dot_pos == std::string::npos) {
     return 0;
@@ -121,9 +123,9 @@ ScientificNotationAnalyzer::count_decimal_digits(const std::string &mantissa) {
 }
 
 InferredNumericType
-ScientificNotationAnalyzer::infer_type(const ScientificNotationInfo &info,
-                                       const Token *token,
-                                       const AnalysisContext &context) {
+ScientificNotationAnalyzer::infer_type(const ScientificNotationInfo& info,
+                                       const Token* token,
+                                       const AnalysisContext& context) {
   // --- 类型推断的核心逻辑 ---
   // 目标是尽可能将数值表示为整数（INT64），只有在必要时才使用浮点数（FLOAT）。
 
@@ -155,10 +157,10 @@ ScientificNotationAnalyzer::infer_type(const ScientificNotationInfo &info,
              : InferredNumericType::FLOAT;
 }
 
-bool ScientificNotationAnalyzer::fits_in_int64(const std::string &mantissa,
+bool ScientificNotationAnalyzer::fits_in_int64(const std::string& mantissa,
                                                int64_t exponent,
-                                               const Token *token,
-                                               const AnalysisContext &context) {
+                                               const Token* token,
+                                               const AnalysisContext& context) {
   // NOTE: 这是一个关键的优化。我们不进行实际的高精度数学计算来判断溢出，
   //       因为这会非常慢且复杂。相反，我们通过 `calculate_magnitude`
   //       来估算数值的数量级（即它大约是 10 的多少次方）。
@@ -170,14 +172,25 @@ bool ScientificNotationAnalyzer::fits_in_int64(const std::string &mantissa,
     return false;
   }
 
-  // 如果量级小于或等于 int64 能表示的最大量级，我们假设它能被装下。
-  return magnitude.value() <= MAX_I64_MAGNITUDE;
+  // 如果量级超过 int64 能表示的最大量级，报告整数溢出错误
+  if (magnitude.value() > MAX_I64_MAGNITUDE) {
+    if (context.error_collector && token) {
+      std::string literal = mantissa + "e" + std::to_string(exponent);
+      auto loc =
+          SourceLocation(context.filename, token->line, token->column,
+                         token->line, token->column + token->value.length());
+      context.error_collector->add(DiagnosticCode::T0001_ScientificIntOverflow,
+                                   loc, {literal});
+    }
+    return false;
+  }
+
+  return true;
 }
 
 std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
-    const std::string &mantissa, int64_t exponent, const Token *token,
-    const AnalysisContext &context) {
-
+    const std::string& mantissa, int64_t exponent, const Token* token,
+    const AnalysisContext& context) {
   // --- 通过估算最终数值的位数来判断其量级 ---
   // NOTE: 这个算法的目的是在不执行实际浮点运算的情况下，估算出一个科学
   //       计数法字面量的数量级（magnitude），即它约等于 10 的多少次方。
@@ -192,7 +205,7 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
   bool has_dot = (dot_pos != std::string::npos);
 
   for (char ch : mantissa) {
-    if (std::isdigit(ch)) {
+    if (std::isdigit(static_cast<unsigned char>(ch))) {
       significant_digits_str += ch;
     }
   }
@@ -233,8 +246,8 @@ std::optional<int64_t> ScientificNotationAnalyzer::calculate_magnitude(
 }
 
 void ScientificNotationAnalyzer::report_overflow(
-    const Token *token, const std::string &mantissa, int64_t exponent,
-    const AnalysisContext &context) {
+    const Token* token, const std::string& mantissa, int64_t exponent,
+    const AnalysisContext& context) {
   if (!context.error_collector || !token) {
     return;
   }
@@ -247,8 +260,8 @@ void ScientificNotationAnalyzer::report_overflow(
                                loc, {literal});
 }
 
-void TokenPreprocessor::report_error(DiagnosticCode code, const Token *token,
-                                     const std::vector<std::string> &args) {
+void TokenPreprocessor::report_error(DiagnosticCode code, const Token* token,
+                                     const std::vector<std::string>& args) {
   if (!token) {
     return;
   }
@@ -258,14 +271,14 @@ void TokenPreprocessor::report_error(DiagnosticCode code, const Token *token,
 }
 
 std::vector<Token>
-TokenPreprocessor::process(const std::vector<Token> &tokens,
-                           const std::string &filename,
-                           const std::string &source_content) {
+TokenPreprocessor::process(const std::vector<Token>& tokens,
+                           const std::string& filename,
+                           const std::string& source_content) {
   std::vector<Token> processed_tokens;
   processed_tokens.reserve(tokens.size());
 
   // 遍历词法分析器生成的 Token 流。
-  for (const auto &token : tokens) {
+  for (const auto& token : tokens) {
     // 只对 `ScientificExponent` 类型的 Token 进行特殊处理。
     if (token.token_type == TokenType::ScientificExponent) {
       // 调用辅助函数处理该 Token，并将结果放入新的列表中。
@@ -281,8 +294,8 @@ TokenPreprocessor::process(const std::vector<Token> &tokens,
 }
 
 Token TokenPreprocessor::process_scientific_token(
-    const Token &token, const std::string &filename,
-    const std::string &source_content) {
+    const Token& token, const std::string& filename,
+    const std::string& source_content) {
   AnalysisContext context(filename, source_content, &error_collector);
   auto info = ScientificNotationAnalyzer::analyze(token.value, &token, context);
 

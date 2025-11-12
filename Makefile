@@ -1,4 +1,4 @@
-.PHONY: all build clean test install help fmt tidy pullall pullerrmsg
+.PHONY: all build clean test install help fmt tidy pullall pullerrmsg coverage coverage-report benchmark docs
 
 ifeq ($(OS),Windows_NT)
     CMAKE_GENERATOR := -G "MinGW Makefiles"
@@ -49,7 +49,9 @@ clean:
 	@cmake -E rm -rf build
 	@echo "Build directory removed"
 	@cmake -E rm -f examples/*.tokens
-	@echo ".tokens files removed"
+	@echo "Build directory and .tokens files removed"
+	@cmake -E rm -rf docs/html
+	@echo "Documentation directory removed"
 	@echo ""
 	@echo "==================================="
 	@echo "Clean completed!"
@@ -149,14 +151,107 @@ help:
 	@echo "=================================="
 	@echo ""
 	@echo "Available targets:"
-	@echo "  make (all)    - Build the project (default)"
-	@echo "  make build    - Build the project in Release mode"
-	@echo "  make debug    - Build the project in Debug mode"
-	@echo "  make clean    - Clean all build artifacts"
-	@echo "  make test     - Build and run tests"
-	@echo "  make install  - Install the compiler"
-	@echo "  make rebuild  - Clean and rebuild"
-	@echo "  make example  - Run example tokenization"
-	@echo "  make fmt      - Format C/C++ source files with clang-format"
-	@echo "  make help     - Show this help message"
+	@echo "  make (all)           - Build the project (default)"
+	@echo "  make build           - Build the project in Release mode"
+	@echo "  make debug           - Build the project in Debug mode"
+	@echo "  make clean           - Clean all build artifacts"
+	@echo "  make test            - Build and run tests"
+	@echo "  make benchmark       - Build and run performance benchmarks"
+	@echo "  make coverage        - Build with coverage and run tests"
+	@echo "  make coverage-report - Generate HTML coverage report"
+	@echo "  make docs            - Generate API documentation with Doxygen"
+	@echo "  make install         - Install the compiler"
+	@echo "  make rebuild         - Clean and rebuild"
+	@echo "  make example         - Run example tokenization"
+	@echo "  make fmt             - Format C/C++ source files with clang-format"
+	@echo "  make tidy            - Run clang-tidy on source files"
+	@echo "  make pullall         - Pull all git submodules"
+	@echo "  make pullerrmsg      - Pull error message submodule"
+	@echo "  make help            - Show this help message"
 	@echo ""
+
+# 性能基准测试
+benchmark:
+	@echo "==================================="
+	@echo "Building and Running Benchmarks"
+	@echo "==================================="
+	@cmake -B build $(CMAKE_GENERATOR) -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON
+	@cmake --build build
+	@echo ""
+	@echo "Running lexer benchmarks..."
+	@./build/benchmarks/benchmark_lexer
+	@echo ""
+	@echo "Running parser benchmarks..."
+	@./build/benchmarks/benchmark_parser
+	@echo ""
+	@echo "==================================="
+	@echo "Benchmark completed!"
+	@echo "==================================="
+
+# 生成文档
+docs:
+	@echo "==================================="
+	@echo "Generating Documentation"
+	@echo "==================================="
+	@if command -v doxygen >/dev/null 2>&1; then \
+		echo "Running Doxygen..."; \
+		doxygen Doxyfile; \
+		echo ""; \
+		echo "===================================";\
+		echo "Documentation generated!";\
+		echo "Open: docs/html/index.html";\
+		echo "===================================";\
+	else \
+		echo "Error: doxygen not found!"; \
+		echo "Please install doxygen first."; \
+		echo ""; \
+		echo "Installation:"; \
+		echo "  macOS:   brew install doxygen graphviz"; \
+		echo "  Ubuntu:  sudo apt-get install doxygen graphviz"; \
+		echo "===================================";\
+		exit 1; \
+	fi
+
+# 代码覆盖率
+coverage:
+	@echo "==================================="
+	@echo "Building with Code Coverage"
+	@echo "==================================="
+	@cmake -B build $(CMAKE_GENERATOR) -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON
+	@cmake --build build
+	@echo ""
+	@echo "Running tests with coverage..."
+	@cd build && ctest --output-on-failure
+	@echo ""
+	@echo "==================================="
+	@echo "Coverage build completed!"
+	@echo "Run 'make coverage-report' to generate HTML report"
+	@echo "==================================="
+
+# 生成覆盖率报告
+coverage-report:
+	@echo "==================================="
+	@echo "Generating Coverage Report"
+	@echo "==================================="
+	@if command -v lcov >/dev/null 2>&1; then \
+		echo "Capturing coverage data..."; \
+		lcov --capture --directory build/CMakeFiles/czc.dir --output-file build/coverage.info --ignore-errors inconsistent,unsupported; \
+		echo "Filtering out system/external headers..."; \
+		lcov --remove build/coverage.info '/usr/*' '/Library/*' '*/_deps/*' --output-file build/coverage_filtered.info --ignore-errors inconsistent,unsupported,empty; \
+		echo "Generating HTML report..."; \
+		genhtml build/coverage_filtered.info --output-directory build/coverage_html --ignore-errors inconsistent,unsupported,empty,category; \
+		echo ""; \
+		echo "===================================";\
+		echo "Coverage report generated!";\
+		echo "Open: build/coverage_html/index.html";\
+		echo "===================================";\
+	else \
+		echo "Error: lcov not found!"; \
+		echo "Please install lcov first."; \
+		echo ""; \
+		echo "Installation:"; \
+		echo "  macOS:   brew install lcov"; \
+		echo "  Ubuntu:  sudo apt-get install lcov"; \
+		echo "===================================";\
+		exit 1; \
+	fi

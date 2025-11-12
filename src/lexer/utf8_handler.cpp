@@ -2,7 +2,7 @@
  * @file utf8_handler.cpp
  * @brief `Utf8Handler` 类的功能实现。
  * @author BegoniaHe
- * @date 2025-11-05
+ * @date 2025-11-11
  */
 
 #include "czc/lexer/utf8_handler.hpp"
@@ -89,8 +89,8 @@ std::string Utf8Handler::codepoint_to_utf8(unsigned int codepoint) {
   return result;
 }
 
-bool Utf8Handler::read_char(const std::string &input, size_t &pos,
-                            std::string &dest) {
+bool Utf8Handler::read_char(const std::string& input, size_t& pos,
+                            std::string& dest) {
   if (pos >= input.size()) {
     return false;
   }
@@ -115,6 +115,40 @@ bool Utf8Handler::read_char(const std::string &input, size_t &pos,
   // 如果所有检查都通过，则将这组字节作为一个完整的 UTF-8
   // 字符追加到目标字符串中。
   dest.append(input, pos, char_len);
+  // 更新位置指针，跳过刚刚读取的整个字符。
+  pos += char_len;
+
+  return true;
+}
+
+bool Utf8Handler::read_char(const std::vector<char>& input, size_t& pos,
+                            std::string& dest) {
+  if (pos >= input.size()) {
+    return false;
+  }
+
+  unsigned char first_byte = static_cast<unsigned char>(input[pos]);
+  size_t char_len = get_char_length(first_byte);
+
+  // 检查计算出的字符长度是否有效，以及输入字符串中是否还有足够的字节来构成一个完整的字符。
+  if (char_len == 0 || pos + char_len > input.size()) {
+    // 如果起始字节无效或剩余字节不足，则这是一个无效的 UTF-8 序列。
+    return false;
+  }
+
+  // 对于多字节字符，验证其后的所有字节是否都是合法的续字节。
+  // 这是确保 UTF-8 序列有效性的关键步骤。
+  for (size_t i = 1; i < char_len; i++) {
+    if (!is_continuation(static_cast<unsigned char>(input[pos + i]))) {
+      return false; // 如果任何一个后续字节不是续字节，则序列无效。
+    }
+  }
+
+  // 如果所有检查都通过，则将这组字节作为一个完整的 UTF-8
+  // 字符追加到目标字符串中。
+  for (size_t i = 0; i < char_len; i++) {
+    dest += input[pos + i];
+  }
   // 更新位置指针，跳过刚刚读取的整个字符。
   pos += char_len;
 
