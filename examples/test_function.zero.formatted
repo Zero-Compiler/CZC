@@ -1,0 +1,14 @@
+// 函数示例
+fn add(a:Integer, b:Integer) -> Integer {
+    return a + b;
+}
+fn multiply(x:Integer, y:Integer) -> Integer {
+    return x * y;
+}
+fn greet(name:String) {
+    print("Hello, ");
+    print(name);
+}
+fn main() {
+    return ;
+}
