@@ -801,14 +801,15 @@ TEST_F(ASTTest, ASTBuilderWithParenExpr) {
   ASSERT_NE(ast, nullptr);
   ASSERT_EQ(ast->get_declarations().size(), 1);
 
-  auto var_decl = std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
+  auto var_decl =
+      std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
   ASSERT_NE(var_decl, nullptr);
 
   // 验证初始化表达式是二元表达式
   auto init = var_decl->get_initializer();
   ASSERT_NE(init, nullptr);
   EXPECT_EQ(init->get_kind(), ASTNodeKind::BinaryOp);
-  
+
   auto binary = std::dynamic_pointer_cast<BinaryOpExpr>(init);
   ASSERT_NE(binary, nullptr);
   EXPECT_EQ(binary->get_operator(), BinaryOperator::Add);
@@ -830,7 +831,8 @@ TEST_F(ASTTest, ASTBuilderWithCallExpr) {
   ASSERT_NE(ast, nullptr);
   ASSERT_EQ(ast->get_declarations().size(), 1);
 
-  auto var_decl = std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
+  auto var_decl =
+      std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
   ASSERT_NE(var_decl, nullptr);
 
   // 验证初始化表达式是函数调用
@@ -870,7 +872,8 @@ TEST_F(ASTTest, ASTBuilderWithNoArgCallExpr) {
   ASSERT_NE(ast, nullptr);
   ASSERT_EQ(ast->get_declarations().size(), 1);
 
-  auto var_decl = std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
+  auto var_decl =
+      std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
   ASSERT_NE(var_decl, nullptr);
 
   auto init = var_decl->get_initializer();
@@ -900,7 +903,8 @@ TEST_F(ASTTest, ASTBuilderWithIndexExpr) {
   ASSERT_NE(ast, nullptr);
   ASSERT_EQ(ast->get_declarations().size(), 1);
 
-  auto var_decl = std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
+  auto var_decl =
+      std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
   ASSERT_NE(var_decl, nullptr);
 
   // 验证初始化表达式是索引访问
@@ -938,7 +942,8 @@ TEST_F(ASTTest, ASTBuilderWithMemberExpr) {
   ASSERT_NE(ast, nullptr);
   ASSERT_EQ(ast->get_declarations().size(), 1);
 
-  auto var_decl = std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
+  auto var_decl =
+      std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
   ASSERT_NE(var_decl, nullptr);
 
   // 简单验证初始化表达式存在
@@ -963,7 +968,8 @@ TEST_F(ASTTest, ASTBuilderWithChainedMemberExpr) {
   ASSERT_NE(ast, nullptr);
   ASSERT_EQ(ast->get_declarations().size(), 1);
 
-  auto var_decl = std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
+  auto var_decl =
+      std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
   ASSERT_NE(var_decl, nullptr);
 
   // 简单验证初始化表达式存在
@@ -988,7 +994,8 @@ TEST_F(ASTTest, ASTBuilderWithComplexExpressionChain) {
   ASSERT_NE(ast, nullptr);
   ASSERT_EQ(ast->get_declarations().size(), 1);
 
-  auto var_decl = std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
+  auto var_decl =
+      std::dynamic_pointer_cast<VarDecl>(ast->get_declarations()[0]);
   ASSERT_NE(var_decl, nullptr);
 
   // 最外层是成员访问 .value
@@ -1008,9 +1015,8 @@ TEST_F(ASTTest, ASTBuilderWithComplexExpressionChain) {
   // 最内层是函数调用 get_array()
   auto index = std::dynamic_pointer_cast<IndexExpr>(index_expr);
   ASSERT_NE(index, nullptr);
-  
+
   auto call = index->get_object();
   ASSERT_NE(call, nullptr);
   EXPECT_EQ(call->get_kind(), ASTNodeKind::CallExpr);
 }
-
