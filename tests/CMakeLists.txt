@@ -130,3 +130,10 @@ add_executable(test_ast
 target_link_libraries(test_ast PRIVATE czc GTest::gtest_main)
 gtest_discover_tests(test_ast)
 
+# AST coverage tests (additional tests to improve function coverage)
+add_executable(test_ast_coverage
+    test_ast_coverage.cpp
+)
+target_link_libraries(test_ast_coverage PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_ast_coverage)
+

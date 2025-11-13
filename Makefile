@@ -9,6 +9,23 @@ COLOR_YELLOW  := \033[33m
 COLOR_BLUE    := \033[34m
 COLOR_CYAN    := \033[36m
 
+# 时间戳打印助手
+define ts_msg
+	@DATE_STR=$$(date '+%Y-%m-%d %H:%M:%S'); \
+	printf "\n$(COLOR_CYAN)╭─────────────────────────────────────────╮\n$(COLOR_RESET)"; \
+	printf "$(COLOR_CYAN)│$(COLOR_RESET) $(COLOR_BOLD)[%s]$(COLOR_RESET)\n" "$$DATE_STR"; \
+	printf "$(COLOR_CYAN)│$(COLOR_RESET) $(COLOR_CYAN)▶ %s$(COLOR_RESET)\n" "$(1)"; \
+	printf "$(COLOR_CYAN)╰─────────────────────────────────────────╯\n$(COLOR_RESET)"
+endef
+
+define ts_done
+	@DATE_STR=$$(date '+%Y-%m-%d %H:%M:%S'); \
+	printf "$(COLOR_GREEN)╭─────────────────────────────────────────╮\n$(COLOR_RESET)"; \
+	printf "$(COLOR_GREEN)│$(COLOR_RESET) $(COLOR_BOLD)[%s]$(COLOR_RESET)\n" "$$DATE_STR"; \
+	printf "$(COLOR_GREEN)│$(COLOR_RESET) $(COLOR_GREEN)✓ %s$(COLOR_RESET)\n" "$(1)"; \
+	printf "$(COLOR_GREEN)╰─────────────────────────────────────────╯\n$(COLOR_RESET)"
+endef
+
 # 检测 CPU 核心数
 ifeq ($(OS),Windows_NT)
     CMAKE_GENERATOR := -G "MinGW Makefiles"
@@ -33,39 +50,48 @@ build: release
 
 # Release 模式构建
 release:
-	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
-	@printf "$(COLOR_BLUE)$(COLOR_BOLD)Building CZC Compiler (Release)\n$(COLOR_RESET)"
-	@printf "$(COLOR_CYAN)Using $(NPROC) CPU cores\n$(COLOR_RESET)"
-	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	$(call ts_msg,Building CZC Compiler (Release Mode))
+	@printf "$(COLOR_BLUE)$(COLOR_BOLD)╔═══════════════════════════════════════╗\n$(COLOR_RESET)"
+	@printf "$(COLOR_BLUE)$(COLOR_BOLD)║  CZC COMPILER - RELEASE BUILD        ║\n$(COLOR_RESET)"
+	@printf "$(COLOR_BLUE)$(COLOR_BOLD)╚═══════════════════════════════════════╝\n$(COLOR_RESET)"
+	@printf "$(COLOR_CYAN)Configuration: $(COLOR_BOLD)Release (Optimized)$(COLOR_RESET)\n"
+	@printf "$(COLOR_CYAN)CPU Cores: $(COLOR_BOLD)$(NPROC)$(COLOR_RESET)\n"
+	@echo ""
 	@cmake -B build $(CMAKE_GENERATOR) -DCMAKE_BUILD_TYPE=Release
 	@cmake --build build --parallel $(NPROC)
 	@echo ""
-	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
-	@printf "$(COLOR_GREEN)$(COLOR_BOLD)Release build completed successfully!\n$(COLOR_RESET)"
-	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	@printf "$(COLOR_GREEN)$(COLOR_BOLD)╔═══════════════════════════════════════╗\n$(COLOR_RESET)"
+	@printf "$(COLOR_GREEN)$(COLOR_BOLD)║  ✓ BUILD SUCCESSFUL                   ║\n$(COLOR_RESET)"
+	@printf "$(COLOR_GREEN)$(COLOR_BOLD)╚═══════════════════════════════════════╝\n$(COLOR_RESET)"
 	@echo ""
-	@printf "$(COLOR_CYAN)Executables:\n$(COLOR_RESET)"
-	@printf "  $(COLOR_GREEN)-$(COLOR_RESET) CLI tool:        .$(PATH_SEP)build$(PATH_SEP)czc-cli$(EXE_EXT)\n"
-	@printf "  $(COLOR_GREEN)-$(COLOR_RESET) Test suite:      .$(PATH_SEP)build$(PATH_SEP)tests$(PATH_SEP)test_lexer$(EXE_EXT)\n"
-	@printf "  $(COLOR_GREEN)-$(COLOR_RESET) Debug operators: .$(PATH_SEP)build$(PATH_SEP)tests$(PATH_SEP)debug_operators$(EXE_EXT)\n"
+	@printf "$(COLOR_CYAN)$(COLOR_BOLD)Generated Executables:\n$(COLOR_RESET)"
+	@printf "  $(COLOR_GREEN)▸$(COLOR_RESET) CLI Tool:         $(COLOR_BOLD).$(PATH_SEP)build$(PATH_SEP)czc-cli$(EXE_EXT)$(COLOR_RESET)\n"
+	@printf "  $(COLOR_GREEN)▸$(COLOR_RESET) Test Suite:       $(COLOR_BOLD).$(PATH_SEP)build$(PATH_SEP)tests$(PATH_SEP)test_lexer$(EXE_EXT)$(COLOR_RESET)\n"
+	@printf "  $(COLOR_GREEN)▸$(COLOR_RESET) Debug Operators:  $(COLOR_BOLD).$(PATH_SEP)build$(PATH_SEP)tests$(PATH_SEP)debug_operators$(EXE_EXT)$(COLOR_RESET)\n"
+	$(call ts_done,Release Build Complete)
 	@echo ""
 
 # Debug 模式构建
 debug:
-	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
-	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)Building CZC Compiler (Debug)\n$(COLOR_RESET)"
-	@printf "$(COLOR_CYAN)Using $(NPROC) CPU cores\n$(COLOR_RESET)"
-	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	$(call ts_msg,Building CZC Compiler (Debug Mode))
+	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)╔═══════════════════════════════════════╗\n$(COLOR_RESET)"
+	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)║  CZC COMPILER - DEBUG BUILD          ║\n$(COLOR_RESET)"
+	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)╚═══════════════════════════════════════╝\n$(COLOR_RESET)"
+	@printf "$(COLOR_CYAN)Configuration: $(COLOR_BOLD)Debug + Coverage$(COLOR_RESET)\n"
+	@printf "$(COLOR_CYAN)CPU Cores: $(COLOR_BOLD)$(NPROC)$(COLOR_RESET)\n"
+	@echo ""
 	@cmake -B build $(CMAKE_GENERATOR) -DCMAKE_BUILD_TYPE=Debug
 	@cmake --build build --parallel $(NPROC)
 	@echo ""
-	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
-	@printf "$(COLOR_GREEN)$(COLOR_BOLD)Debug build completed successfully!\n$(COLOR_RESET)"
-	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	@printf "$(COLOR_GREEN)$(COLOR_BOLD)╔═══════════════════════════════════════╗\n$(COLOR_RESET)"
+	@printf "$(COLOR_GREEN)$(COLOR_BOLD)║  ✓ DEBUG BUILD SUCCESSFUL             ║\n$(COLOR_RESET)"
+	@printf "$(COLOR_GREEN)$(COLOR_BOLD)╚═══════════════════════════════════════╝\n$(COLOR_RESET)"
+	$(call ts_done,Debug Build Complete)
 	@echo ""
 
 # 清理构建产物
 clean:
+	$(call ts_msg,Starting target 'clean')
 	@printf "$(COLOR_CYAN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_CYAN)$(COLOR_BOLD)Cleaning CZC Project\n$(COLOR_RESET)"
 	@printf "$(COLOR_CYAN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
@@ -81,29 +107,37 @@ clean:
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)Clean completed!\n$(COLOR_RESET)"
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	$(call ts_done,Finished target 'clean')
 
 # 运行测试
 test: build
+	$(call ts_msg,Starting target 'test')
 	@printf "$(COLOR_CYAN)Running tests...\n$(COLOR_RESET)"
 	@cd build && ctest --output-on-failure --parallel $(NPROC)
+	$(call ts_done,Finished target 'test')
 
 # 安装
 install: build
+	$(call ts_msg,Starting target 'install')
 	@printf "$(COLOR_CYAN)Installing CZC...\n$(COLOR_RESET)"
 	@cd build && cmake --install . --prefix /usr/local
+	$(call ts_done,Finished target 'install')
 
 # 重新构建
 rebuild: clean build
 
 # 运行示例
 example: build
+	$(call ts_msg,Starting target 'example')
 	@printf "$(COLOR_CYAN)Tokenizing hello.zero...\n$(COLOR_RESET)"
 	@./build/czc-cli tokenize examples/hello.zero
 	@echo ""
 	@printf "$(COLOR_GREEN)Output saved to examples/hello.zero.tokens\n$(COLOR_RESET)"
+	$(call ts_done,Finished target 'example')
 
 # 格式化代码
 fmt:
+	$(call ts_msg,Starting target 'fmt')
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)Formatting C/C++ Source Files\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
@@ -129,9 +163,11 @@ fmt:
 		printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"; \
 		exit 1; \
 	fi
+	$(call ts_done,Finished target 'fmt')
 
 # 整理代码
 tidy:
+	$(call ts_msg,Starting target 'tidy')
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)Tidying C/C++ Source Files\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
@@ -153,25 +189,31 @@ tidy:
 		printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"; \
 		exit 1; \
 	fi
+	$(call ts_done,Finished target 'tidy')
 
 # 拉取所有子模块
 pullall:
+	$(call ts_msg,Starting target 'pullall')
 	@printf "$(COLOR_CYAN)Pulling all submodules...\n$(COLOR_RESET)"
 	@git submodule update --init --recursive
 	@printf "$(COLOR_GREEN)All submodules pulled successfully!\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	$(call ts_done,Finished target 'pullall')
 
 # 拉取错误信息
 pullerrmsg:
+	$(call ts_msg,Starting target 'pullerrmsg')
 	@printf "$(COLOR_CYAN)Pulling error messages...\n$(COLOR_RESET)"
 	@cd error-msg
 	@git pull origin main
 	@cd ..
 	@printf "$(COLOR_GREEN)Error messages pulled successfully!\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	$(call ts_done,Finished target 'pullerrmsg')
 
 # 帮助信息
 help:
+	$(call ts_msg,Starting target 'help')
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)CZ Compiler - Makefile Commands\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
@@ -199,9 +241,11 @@ help:
 	@echo ""
 	@echo "Note: All builds use $(NPROC) CPU cores for parallel compilation"
 	@echo ""
+	$(call ts_done,Finished target 'help')
 
 # 性能基准测试
 benchmark:
+	$(call ts_msg,Starting target 'benchmark')
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)Building and Running Benchmarks\n$(COLOR_RESET)"
 	@printf "$(COLOR_CYAN)Using $(NPROC) CPU cores\n$(COLOR_RESET)"
@@ -218,9 +262,11 @@ benchmark:
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)Benchmark completed!\n$(COLOR_RESET)"
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	$(call ts_done,Finished target 'benchmark')
 
 # 生成文档
 docs:
+	$(call ts_msg,Starting target 'docs')
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)Generating Documentation\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
@@ -242,9 +288,11 @@ docs:
 		printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"; \
 		exit 1; \
 	fi
+	$(call ts_done,Finished target 'docs')
 
 # 代码覆盖率
 coverage:
+	$(call ts_msg,Starting target 'coverage')
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)Building with Code Coverage\n$(COLOR_RESET)"
 	@printf "$(COLOR_CYAN)Using $(NPROC) CPU cores\n$(COLOR_RESET)"
@@ -259,9 +307,11 @@ coverage:
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)Coverage build completed!\n$(COLOR_RESET)"
 	@printf "$(COLOR_YELLOW)Run 'make coverage-report' to generate HTML report\n$(COLOR_RESET)"
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
+	$(call ts_done,Finished target 'coverage')
 
 # 生成覆盖率报告
 coverage-report:
+	$(call ts_msg,Starting target 'coverage-report')
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)Generating Coverage Report\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"
@@ -269,7 +319,9 @@ coverage-report:
 		printf "$(COLOR_CYAN)Capturing coverage data...\n$(COLOR_RESET)"; \
 		lcov --capture --directory build/CMakeFiles/czc.dir --output-file build/coverage.info --ignore-errors inconsistent,unsupported 2>/dev/null; \
 		printf "$(COLOR_CYAN)Filtering out system/external headers...\n$(COLOR_RESET)"; \
-		lcov --remove build/coverage.info '/usr/*' '/Library/*' '*/_deps/*' --output-file build/coverage_filtered.info --ignore-errors inconsistent,unsupported,empty 2>/dev/null; \
+		lcov --remove build/coverage.info '/usr/*' '/Library/*' '*/_deps/*' --output-file build/coverage_temp.info --ignore-errors inconsistent,unsupported,empty 2>/dev/null; \
+		printf "$(COLOR_CYAN)Filtering out virtual destructors...\n$(COLOR_RESET)"; \
+		python3 filter_coverage.py build/coverage_temp.info build/coverage_filtered.info; \
 		printf "$(COLOR_CYAN)Generating HTML report...\n$(COLOR_RESET)"; \
 		genhtml build/coverage_filtered.info --output-directory build/coverage_html --ignore-errors inconsistent,unsupported,empty,category 2>/dev/null; \
 		echo ""; \
@@ -296,9 +348,11 @@ coverage-report:
 		printf "$(COLOR_BLUE)$(COLOR_BOLD)===================================\n$(COLOR_RESET)"; \
 		exit 1; \
 	fi
+	$(call ts_done,Finished target 'coverage-report')
 
 # 提交前检查 - 确保代码质量
 runbeforecommit:
+	$(call ts_msg,Starting target 'runbeforecommit')
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)========================================\\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)Pre-Commit Quality Check\\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)========================================\\n$(COLOR_RESET)"
@@ -318,7 +372,8 @@ runbeforecommit:
 	@printf "$(COLOR_CYAN)Step 4/5: Generating coverage report...\\n$(COLOR_RESET)"
 	@if command -v lcov >/dev/null 2>&1; then \
 		lcov --capture --directory build/CMakeFiles/czc.dir --output-file build/coverage.info --ignore-errors inconsistent,unsupported 2>/dev/null; \
-		lcov --remove build/coverage.info '/usr/*' '/Library/*' '*/_deps/*' --output-file build/coverage_filtered.info --ignore-errors inconsistent,unsupported,empty 2>/dev/null; \
+		lcov --remove build/coverage.info '/usr/*' '/Library/*' '*/_deps/*' --output-file build/coverage_temp.info --ignore-errors inconsistent,unsupported,empty 2>/dev/null; \
+		python3 filter_coverage.py build/coverage_temp.info build/coverage_filtered.info; \
 		genhtml build/coverage_filtered.info --output-directory build/coverage_html --ignore-errors inconsistent,unsupported,empty,category 2>/dev/null; \
 		SUMMARY=$$(lcov --summary build/coverage_filtered.info --ignore-errors inconsistent,corrupt,count 2>&1); \
 		LINE_COV=$$(echo "$$SUMMARY" | grep "lines" | grep -oE '[0-9]+\.[0-9]+%' | head -1 | sed 's/%//'); \
@@ -381,7 +436,7 @@ runbeforecommit:
 			LINE_COV=$$(echo "$$SUMMARY" | grep "lines" | grep -oE '[0-9]+\.[0-9]+%' | head -1); \
 			FUNC_COV=$$(echo "$$SUMMARY" | grep "functions" | grep -oE '[0-9]+\.[0-9]+%' | head -1); \
 			if [ ! -z "$$LINE_COV" ] && [ ! -z "$$FUNC_COV" ]; then \
-				printf "  $(COLOR_GREEN)[PASS]$(COLOR_RESET) Coverage: Lines $$LINE_COV, Functions $$FUNC_COV (>= 80%%)\n"; \
+				echo "  $(COLOR_GREEN)[PASS]$(COLOR_RESET) Coverage: Lines $$LINE_COV | Functions $$FUNC_COV (>= 80%)"; \
 			fi; \
 		fi; \
 	fi
@@ -389,3 +444,4 @@ runbeforecommit:
 	@echo ""
 	@printf "$(COLOR_GREEN)$(COLOR_BOLD)You are ready to commit!$(COLOR_RESET)\n"
 	@echo ""
+	$(call ts_done,Finished target 'runbeforecommit')
