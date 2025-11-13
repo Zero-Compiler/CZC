@@ -373,7 +373,7 @@ runbeforecommit:
 	@if command -v lcov >/dev/null 2>&1; then \
 		lcov --capture --directory build/CMakeFiles/czc.dir --output-file build/coverage.info --ignore-errors inconsistent,unsupported 2>/dev/null; \
 		lcov --remove build/coverage.info '/usr/*' '/Library/*' '*/_deps/*' --output-file build/coverage_temp.info --ignore-errors inconsistent,unsupported,empty 2>/dev/null; \
-		python3 filter_coverage.py build/coverage_temp.info build/coverage_filtered.info; \
+		python3 ./filter_coverage.py build/coverage_temp.info build/coverage_filtered.info; \
 		genhtml build/coverage_filtered.info --output-directory build/coverage_html --ignore-errors inconsistent,unsupported,empty,category 2>/dev/null; \
 		SUMMARY=$$(lcov --summary build/coverage_filtered.info --ignore-errors inconsistent,corrupt,count 2>&1); \
 		LINE_COV=$$(echo "$$SUMMARY" | grep "lines" | grep -oE '[0-9]+\.[0-9]+%' | head -1 | sed 's/%//'); \
@@ -392,10 +392,10 @@ runbeforecommit:
 		echo ""; \
 		LINE_FAIL=0; \
 		FUNC_FAIL=0; \
-		if [ $$(echo "$$LINE_COV < 80" | bc -l) -eq 1 ]; then \
+		if [ $$(awk "BEGIN {print ($$LINE_COV < 80)}") -eq 1 ]; then \
 			LINE_FAIL=1; \
 		fi; \
-		if [ $$(echo "$$FUNC_COV < 80" | bc -l) -eq 1 ]; then \
+		if [ $$(awk "BEGIN {print ($$FUNC_COV < 80)}") -eq 1 ]; then \
 			FUNC_FAIL=1; \
 		fi; \
 		if [ $$LINE_FAIL -eq 1 ] || [ $$FUNC_FAIL -eq 1 ]; then \
