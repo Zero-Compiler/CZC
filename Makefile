@@ -53,7 +53,7 @@ clean:
 	@cmake -E rm -rf examples/*.formatted
 	@echo "Formatted example files removed"
 	@cmake -E rm -rf docs/html
-	@echo "Documentation directory removed"
+	@echo "Auto generated documentation removed"
 	@echo ""
 	@echo "==================================="
 	@echo "Clean completed!"

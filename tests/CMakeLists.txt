@@ -123,3 +123,10 @@ add_executable(test_cst_edge_cases
 target_link_libraries(test_cst_edge_cases PRIVATE czc GTest::gtest_main)
 gtest_discover_tests(test_cst_edge_cases)
 
+# AST tests
+add_executable(test_ast
+    test_ast.cpp
+)
+target_link_libraries(test_ast PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_ast)
+

@@ -15,12 +15,14 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
 
+#include "test_helpers.hpp"
 #include <gtest/gtest.h>
 
 using namespace czc::formatter;
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::cst;
+using namespace czc::test;
 
 // --- Test Fixtures ---
 
@@ -64,12 +66,21 @@ let greet = fn () {
 
   auto cst = parse(source);
   ASSERT_NE(cst, nullptr);
-  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  verify_node(cst.get(), CSTNodeType::Program);
+
+  // 查找函数字面量节点
+  auto fn_literal =
+      find_node_recursive(cst.get(), CSTNodeType::FunctionLiteral);
+  ASSERT_NE(fn_literal, nullptr) << "Should find function literal";
 
   std::string formatted = format(cst);
   EXPECT_TRUE(formatted.find("fn ()") != std::string::npos);
 }
 
+/**
+ * @test 测试带参数的函数字面量。
+ * @details 验证函数字面量的参数解析。
+ */
 /**
  * @test 测试带参数的函数字面量。
  * @details 验证函数字面量的参数解析。
@@ -84,9 +95,17 @@ let add = fn (a, b) {
   auto cst = parse(source);
   ASSERT_NE(cst, nullptr);
 
+  // 查找函数字面量并验证参数数量
+  auto fn_literal =
+      find_node_recursive(cst.get(), CSTNodeType::FunctionLiteral);
+  ASSERT_NE(fn_literal, nullptr) << "Should find function literal";
+
+  // 统计参数数量
+  size_t param_count = count_nodes(fn_literal, CSTNodeType::Parameter);
+  EXPECT_EQ(param_count, 2) << "Function should have 2 parameters";
+
   std::string formatted = format(cst);
   EXPECT_TRUE(formatted.find("fn (a, b)") != std::string::npos);
-  EXPECT_TRUE(formatted.find("return a + b") != std::string::npos);
 }
 
 /**

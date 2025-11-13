@@ -344,6 +344,19 @@ private:
    */
   std::unique_ptr<cst::CSTNode> primary();
 
+  // --- 辅助方法 ---
+
+  /**
+   * @brief 解析数组后缀（动态数组 T[] 或固定大小数组 T[N]）。
+   * @param[in] base_type 基础类型节点，将被包装为数组类型。
+   * @return 包装了数组后缀的类型节点。
+   * @details
+   *   此方法处理类型表达式后的数组声明符，支持多维数组。
+   *   例如：Int[]、Int[5]、Int[3][4]、((Int) -> Float)[]
+   */
+  std::unique_ptr<cst::CSTNode>
+  parse_array_suffix(std::unique_ptr<cst::CSTNode> base_type);
+
   // --- 成员变量 ---
 
   // 从词法分析器接收到的、需要解析的 Token 序列。

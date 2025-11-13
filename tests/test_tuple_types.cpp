@@ -15,12 +15,14 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
 
+#include "test_helpers.hpp"
 #include <gtest/gtest.h>
 
 using namespace czc::formatter;
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::cst;
+using namespace czc::test;
 
 // --- Test Fixtures ---
 
@@ -60,7 +62,11 @@ TEST_F(TupleTypeTest, BasicTupleType) {
 
   auto cst = parse(source);
   ASSERT_NE(cst, nullptr);
-  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  verify_node(cst.get(), CSTNodeType::Program);
+
+  // 查找元组类型节点
+  auto tuple_type = find_node_recursive(cst.get(), CSTNodeType::TupleType);
+  ASSERT_NE(tuple_type, nullptr) << "Should find tuple type";
 
   std::string formatted = format(cst);
   EXPECT_TRUE(formatted.find("(Integer, String)") != std::string::npos);
@@ -79,6 +85,10 @@ let quad: (String, Integer, Float, Boolean) = ("test", 42, 3.14, true);
 
   auto cst = parse(source);
   ASSERT_NE(cst, nullptr);
+
+  // 统计元组类型数量
+  size_t tuple_type_count = count_nodes(cst.get(), CSTNodeType::TupleType);
+  EXPECT_EQ(tuple_type_count, 3) << "Should have 3 tuple types";
 
   std::string formatted = format(cst);
   EXPECT_TRUE(formatted.find("(Integer, String)") != std::string::npos);

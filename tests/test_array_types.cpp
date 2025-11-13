@@ -15,12 +15,14 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
 
+#include "test_helpers.hpp"
 #include <gtest/gtest.h>
 
 using namespace czc::formatter;
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::cst;
+using namespace czc::test;
 
 // --- Test Fixtures ---
 
@@ -61,6 +63,15 @@ TEST_F(ArrayTypeTest, BasicDynamicArray) {
   auto cst = parse(source);
   ASSERT_NE(cst, nullptr);
   EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+
+  // 查找变量声明节点
+  auto var_decl = find_node_recursive(cst.get(), CSTNodeType::VarDeclaration);
+  ASSERT_NE(var_decl, nullptr) << "Should find variable declaration";
+
+  // 验证数组类型节点
+  auto array_type = find_node_recursive(var_decl, CSTNodeType::ArrayType);
+  ASSERT_NE(array_type, nullptr) << "Should find array type";
+  verify_array_type(array_type, false, "Integer");
 
   std::string formatted = format(cst);
   EXPECT_TRUE(formatted.find("Integer[]") != std::string::npos);

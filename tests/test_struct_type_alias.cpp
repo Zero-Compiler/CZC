@@ -15,12 +15,14 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
 
+#include "test_helpers.hpp"
 #include <gtest/gtest.h>
 
 using namespace czc::formatter;
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::cst;
+using namespace czc::test;
 
 // --- Test Fixtures ---
 
@@ -70,7 +72,12 @@ struct Person {
   // 验证有一个子节点（结构体声明）
   const auto& children = cst->get_children();
   ASSERT_EQ(children.size(), 1);
-  EXPECT_EQ(children[0]->get_type(), CSTNodeType::StructDeclaration);
+
+  auto struct_node = children[0].get();
+  EXPECT_EQ(struct_node->get_type(), CSTNodeType::StructDeclaration);
+
+  // 使用辅助函数进行结构化验证
+  verify_struct_declaration(struct_node, "Person", 2);
 
   // 验证格式化输出
   std::string formatted = format(cst);
@@ -92,7 +99,12 @@ TEST_F(StructTest, EmptyStruct) {
 
   const auto& children = cst->get_children();
   ASSERT_EQ(children.size(), 1);
-  EXPECT_EQ(children[0]->get_type(), CSTNodeType::StructDeclaration);
+
+  auto struct_node = children[0].get();
+  EXPECT_EQ(struct_node->get_type(), CSTNodeType::StructDeclaration);
+
+  // 使用辅助函数验证空结构体
+  verify_struct_declaration(struct_node, "Empty", 0);
 }
 
 /**

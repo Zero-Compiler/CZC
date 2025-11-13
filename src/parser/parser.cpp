@@ -10,6 +10,7 @@
 #include "czc/diagnostics/diagnostic_code.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 
 namespace czc {
 namespace parser {
@@ -412,49 +413,8 @@ std::unique_ptr<CSTNode> Parser::parse_type() {
     return nullptr;
   }
 
-  while (check(TokenType::LeftBracket)) {
-    Token left_bracket = advance();
-
-    if (check(TokenType::Integer)) {
-      auto sized_array =
-          make_cst_node(CSTNodeType::SizedArrayType, make_location());
-      sized_array->add_child(std::move(base_type));
-
-      auto lbracket_node = make_cst_node(CSTNodeType::Delimiter, left_bracket);
-      sized_array->add_child(std::move(lbracket_node));
-
-      Token size_token = advance();
-      auto size_node = make_cst_node(CSTNodeType::IntegerLiteral, size_token);
-      sized_array->add_child(std::move(size_node));
-
-      auto right_bracket = consume(TokenType::RightBracket);
-      if (right_bracket) {
-        auto rbracket_node =
-            make_cst_node(CSTNodeType::Delimiter, *right_bracket);
-        sized_array->add_child(std::move(rbracket_node));
-      }
-
-      base_type = std::move(sized_array);
-    } else {
-      // 动态数组 T[]
-      auto array_type = make_cst_node(CSTNodeType::ArrayType, make_location());
-      array_type->add_child(std::move(base_type));
-
-      auto lbracket_node = make_cst_node(CSTNodeType::Delimiter, left_bracket);
-      array_type->add_child(std::move(lbracket_node));
-
-      auto right_bracket = consume(TokenType::RightBracket);
-      if (right_bracket) {
-        auto rbracket_node =
-            make_cst_node(CSTNodeType::Delimiter, *right_bracket);
-        array_type->add_child(std::move(rbracket_node));
-      }
-
-      base_type = std::move(array_type);
-    }
-  }
-
-  return base_type;
+  // 处理后缀数组类型: T[], T[N], T[][]
+  return parse_array_suffix(std::move(base_type));
 }
 
 std::unique_ptr<CSTNode> Parser::struct_declaration() {
@@ -492,7 +452,8 @@ std::unique_ptr<CSTNode> Parser::struct_declaration() {
   node->add_child(std::move(lbrace_node));
 
   // 解析字段列表
-  std::vector<std::string> field_names; // 用于检测重复字段名
+  // NOTE: 使用 unordered_set 提供 O(1) 平均查找时间，避免 O(n²) 复杂度。
+  std::unordered_set<std::string> field_names; // 用于检测重复字段名
 
   if (!check(TokenType::RightBrace)) {
     do {
@@ -525,14 +486,13 @@ std::unique_ptr<CSTNode> Parser::struct_declaration() {
         break;
       }
 
-      // 检查重复字段名
-      if (std::find(field_names.begin(), field_names.end(),
-                    field_name->value) != field_names.end()) {
+      // 检查重复字段名（O(1) 平均时间）
+      if (field_names.count(field_name->value) > 0) {
         std::vector<std::string> args = {field_name->value};
         report_error(DiagnosticCode::S0012_DuplicateFieldName, make_location(),
                      args);
       } else {
-        field_names.push_back(field_name->value);
+        field_names.insert(field_name->value);
       }
 
       auto field_node = make_cst_node(CSTNodeType::StructField, *field_name);
@@ -612,10 +572,11 @@ std::unique_ptr<CSTNode> Parser::struct_declaration() {
     node->add_child(std::move(rbrace_node));
   }
 
-  // 消费分号
-  auto semicolon = consume(TokenType::Semicolon);
-  if (semicolon) {
-    auto semicolon_node = make_cst_node(CSTNodeType::Delimiter, *semicolon);
+  // 消费可选的分号（为了与现代语言习惯保持一致）
+  // NOTE: 分号现在是可选的，但如果存在则会被保留在 CST 中用于格式化。
+  if (check(TokenType::Semicolon)) {
+    Token semicolon = advance();
+    auto semicolon_node = make_cst_node(CSTNodeType::Delimiter, semicolon);
     node->add_child(std::move(semicolon_node));
   }
 
@@ -942,55 +903,7 @@ std::unique_ptr<CSTNode> Parser::parse_type_primary() {
       }
 
       // 处理后缀数组类型: ((T) -> R)[]
-      auto base_type = std::move(func_sig_node);
-      while (check(TokenType::LeftBracket)) {
-        Token left_bracket = advance();
-
-        if (check(TokenType::Integer)) {
-          // 固定大小数组 T[5]
-          auto sized_array =
-              make_cst_node(CSTNodeType::SizedArrayType, make_location());
-          sized_array->add_child(std::move(base_type));
-
-          auto lbracket_node =
-              make_cst_node(CSTNodeType::Delimiter, left_bracket);
-          sized_array->add_child(std::move(lbracket_node));
-
-          Token size_token = advance();
-          auto size_node =
-              make_cst_node(CSTNodeType::IntegerLiteral, size_token);
-          sized_array->add_child(std::move(size_node));
-
-          auto right_bracket = consume(TokenType::RightBracket);
-          if (right_bracket) {
-            auto rbracket_node =
-                make_cst_node(CSTNodeType::Delimiter, *right_bracket);
-            sized_array->add_child(std::move(rbracket_node));
-          }
-
-          base_type = std::move(sized_array);
-        } else {
-          // 动态数组 T[]
-          auto array_type =
-              make_cst_node(CSTNodeType::ArrayType, make_location());
-          array_type->add_child(std::move(base_type));
-
-          auto lbracket_node =
-              make_cst_node(CSTNodeType::Delimiter, left_bracket);
-          array_type->add_child(std::move(lbracket_node));
-
-          auto right_bracket = consume(TokenType::RightBracket);
-          if (right_bracket) {
-            auto rbracket_node =
-                make_cst_node(CSTNodeType::Delimiter, *right_bracket);
-            array_type->add_child(std::move(rbracket_node));
-          }
-
-          base_type = std::move(array_type);
-        }
-      }
-
-      return base_type;
+      return parse_array_suffix(std::move(func_sig_node));
     }
 
     // 是元组类型
@@ -1001,55 +914,8 @@ std::unique_ptr<CSTNode> Parser::parse_type_primary() {
     auto rparen_node = make_cst_node(CSTNodeType::Delimiter, *rparen_token);
     tuple_node->add_child(std::move(rparen_node));
 
-    // 处理后缀数组类型: (T1, T2)[], ((T) -> R)[]
-    auto base_type = std::move(tuple_node);
-    while (check(TokenType::LeftBracket)) {
-      Token left_bracket = advance();
-
-      if (check(TokenType::Integer)) {
-        // 固定大小数组 T[5]
-        auto sized_array =
-            make_cst_node(CSTNodeType::SizedArrayType, make_location());
-        sized_array->add_child(std::move(base_type));
-
-        auto lbracket_node =
-            make_cst_node(CSTNodeType::Delimiter, left_bracket);
-        sized_array->add_child(std::move(lbracket_node));
-
-        Token size_token = advance();
-        auto size_node = make_cst_node(CSTNodeType::IntegerLiteral, size_token);
-        sized_array->add_child(std::move(size_node));
-
-        auto right_bracket = consume(TokenType::RightBracket);
-        if (right_bracket) {
-          auto rbracket_node =
-              make_cst_node(CSTNodeType::Delimiter, *right_bracket);
-          sized_array->add_child(std::move(rbracket_node));
-        }
-
-        base_type = std::move(sized_array);
-      } else {
-        // 动态数组 T[]
-        auto array_type =
-            make_cst_node(CSTNodeType::ArrayType, make_location());
-        array_type->add_child(std::move(base_type));
-
-        auto lbracket_node =
-            make_cst_node(CSTNodeType::Delimiter, left_bracket);
-        array_type->add_child(std::move(lbracket_node));
-
-        auto right_bracket = consume(TokenType::RightBracket);
-        if (right_bracket) {
-          auto rbracket_node =
-              make_cst_node(CSTNodeType::Delimiter, *right_bracket);
-          array_type->add_child(std::move(rbracket_node));
-        }
-
-        base_type = std::move(array_type);
-      }
-    }
-
-    return base_type;
+    // 处理后缀数组类型: (T1, T2)[]
+    return parse_array_suffix(std::move(tuple_node));
   }
 
   // 基本类型：标识符（支持后缀数组类型）
@@ -1058,53 +924,7 @@ std::unique_ptr<CSTNode> Parser::parse_type_primary() {
     auto base_type = make_cst_node(CSTNodeType::TypeAnnotation, type_token);
 
     // 处理后缀数组类型: T[], T[5], T[][]
-    while (check(TokenType::LeftBracket)) {
-      Token left_bracket = advance();
-
-      if (check(TokenType::Integer)) {
-        // 固定大小数组 T[5]
-        auto sized_array =
-            make_cst_node(CSTNodeType::SizedArrayType, make_location());
-        sized_array->add_child(std::move(base_type));
-
-        auto lbracket_node =
-            make_cst_node(CSTNodeType::Delimiter, left_bracket);
-        sized_array->add_child(std::move(lbracket_node));
-
-        Token size_token = advance();
-        auto size_node = make_cst_node(CSTNodeType::IntegerLiteral, size_token);
-        sized_array->add_child(std::move(size_node));
-
-        auto right_bracket = consume(TokenType::RightBracket);
-        if (right_bracket) {
-          auto rbracket_node =
-              make_cst_node(CSTNodeType::Delimiter, *right_bracket);
-          sized_array->add_child(std::move(rbracket_node));
-        }
-
-        base_type = std::move(sized_array);
-      } else {
-        // 动态数组 T[]
-        auto array_type =
-            make_cst_node(CSTNodeType::ArrayType, make_location());
-        array_type->add_child(std::move(base_type));
-
-        auto lbracket_node =
-            make_cst_node(CSTNodeType::Delimiter, left_bracket);
-        array_type->add_child(std::move(lbracket_node));
-
-        auto right_bracket = consume(TokenType::RightBracket);
-        if (right_bracket) {
-          auto rbracket_node =
-              make_cst_node(CSTNodeType::Delimiter, *right_bracket);
-          array_type->add_child(std::move(rbracket_node));
-        }
-
-        base_type = std::move(array_type);
-      }
-    }
-
-    return base_type;
+    return parse_array_suffix(std::move(base_type));
   }
 
   // 无法识别的类型
@@ -1113,6 +933,56 @@ std::unique_ptr<CSTNode> Parser::parse_type_primary() {
   report_error(DiagnosticCode::S0009_ExpectedTypeExpression, make_location(),
                args);
   return nullptr;
+}
+
+std::unique_ptr<CSTNode>
+Parser::parse_array_suffix(std::unique_ptr<CSTNode> base_type) {
+  // NOTE: 此函数处理类型表达式后的数组声明符，支持多维数组。
+  //       通过循环包装 base_type，直到没有更多左方括号为止。
+  while (check(TokenType::LeftBracket)) {
+    Token left_bracket = advance();
+
+    if (check(TokenType::Integer)) {
+      // 固定大小数组 T[N]
+      auto sized_array =
+          make_cst_node(CSTNodeType::SizedArrayType, make_location());
+      sized_array->add_child(std::move(base_type));
+
+      auto lbracket_node = make_cst_node(CSTNodeType::Delimiter, left_bracket);
+      sized_array->add_child(std::move(lbracket_node));
+
+      Token size_token = advance();
+      auto size_node = make_cst_node(CSTNodeType::IntegerLiteral, size_token);
+      sized_array->add_child(std::move(size_node));
+
+      auto right_bracket = consume(TokenType::RightBracket);
+      if (right_bracket) {
+        auto rbracket_node =
+            make_cst_node(CSTNodeType::Delimiter, *right_bracket);
+        sized_array->add_child(std::move(rbracket_node));
+      }
+
+      base_type = std::move(sized_array);
+    } else {
+      // 动态数组 T[]
+      auto array_type = make_cst_node(CSTNodeType::ArrayType, make_location());
+      array_type->add_child(std::move(base_type));
+
+      auto lbracket_node = make_cst_node(CSTNodeType::Delimiter, left_bracket);
+      array_type->add_child(std::move(lbracket_node));
+
+      auto right_bracket = consume(TokenType::RightBracket);
+      if (right_bracket) {
+        auto rbracket_node =
+            make_cst_node(CSTNodeType::Delimiter, *right_bracket);
+        array_type->add_child(std::move(rbracket_node));
+      }
+
+      base_type = std::move(array_type);
+    }
+  }
+
+  return base_type;
 }
 
 std::unique_ptr<CSTNode> Parser::statement() {

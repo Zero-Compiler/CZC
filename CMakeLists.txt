@@ -32,6 +32,8 @@ add_library(czc STATIC
     src/parser/parser.cpp
     src/formatter/formatter.cpp
     src/formatter/error_collector.cpp
+    src/ast/ast_builder.cpp
+    src/ast/ast_visitor.cpp
 )
 
 target_include_directories(czc PUBLIC
