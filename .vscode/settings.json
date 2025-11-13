@@ -88,6 +88,7 @@
         "text_encoding": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "*.backup": "cpp"
+        "*.backup": "cpp",
+        "filesystem": "cpp"
     }
 }
