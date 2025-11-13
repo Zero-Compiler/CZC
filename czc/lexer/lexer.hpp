@@ -9,6 +9,8 @@
 #define CZC_LEXER_HPP
 
 #include "czc/diagnostics/diagnostic_code.hpp"
+#include "czc/lexer/error_collector.hpp"
+#include "czc/lexer/token.hpp"
 #include "czc/utils/source_tracker.hpp"
 
 #include <memory>
@@ -16,11 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "error_collector.hpp"
-#include "token.hpp"
-
-namespace czc {
-namespace lexer {
+namespace czc::lexer {
 
 /**
  * @brief 负责将源代码文本流转换为词法单元（Token）序列的词法分析器。
@@ -178,7 +176,6 @@ public:
   }
 };
 
-} // namespace lexer
-} // namespace czc
+} // namespace czc::lexer
 
 #endif // CZC_LEXER_HPP

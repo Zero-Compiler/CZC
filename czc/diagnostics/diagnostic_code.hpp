@@ -12,8 +12,7 @@
 
 #include <string>
 
-namespace czc {
-namespace diagnostics {
+namespace czc::diagnostics {
 
 /**
  * @brief 定义诊断消息的严重级别。
@@ -90,7 +89,6 @@ enum class DiagnosticCode {
  */
 std::string diagnostic_code_to_string(DiagnosticCode code);
 
-} // namespace diagnostics
-} // namespace czc
+} // namespace czc::diagnostics
 
 #endif // CZC_DIAGNOSTIC_CODE_HPP

@@ -10,8 +10,7 @@
 #include <algorithm>
 #include <filesystem>
 
-namespace czc {
-namespace utils {
+namespace czc::utils {
 
 std::vector<std::string>
 FileCollector::collect_files(const std::vector<std::string>& patterns) {
@@ -127,5 +126,4 @@ bool FileCollector::matches_pattern(const std::string& filename,
   return p_idx == pattern.length();
 }
 
-} // namespace utils
-} // namespace czc
+} // namespace czc::utils

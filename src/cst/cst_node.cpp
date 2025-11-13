@@ -7,8 +7,7 @@
 
 #include "czc/cst/cst_node.hpp"
 
-namespace czc {
-namespace cst {
+namespace czc::cst {
 
 CSTNode::CSTNode(CSTNodeType type, const utils::SourceLocation& location)
     : node_type(type), location(location), children(), token() {}
@@ -135,5 +134,4 @@ std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
   return node;
 }
 
-} // namespace cst
-} // namespace czc
+} // namespace czc::cst

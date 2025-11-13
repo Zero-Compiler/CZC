@@ -11,16 +11,14 @@
 #include "czc/cst/cst_node.hpp"
 #include "czc/diagnostics/diagnostic_reporter.hpp"
 #include "czc/lexer/token.hpp"
+#include "czc/parser/error_collector.hpp"
 
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include "error_collector.hpp"
-
-namespace czc {
-namespace parser {
+namespace czc::parser {
 
 /**
  * @brief 负责将 Token 流转换为具体语法树（CST）的语法分析器。
@@ -372,7 +370,6 @@ private:
   ParserErrorCollector error_collector;
 };
 
-} // namespace parser
-} // namespace czc
+} // namespace czc::parser
 
 #endif // CZC_PARSER_HPP

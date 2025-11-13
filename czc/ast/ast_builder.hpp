@@ -15,8 +15,7 @@
 #include <memory>
 #include <string>
 
-namespace czc {
-namespace ast {
+namespace czc::ast {
 
 /**
  * @class ASTBuilder
@@ -188,7 +187,6 @@ private:
   std::string parse_string_literal(const std::string& literal_str);
 };
 
-} // namespace ast
-} // namespace czc
+} // namespace czc::ast
 
 #endif // CZC_AST_BUILDER_HPP

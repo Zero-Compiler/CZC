@@ -13,8 +13,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace czc {
-namespace lexer {
+namespace czc::lexer {
 
 using namespace czc::diagnostics;
 using namespace czc::utils;
@@ -26,7 +25,8 @@ void Lexer::report_error(DiagnosticCode code, size_t error_line,
   //       通常我们只关心单个字符或符号的位置，因此起始和结束位置是相同的。
   auto loc = SourceLocation(tracker.get_filename(), error_line, error_column,
                             error_line, error_column);
-  error_collector.add(code, loc, args);
+  LexerError error(code, loc, args);
+  error_collector.add(error);
 }
 
 void Lexer::advance() {
@@ -774,8 +774,7 @@ Token Lexer::next_token() {
 
   // 如果在跳过空白后到达了文件末尾，则返回 EOF Token。
   if (!current_char.has_value()) {
-    return Token(TokenType::EndOfFile, "", tracker.get_line(),
-                 tracker.get_column());
+    return Token::makeEOF();
   }
 
   // 检查是否是注释
@@ -965,5 +964,4 @@ std::vector<Token> Lexer::tokenize() {
   return tokens;
 }
 
-} // namespace lexer
-} // namespace czc
+} // namespace czc::lexer

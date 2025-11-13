@@ -10,8 +10,7 @@
 
 #include <memory>
 
-namespace czc {
-namespace diagnostics {
+namespace czc::diagnostics {
 
 class Diagnostic;
 
@@ -49,7 +48,6 @@ public:
   virtual bool has_errors() const = 0;
 };
 
-} // namespace diagnostics
-} // namespace czc
+} // namespace czc::diagnostics
 
 #endif // CZC_DIAGNOSTIC_REPORTER_HPP

@@ -16,8 +16,7 @@
 #include <string>
 #include <vector>
 
-namespace czc {
-namespace test {
+namespace czc::test {
 
 /**
  * @brief 验证 CST 节点的基本属性。
@@ -291,7 +290,6 @@ inline void print_cst_tree(const cst::CSTNode* node, int indent = 0) {
   }
 }
 
-} // namespace test
-} // namespace czc
+} // namespace czc::test
 
 #endif // CZC_TEST_HELPERS_HPP

@@ -12,8 +12,7 @@
 
 #include <string>
 
-namespace czc {
-namespace formatter {
+namespace czc::formatter {
 
 /**
  * @brief CST 节点格式化访问者接口。
@@ -396,7 +395,6 @@ public:
   virtual std::string visit_comment(const cst::CSTNode* node) = 0;
 };
 
-} // namespace formatter
-} // namespace czc
+} // namespace czc::formatter
 
 #endif // CZC_FORMAT_VISITOR_HPP

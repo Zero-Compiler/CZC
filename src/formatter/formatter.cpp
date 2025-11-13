@@ -10,8 +10,7 @@
 #include <cstdio>
 #include <sstream>
 
-namespace czc {
-namespace formatter {
+namespace czc::formatter {
 
 Formatter::Formatter(const FormatOptions& options)
     : options(options), error_collector(), indent_level(0) {}
@@ -1103,5 +1102,4 @@ std::string Formatter::format_standalone_comment(const cst::CSTNode* comment) {
   return result.str();
 }
 
-} // namespace formatter
-} // namespace czc
+} // namespace czc::formatter

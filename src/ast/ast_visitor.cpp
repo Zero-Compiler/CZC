@@ -11,8 +11,7 @@
 
 #include <iostream>
 
-namespace czc {
-namespace ast {
+namespace czc::ast {
 
 // === ASTPrinter 实现 ===
 
@@ -79,5 +78,4 @@ void ASTPrinter::visit_block_stmt(BlockStmt* node) {
   decrease_indent();
 }
 
-} // namespace ast
-} // namespace czc
+} // namespace czc::ast

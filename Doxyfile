@@ -1,6 +1,6 @@
 # Doxyfile for CZC Compiler
 # Project information
-PROJECT_NAME           = "CZC Compiler"
+PROJECT_NAME           = "CZ Compiler"
 PROJECT_BRIEF          = "A modern compiler for the Zero programming language"
 PROJECT_NUMBER         = "0.1.0"
 PROJECT_LOGO           = 

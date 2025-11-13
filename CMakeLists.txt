@@ -30,8 +30,11 @@ add_library(czc STATIC
     src/utils/file_collector.cpp
     src/cst/cst_node.cpp
     src/parser/parser.cpp
+    src/parser/parser_decl.cpp
+    src/parser/parser_type.cpp
+    src/parser/parser_stmt.cpp
+    src/parser/parser_expr.cpp
     src/formatter/formatter.cpp
-    src/formatter/error_collector.cpp
     src/ast/ast_builder.cpp
     src/ast/ast_visitor.cpp
 )

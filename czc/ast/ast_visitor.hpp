@@ -11,8 +11,7 @@
 
 #include <memory>
 
-namespace czc {
-namespace ast {
+namespace czc::ast {
 
 // 前向声明所有 AST 节点类型
 class Program;
@@ -129,7 +128,6 @@ private:
   }
 };
 
-} // namespace ast
-} // namespace czc
+} // namespace czc::ast
 
 #endif // CZC_AST_VISITOR_HPP

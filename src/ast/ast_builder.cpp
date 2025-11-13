@@ -11,8 +11,7 @@
 
 #include <stdexcept>
 
-namespace czc {
-namespace ast {
+namespace czc::ast {
 
 std::shared_ptr<Program> ASTBuilder::build(const cst::CSTNode* cst_root) {
   if (cst_root == nullptr) {
@@ -855,5 +854,4 @@ ASTBuilder::build_member_expr(const cst::CSTNode* cst_node) {
   return std::make_shared<MemberExpr>(object, member, cst_node->get_location());
 }
 
-} // namespace ast
-} // namespace czc
+} // namespace czc::ast

@@ -9,8 +9,7 @@
 
 #include <unordered_map>
 
-namespace czc {
-namespace lexer {
+namespace czc::lexer {
 
 Token::Token(TokenType type, const std::string& val, size_t line, size_t column,
              bool synthetic)
@@ -165,5 +164,4 @@ std::string token_type_to_string(TokenType type) {
   }
 }
 
-} // namespace lexer
-} // namespace czc
+} // namespace czc::lexer

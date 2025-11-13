@@ -16,8 +16,7 @@
 #include <string>
 #include <vector>
 
-namespace czc {
-namespace cst {
+namespace czc::cst {
 
 /**
  * @brief 定义 CST 节点的所有类型。
@@ -206,7 +205,6 @@ std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
 std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
                                        const lexer::Token& token);
 
-} // namespace cst
-} // namespace czc
+} // namespace czc::cst
 
 #endif // CZC_CST_NODE_HPP

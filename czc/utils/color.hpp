@@ -10,8 +10,7 @@
 
 #include <string>
 
-namespace czc {
-namespace utils {
+namespace czc::utils {
 
 /**
  * @brief 定义用于终端输出的 ANSI 颜色代码常量。
@@ -33,7 +32,6 @@ const std::string Blue = "\033[34m";
 // 设置文本颜色为青色。
 const std::string Cyan = "\033[36m";
 } // namespace Color
-} // namespace utils
-} // namespace czc
+} // namespace czc::utils
 
 #endif // CZC_UTILS_COLOR_HPP

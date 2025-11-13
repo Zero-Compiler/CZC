@@ -17,8 +17,7 @@
 #include "diagnostic_code.hpp"
 #include "diagnostic_reporter.hpp"
 
-namespace czc {
-namespace diagnostics {
+namespace czc::diagnostics {
 
 /**
  * @brief 存储单条诊断消息的国际化模板。
@@ -283,7 +282,6 @@ public:
   }
 };
 
-} // namespace diagnostics
-} // namespace czc
+} // namespace czc::diagnostics
 
 #endif // CZC_DIAGNOSTIC_HPP

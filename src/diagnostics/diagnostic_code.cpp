@@ -10,8 +10,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace czc {
-namespace diagnostics {
+namespace czc::diagnostics {
 
 std::string diagnostic_code_to_string(DiagnosticCode code) {
   int code_num = static_cast<int>(code);
@@ -56,5 +55,4 @@ std::string diagnostic_code_to_string(DiagnosticCode code) {
   return oss.str();
 }
 
-} // namespace diagnostics
-} // namespace czc
+} // namespace czc::diagnostics

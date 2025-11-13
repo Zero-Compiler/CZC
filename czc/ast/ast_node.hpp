@@ -16,8 +16,7 @@
 #include <string>
 #include <vector>
 
-namespace czc {
-namespace ast {
+namespace czc::ast {
 
 // 前向声明
 class ASTNode;
@@ -688,7 +687,6 @@ private:
 
 // 更多具体节点类型将在后续实现中添加...
 
-} // namespace ast
-} // namespace czc
+} // namespace czc::ast
 
 #endif // CZC_AST_NODE_HPP

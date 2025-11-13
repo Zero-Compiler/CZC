@@ -18,8 +18,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace czc {
-namespace token_preprocessor {
+namespace czc::token_preprocessor {
 
 using namespace czc::diagnostics;
 using namespace czc::lexer;
@@ -179,8 +178,9 @@ bool ScientificNotationAnalyzer::fits_in_int64(const std::string& mantissa,
       auto loc =
           SourceLocation(context.filename, token->line, token->column,
                          token->line, token->column + token->value.length());
-      context.error_collector->add(DiagnosticCode::T0001_ScientificIntOverflow,
-                                   loc, {literal});
+      TPError error(DiagnosticCode::T0001_ScientificIntOverflow, loc,
+                    {literal});
+      context.error_collector->add(error);
     }
     return false;
   }
@@ -256,8 +256,8 @@ void ScientificNotationAnalyzer::report_overflow(
   auto loc = SourceLocation(context.filename, token->line, token->column,
                             token->line, token->column + token->value.length());
 
-  context.error_collector->add(DiagnosticCode::T0002_ScientificFloatOverflow,
-                               loc, {literal});
+  TPError error(DiagnosticCode::T0002_ScientificFloatOverflow, loc, {literal});
+  context.error_collector->add(error);
 }
 
 void TokenPreprocessor::report_error(DiagnosticCode code, const Token* token,
@@ -267,7 +267,8 @@ void TokenPreprocessor::report_error(DiagnosticCode code, const Token* token,
   }
   auto loc = SourceLocation("<unknown>", token->line, token->column,
                             token->line, token->column + token->value.length());
-  error_collector.add(code, loc, args);
+  TPError error(code, loc, args);
+  error_collector.add(error);
 }
 
 std::vector<Token>
@@ -338,5 +339,4 @@ std::string inferred_type_to_string(InferredNumericType type) {
   }
 }
 
-} // namespace token_preprocessor
-} // namespace czc
+} // namespace czc::token_preprocessor
