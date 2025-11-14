@@ -10,8 +10,7 @@
 #include <cstdio>
 #include <sstream>
 
-namespace czc {
-namespace formatter {
+namespace czc::formatter {
 
 Formatter::Formatter(const FormatOptions& options)
     : options(options), error_collector(), indent_level(0) {}
@@ -38,6 +37,10 @@ std::string Formatter::format_node(const cst::CSTNode* node) {
     return visit_var_declaration(node);
   case cst::CSTNodeType::FnDeclaration:
     return visit_fn_declaration(node);
+  case cst::CSTNodeType::StructDeclaration:
+    return visit_struct_declaration(node);
+  case cst::CSTNodeType::TypeAliasDeclaration:
+    return visit_type_alias_declaration(node);
   case cst::CSTNodeType::ReturnStmt:
     return visit_return_stmt(node);
   case cst::CSTNodeType::IfStmt:
@@ -62,8 +65,16 @@ std::string Formatter::format_node(const cst::CSTNode* node) {
     return visit_assign_expr(node);
   case cst::CSTNodeType::IndexAssignExpr:
     return visit_index_assign_expr(node);
+  case cst::CSTNodeType::MemberAssignExpr:
+    return visit_member_assign_expr(node);
   case cst::CSTNodeType::ArrayLiteral:
     return visit_array_literal(node);
+  case cst::CSTNodeType::TupleLiteral:
+    return visit_tuple_literal(node);
+  case cst::CSTNodeType::FunctionLiteral:
+    return visit_function_literal(node);
+  case cst::CSTNodeType::StructLiteral:
+    return visit_struct_literal(node);
   case cst::CSTNodeType::ParenExpr:
     return visit_paren_expr(node);
   case cst::CSTNodeType::IntegerLiteral:
@@ -80,6 +91,22 @@ std::string Formatter::format_node(const cst::CSTNode* node) {
     return visit_type_annotation(node);
   case cst::CSTNodeType::ArrayType:
     return visit_array_type(node);
+  case cst::CSTNodeType::SizedArrayType:
+    return visit_sized_array_type(node);
+  case cst::CSTNodeType::UnionType:
+    return visit_union_type(node);
+  case cst::CSTNodeType::IntersectionType:
+    return visit_intersection_type(node);
+  case cst::CSTNodeType::NegationType:
+    return visit_negation_type(node);
+  case cst::CSTNodeType::TupleType:
+    return visit_tuple_type(node);
+  case cst::CSTNodeType::FunctionSignatureType:
+    return visit_function_signature_type(node);
+  case cst::CSTNodeType::AnonymousStructType:
+    return visit_anonymous_struct_type(node);
+  case cst::CSTNodeType::StructField:
+    return visit_struct_field(node);
   case cst::CSTNodeType::Parameter:
     return visit_parameter(node);
   case cst::CSTNodeType::ParameterList:
@@ -151,8 +178,7 @@ std::string Formatter::visit_var_declaration(const cst::CSTNode* node) {
 std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
   std::ostringstream result;
   // FnDeclaration: fn func_name(params) [-> return_type] { body }
-  // 参考 Rust 风格的函数声明格式化
-  // 
+  //
   // 结构解析：
   // - Delimiter(fn) - fn 关键字
   // - Identifier - 函数名
@@ -164,7 +190,7 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
   // - BlockStmt - 函数体
 
   result << get_indent();
-  
+
   const auto& children = node->get_children();
   for (size_t i = 0; i < children.size(); ++i) {
     const auto& child = children[i];
@@ -186,7 +212,7 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
             const auto& next = children[i + 1];
             if (next->get_type() == cst::CSTNodeType::Delimiter) {
               const auto& next_token = next->get_token();
-              if (next_token.has_value() && 
+              if (next_token.has_value() &&
                   next_token->token_type == lexer::TokenType::Arrow) {
                 result << ONE_WIDTH_SPACE_STRING;
               }
@@ -212,7 +238,7 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
       // 返回类型
       result << format_node(child.get());
       // 返回类型后面如果有代码块，加空格
-      if (i + 1 < children.size() && 
+      if (i + 1 < children.size() &&
           children[i + 1]->get_type() == cst::CSTNodeType::BlockStmt) {
         result << ONE_WIDTH_SPACE_STRING;
       }
@@ -224,7 +250,7 @@ std::string Formatter::visit_fn_declaration(const cst::CSTNode* node) {
       result << format_node(child.get());
     }
   }
-  
+
   return result.str();
 }
 
@@ -656,6 +682,57 @@ std::string Formatter::visit_array_type(const cst::CSTNode* node) {
   return result.str();
 }
 
+std::string Formatter::visit_sized_array_type(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // SizedArrayType: Type[5]
+  for (const auto& child : node->get_children()) {
+    result << format_node(child.get());
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_tuple_literal(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // TupleLiteral: (expr1, expr2, ...)
+  for (const auto& child : node->get_children()) {
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::Comma) {
+          result << "," << ONE_WIDTH_SPACE_STRING;
+        } else {
+          result << token->value;
+        }
+      }
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_function_literal(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // FunctionLiteral: fn (params) { body }
+  for (const auto& child : node->get_children()) {
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::Fn) {
+          result << token->value << ONE_WIDTH_SPACE_STRING;
+        } else {
+          result << format_node(child.get());
+        }
+      }
+    } else if (child->get_type() == cst::CSTNodeType::BlockStmt) {
+      result << ONE_WIDTH_SPACE_STRING << format_node(child.get());
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
 std::string Formatter::visit_parameter(const cst::CSTNode* node) {
   std::ostringstream result;
   // Parameter: name or name: type
@@ -701,6 +778,264 @@ std::string Formatter::visit_argument_list(const cst::CSTNode* node) {
         }
       } else if (token.has_value()) {
         result << token->value;
+      }
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_struct_declaration(const cst::CSTNode* node) {
+  std::ostringstream result;
+  result << get_indent();
+
+  // struct Name { field: Type, ... };
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::Struct) {
+          result << token->value << ONE_WIDTH_SPACE_STRING;
+        } else if (token->token_type == lexer::TokenType::LeftBrace) {
+          result << ONE_WIDTH_SPACE_STRING << token->value << "\n";
+          indent_level++;
+        } else if (token->token_type == lexer::TokenType::RightBrace) {
+          indent_level--;
+          result << "\n" << get_indent() << token->value;
+        } else if (token->token_type == lexer::TokenType::Semicolon) {
+          result << token->value << "\n";
+        } else if (token->token_type == lexer::TokenType::Comma) {
+          result << token->value << "\n";
+        } else {
+          result << format_node(child.get());
+        }
+      }
+    } else if (child->get_type() == cst::CSTNodeType::Identifier) {
+      result << format_node(child.get());
+    } else if (child->get_type() == cst::CSTNodeType::StructField) {
+      result << get_indent() << format_node(child.get());
+    } else if (child->get_type() == cst::CSTNodeType::Comment) {
+      result << format_standalone_comment(child.get());
+    }
+  }
+
+  return result.str();
+}
+
+std::string Formatter::visit_type_alias_declaration(const cst::CSTNode* node) {
+  std::ostringstream result;
+  result << get_indent();
+
+  // type Name = TypeExpr;
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::Type) {
+          result << token->value << ONE_WIDTH_SPACE_STRING;
+        } else if (token->token_type == lexer::TokenType::Equal) {
+          result << ONE_WIDTH_SPACE_STRING << token->value
+                 << ONE_WIDTH_SPACE_STRING;
+        } else if (token->token_type == lexer::TokenType::Semicolon) {
+          result << token->value << "\n";
+        } else {
+          result << format_node(child.get());
+        }
+      }
+    } else if (child->get_type() == cst::CSTNodeType::Identifier) {
+      result << format_node(child.get());
+    } else {
+      result << format_node(child.get());
+    }
+  }
+
+  return result.str();
+}
+
+std::string Formatter::visit_member_assign_expr(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // obj.member = value
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+    if (child->get_type() == cst::CSTNodeType::Operator) {
+      result << ONE_WIDTH_SPACE_STRING << format_node(child.get())
+             << ONE_WIDTH_SPACE_STRING;
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_struct_literal(const cst::CSTNode* node) {
+  std::ostringstream result;
+
+  // TypeName { field: value, ... }
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::LeftBrace) {
+          result << ONE_WIDTH_SPACE_STRING << token->value << "\n";
+          indent_level++;
+        } else if (token->token_type == lexer::TokenType::RightBrace) {
+          indent_level--;
+          result << get_indent() << token->value;
+        } else if (token->token_type == lexer::TokenType::Comma) {
+          result << token->value << "\n";
+        } else if (token->token_type == lexer::TokenType::Colon) {
+          result << token->value << ONE_WIDTH_SPACE_STRING;
+        } else {
+          result << format_node(child.get());
+        }
+      }
+    } else if (child->get_type() == cst::CSTNodeType::Identifier) {
+      // 字段名或类型名
+      if (i == 0) {
+        // 类型名
+        result << format_node(child.get());
+      } else {
+        // 字段名
+        result << get_indent() << format_node(child.get());
+      }
+    } else if (child->get_type() == cst::CSTNodeType::Comment) {
+      result << format_standalone_comment(child.get());
+    } else {
+      // 字段值表达式
+      result << format_node(child.get());
+    }
+  }
+
+  return result.str();
+}
+
+std::string Formatter::visit_union_type(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // T1 | T2
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+    if (child->get_type() == cst::CSTNodeType::Operator) {
+      result << ONE_WIDTH_SPACE_STRING << format_node(child.get())
+             << ONE_WIDTH_SPACE_STRING;
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_intersection_type(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // T1 & T2
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+    if (child->get_type() == cst::CSTNodeType::Operator) {
+      result << ONE_WIDTH_SPACE_STRING << format_node(child.get())
+             << ONE_WIDTH_SPACE_STRING;
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_negation_type(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // ~T
+  for (const auto& child : node->get_children()) {
+    result << format_node(child.get());
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_tuple_type(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // (T1, T2, T3)
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value() && token->token_type == lexer::TokenType::Comma) {
+        result << token->value << ONE_WIDTH_SPACE_STRING;
+      } else {
+        result << format_node(child.get());
+      }
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_function_signature_type(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // (T1, T2) -> (T3, T4)
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::Arrow) {
+          result << ONE_WIDTH_SPACE_STRING << token->value
+                 << ONE_WIDTH_SPACE_STRING;
+        } else if (token->token_type == lexer::TokenType::Comma) {
+          result << token->value << ONE_WIDTH_SPACE_STRING;
+        } else {
+          result << format_node(child.get());
+        }
+      }
+    } else {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_anonymous_struct_type(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // struct { field: Type, ... }
+  for (size_t i = 0; i < node->get_children().size(); ++i) {
+    const auto& child = node->get_children()[i];
+
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value()) {
+        if (token->token_type == lexer::TokenType::Struct) {
+          result << token->value << ONE_WIDTH_SPACE_STRING;
+        } else if (token->token_type == lexer::TokenType::LeftBrace) {
+          result << token->value << ONE_WIDTH_SPACE_STRING;
+        } else if (token->token_type == lexer::TokenType::RightBrace) {
+          result << ONE_WIDTH_SPACE_STRING << token->value;
+        } else if (token->token_type == lexer::TokenType::Comma) {
+          result << token->value << ONE_WIDTH_SPACE_STRING;
+        } else {
+          result << format_node(child.get());
+        }
+      }
+    } else if (child->get_type() == cst::CSTNodeType::StructField) {
+      result << format_node(child.get());
+    }
+  }
+  return result.str();
+}
+
+std::string Formatter::visit_struct_field(const cst::CSTNode* node) {
+  std::ostringstream result;
+  // field: Type
+  for (const auto& child : node->get_children()) {
+    if (child->get_type() == cst::CSTNodeType::Delimiter) {
+      const auto& token = child->get_token();
+      if (token.has_value() && token->token_type == lexer::TokenType::Colon) {
+        result << token->value << ONE_WIDTH_SPACE_STRING;
+      } else {
+        result << format_node(child.get());
       }
     } else {
       result << format_node(child.get());
@@ -767,5 +1102,4 @@ std::string Formatter::format_standalone_comment(const cst::CSTNode* comment) {
   return result.str();
 }
 
-} // namespace formatter
-} // namespace czc
+} // namespace czc::formatter

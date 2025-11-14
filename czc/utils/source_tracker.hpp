@@ -13,8 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace czc {
-namespace utils {
+namespace czc::utils {
 
 /**
  * @brief 管理源代码文本并精确跟踪当前的扫描位置。
@@ -145,7 +144,6 @@ public:
   }
 };
 
-} // namespace utils
-} // namespace czc
+} // namespace czc::utils
 
 #endif // CZC_SOURCE_TRACKER_HPP

@@ -3,4 +3,6 @@ make clean
 make fmt
 make build
 make test
+make coverage
+make coverage-report
 make docs

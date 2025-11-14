@@ -11,16 +11,14 @@
 #include "czc/cst/cst_node.hpp"
 #include "czc/diagnostics/diagnostic_reporter.hpp"
 #include "czc/lexer/token.hpp"
+#include "czc/parser/error_collector.hpp"
 
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include "error_collector.hpp"
-
-namespace czc {
-namespace parser {
+namespace czc::parser {
 
 /**
  * @brief 负责将 Token 流转换为具体语法树（CST）的语法分析器。
@@ -174,11 +172,54 @@ private:
   std::unique_ptr<cst::CSTNode> fn_declaration();
 
   /**
+   * @brief 解析结构体声明。
+   * @details 语法：struct identifier { field: type, ... };
+   * @return 结构体声明节点。
+   */
+  std::unique_ptr<cst::CSTNode> struct_declaration();
+
+  /**
+   * @brief 解析类型别名声明。
+   * @details 语法：type identifier = type_expression;
+   * @return 类型别名声明节点。
+   */
+  std::unique_ptr<cst::CSTNode> type_alias_declaration();
+
+  /**
    * @brief 解析类型注解。
    * @details 语法：int64 | float64 | string | bool | void | null | [type]
    * @return 类型注解节点。
    */
   std::unique_ptr<cst::CSTNode> parse_type();
+
+  /**
+   * @brief 解析类型表达式（支持联合、交集、否定等复杂类型）。
+   * @details 语法：type_union
+   * @return 类型表达式节点。
+   */
+  std::unique_ptr<cst::CSTNode> parse_type_expression();
+
+  /**
+   * @brief 解析联合类型表达式。
+   * @details 语法：type_intersection (| type_intersection)*
+   * @return 类型表达式节点。
+   */
+  std::unique_ptr<cst::CSTNode> parse_type_union();
+
+  /**
+   * @brief 解析交集类型表达式。
+   * @details 语法：type_primary (& type_primary)*
+   * @return 类型表达式节点。
+   */
+  std::unique_ptr<cst::CSTNode> parse_type_intersection();
+
+  /**
+   * @brief 解析基础类型表达式。
+   * @details 语法：identifier | array_type | tuple_type | function_signature |
+   * anonymous_struct | ~type | (type_expression)
+   * @return 类型表达式节点。
+   */
+  std::unique_ptr<cst::CSTNode> parse_type_primary();
 
   /**
    * @brief 解析语句。
@@ -301,6 +342,19 @@ private:
    */
   std::unique_ptr<cst::CSTNode> primary();
 
+  // --- 辅助方法 ---
+
+  /**
+   * @brief 解析数组后缀（动态数组 T[] 或固定大小数组 T[N]）。
+   * @param[in] base_type 基础类型节点，将被包装为数组类型。
+   * @return 包装了数组后缀的类型节点。
+   * @details
+   *   此方法处理类型表达式后的数组声明符，支持多维数组。
+   *   例如：Int[]、Int[5]、Int[3][4]、((Int) -> Float)[]
+   */
+  std::unique_ptr<cst::CSTNode>
+  parse_array_suffix(std::unique_ptr<cst::CSTNode> base_type);
+
   // --- 成员变量 ---
 
   // 从词法分析器接收到的、需要解析的 Token 序列。
@@ -316,7 +370,6 @@ private:
   ParserErrorCollector error_collector;
 };
 
-} // namespace parser
-} // namespace czc
+} // namespace czc::parser
 
 #endif // CZC_PARSER_HPP

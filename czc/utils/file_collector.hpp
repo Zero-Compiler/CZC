@@ -11,8 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace czc {
-namespace utils {
+namespace czc::utils {
 
 /**
  * @brief 提供根据通配符模式查找和收集文件的静态工具方法。
@@ -45,7 +44,6 @@ private:
                               const std::string& pattern);
 };
 
-} // namespace utils
-} // namespace czc
+} // namespace czc::utils
 
 #endif // CZC_FILE_COLLECTOR_HPP

@@ -10,8 +10,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace czc {
-namespace diagnostics {
+namespace czc::diagnostics {
 
 std::string diagnostic_code_to_string(DiagnosticCode code) {
   int code_num = static_cast<int>(code);
@@ -35,6 +34,10 @@ std::string diagnostic_code_to_string(DiagnosticCode code) {
     // P-prefix codes are for the Parser.
     prefix = 'P';
     offset = code_num - 2000;
+  } else if (code_num < 4000) {
+    // S-prefix codes are for Struct-related operations.
+    prefix = 'S';
+    offset = code_num - 3000;
   } else {
     // NOTE: 对于未知的错误代码范围，返回一个默认的 "U0000" (Unknown)
     //       字符串，这是一种防御性编程，可以防止程序在遇到意外
@@ -52,5 +55,4 @@ std::string diagnostic_code_to_string(DiagnosticCode code) {
   return oss.str();
 }
 
-} // namespace diagnostics
-} // namespace czc
+} // namespace czc::diagnostics

@@ -9,8 +9,7 @@
 
 #include <unordered_map>
 
-namespace czc {
-namespace lexer {
+namespace czc::lexer {
 
 Token::Token(TokenType type, const std::string& val, size_t line, size_t column,
              bool synthetic)
@@ -126,6 +125,12 @@ std::string token_type_to_string(TokenType type) {
     return "And";
   case TokenType::Or:
     return "Or";
+  case TokenType::AndAnd:
+    return "AndAnd";
+  case TokenType::OrOr:
+    return "OrOr";
+  case TokenType::Tilde:
+    return "Tilde";
   case TokenType::LeftParen:
     return "LeftParen";
   case TokenType::RightParen:
@@ -159,5 +164,4 @@ std::string token_type_to_string(TokenType type) {
   }
 }
 
-} // namespace lexer
-} // namespace czc
+} // namespace czc::lexer

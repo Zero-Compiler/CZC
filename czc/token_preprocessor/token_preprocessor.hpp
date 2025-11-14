@@ -10,16 +10,14 @@
 
 #include "czc/diagnostics/diagnostic_reporter.hpp"
 #include "czc/lexer/token.hpp"
+#include "czc/token_preprocessor/error_collector.hpp"
 
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include "error_collector.hpp"
-
-namespace czc {
-namespace token_preprocessor {
+namespace czc::token_preprocessor {
 
 /**
  * @brief `int64_t` 的最大值约为 9e18，因此整数部分超过 18 位可能溢出。
@@ -280,7 +278,6 @@ private:
  */
 std::string inferred_type_to_string(InferredNumericType type);
 
-} // namespace token_preprocessor
-} // namespace czc
+} // namespace czc::token_preprocessor
 
 #endif // CZC_TOKEN_PREPROCESSOR_HPP

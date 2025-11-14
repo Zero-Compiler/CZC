@@ -10,11 +10,13 @@
 #include "czc/lexer/lexer.hpp"
 #include "czc/parser/parser.hpp"
 
+#include "test_helpers.hpp"
 #include <gtest/gtest.h>
 
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::cst;
+using namespace czc::test;
 
 // --- 测试夹具 ---
 
@@ -61,6 +63,11 @@ TEST_F(ParserTest, FunctionDeclaration) {
   ASSERT_NE(cst, nullptr);
   EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
   EXPECT_FALSE(parser.has_errors());
+
+  // 使用辅助函数进行结构化验证
+  auto func_decl = find_node_recursive(cst.get(), CSTNodeType::FnDeclaration);
+  ASSERT_NE(func_decl, nullptr) << "Should find function declaration";
+  verify_function_declaration(func_decl, "add", 2);
 }
 
 // --- 二元表达式测试 ---
@@ -126,7 +133,7 @@ TEST_F(ParserTest, WhileStatement) {
  * @details 验证解析器能够正确解析数组类型标注和数组初始化表达式。
  */
 TEST_F(ParserTest, ArrayLiteral) {
-  Lexer lexer("let arr: [int] = [1, 2, 3];");
+  Lexer lexer("let arr: Integer[] = [1, 2, 3];");
   auto tokens = lexer.tokenize();
 
   Parser parser(tokens);

@@ -12,8 +12,7 @@
 
 #include <string>
 
-namespace czc {
-namespace diagnostics {
+namespace czc::diagnostics {
 
 /**
  * @brief 定义诊断消息的严重级别。
@@ -65,6 +64,21 @@ enum class DiagnosticCode {
   P0011_ExpectedTypeAnnotation,  // 期望类型注解
   P0012_ExpectedArrow,           // 期望箭头 ->
   P0013_InvalidAssignmentTarget, // 无效的赋值目标
+
+  // === Struct 相关错误 (S0001-S0999) ===
+  S0001_ExpectedStructName = 3001,   // 期望结构体名称
+  S0002_ExpectedLeftBraceInStruct,   // 期望左花括号开始结构体定义
+  S0003_ExpectedFieldName,           // 期望字段名称
+  S0004_ExpectedColonAfterFieldName, // 期望字段名后的冒号
+  S0005_ExpectedFieldType,           // 期望字段类型
+  S0006_ExpectedCommaOrRightBrace,   // 期望逗号或右花括号
+  S0007_ExpectedTypeName,            // 期望类型名称
+  S0008_ExpectedEqualInTypeAlias,    // 期望类型别名中的等号
+  S0009_ExpectedTypeExpression,      // 期望类型表达式
+  S0010_ExpectedRightParenInTuple,   // 期望元组中的右括号
+  S0011_ExpectedRightParenInFuncSig, // 期望函数签名中的右括号
+  S0012_DuplicateFieldName,          // 重复的字段名
+  S0013_ExpectedStructFieldInit,     // 期望结构体字段初始化
 };
 
 /**
@@ -75,7 +89,6 @@ enum class DiagnosticCode {
  */
 std::string diagnostic_code_to_string(DiagnosticCode code);
 
-} // namespace diagnostics
-} // namespace czc
+} // namespace czc::diagnostics
 
 #endif // CZC_DIAGNOSTIC_CODE_HPP

@@ -11,8 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace czc {
-namespace lexer {
+namespace czc::lexer {
 
 /**
  * @brief 提供处理 UTF-8 编码文本的静态核心工具函数。
@@ -76,7 +75,6 @@ public:
                         std::string& dest);
 };
 
-} // namespace lexer
-} // namespace czc
+} // namespace czc::lexer
 
 #endif // CZC_UTF8_HANDLER_HPP

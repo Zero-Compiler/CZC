@@ -16,8 +16,7 @@
 #include <memory>
 #include <string>
 
-namespace czc {
-namespace formatter {
+namespace czc::formatter {
 
 const std::string ONE_WIDTH_SPACE_STRING = " ";     // 单个空格字符串常量
 const std::string TWO_WIDTH_SPACE_STRING = "  ";    // 两个空格字符串常量
@@ -70,6 +69,8 @@ public:
   std::string visit_program(const cst::CSTNode* node) override;
   std::string visit_var_declaration(const cst::CSTNode* node) override;
   std::string visit_fn_declaration(const cst::CSTNode* node) override;
+  std::string visit_struct_declaration(const cst::CSTNode* node) override;
+  std::string visit_type_alias_declaration(const cst::CSTNode* node) override;
   std::string visit_return_stmt(const cst::CSTNode* node) override;
   std::string visit_if_stmt(const cst::CSTNode* node) override;
   std::string visit_while_stmt(const cst::CSTNode* node) override;
@@ -82,7 +83,9 @@ public:
   std::string visit_member_expr(const cst::CSTNode* node) override;
   std::string visit_assign_expr(const cst::CSTNode* node) override;
   std::string visit_index_assign_expr(const cst::CSTNode* node) override;
+  std::string visit_member_assign_expr(const cst::CSTNode* node) override;
   std::string visit_array_literal(const cst::CSTNode* node) override;
+  std::string visit_struct_literal(const cst::CSTNode* node) override;
   std::string visit_paren_expr(const cst::CSTNode* node) override;
   std::string visit_integer_literal(const cst::CSTNode* node) override;
   std::string visit_float_literal(const cst::CSTNode* node) override;
@@ -91,6 +94,16 @@ public:
   std::string visit_identifier(const cst::CSTNode* node) override;
   std::string visit_type_annotation(const cst::CSTNode* node) override;
   std::string visit_array_type(const cst::CSTNode* node) override;
+  std::string visit_sized_array_type(const cst::CSTNode* node) override;
+  std::string visit_tuple_literal(const cst::CSTNode* node) override;
+  std::string visit_function_literal(const cst::CSTNode* node) override;
+  std::string visit_union_type(const cst::CSTNode* node) override;
+  std::string visit_intersection_type(const cst::CSTNode* node) override;
+  std::string visit_negation_type(const cst::CSTNode* node) override;
+  std::string visit_tuple_type(const cst::CSTNode* node) override;
+  std::string visit_function_signature_type(const cst::CSTNode* node) override;
+  std::string visit_anonymous_struct_type(const cst::CSTNode* node) override;
+  std::string visit_struct_field(const cst::CSTNode* node) override;
   std::string visit_parameter(const cst::CSTNode* node) override;
   std::string visit_parameter_list(const cst::CSTNode* node) override;
   std::string visit_argument_list(const cst::CSTNode* node) override;
@@ -155,7 +168,6 @@ private:
   std::string format_standalone_comment(const cst::CSTNode* comment);
 };
 
-} // namespace formatter
-} // namespace czc
+} // namespace czc::formatter
 
 #endif // CZC_FORMATTER_HPP

@@ -1,0 +1,31 @@
+// 结构体声明测试
+struct Person {
+    name: String,
+    age: Integer,
+    active: Boolean
+};
+// 类型别名测试
+type User = Person;
+// 联合类型
+type NumberOrString = Integer | String;
+// 交集类型（取共有属性）
+type ReadableWritable = Readable & Writable;
+// 否定类型
+type NotNull = ~Null;
+// 元组类型
+type Point2D = (Integer, Integer);
+type Point3D = (Integer, Integer, Integer);
+// 函数签名类型
+type BinaryOp = (Integer, Integer) -> Integer;
+type MultiReturn = (Integer) -> (Integer, String);
+// 匿名结构体类型
+type Config = struct { host: String, port: Integer };
+// 结构体字面量
+let person = Person {
+    name: "Alice",
+    age: 30,
+    active: true};   // 字段访问
+let name = person.name;
+let age = person.age;   // 字段赋值
+person.age = 31;
+person.name = "Bob";

@@ -11,8 +11,7 @@
 #include <optional>
 #include <string>
 
-namespace czc {
-namespace lexer {
+namespace czc::lexer {
 
 /**
  * @brief 定义了词法分析器可以产生的所有词法单元（Token）的类型。
@@ -68,9 +67,12 @@ enum class TokenType {
   GreaterEqual, // `>=`
 
   // === 逻辑运算符 ===
-  And,  // `&&`
-  Or,   // `||`
-  Bang, // `!`
+  And,    // `&` (类型交集或按位与)
+  Or,     // `|` (类型并集或按位或)
+  AndAnd, // `&&` (逻辑与)
+  OrOr,   // `||` (逻辑或)
+  Bang,   // `!` (逻辑非)
+  Tilde,  // `~` (类型否定或按位取反)
 
   // === 分隔符 ===
   LeftParen,    // `(`
@@ -140,6 +142,17 @@ public:
    */
   Token(TokenType type, const std::string& val, size_t line = 0,
         size_t column = 0, bool synthetic = false);
+
+  /**
+   * @brief 创建一个 EOF (End Of File) Token 的工厂方法。
+   * @details
+   *   该方法提供了一个统一的、语义明确的方式来创建文件结束标记。
+   *   使用工厂方法而非直接构造，可以避免重复代码并使意图更清晰。
+   * @return 一个表示文件结束的 Token 对象。
+   */
+  static Token makeEOF() {
+    return Token(TokenType::EndOfFile, "", 0, 0);
+  }
 };
 
 /**
@@ -158,7 +171,6 @@ std::optional<TokenType> get_keyword(const std::string& word);
  */
 std::string token_type_to_string(TokenType type);
 
-} // namespace lexer
-} // namespace czc
+} // namespace czc::lexer
 
 #endif // CZC_LEXER_TOKEN_HPP

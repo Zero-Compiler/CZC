@@ -16,6 +16,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <toml++/toml.h>
+
 using namespace czc::diagnostics;
 using namespace czc::utils;
 
@@ -70,87 +72,58 @@ bool I18nMessages::load_from_file(const std::string& locale) {
     return false; // 在所有搜索路径中都找不到文件。
   }
 
-  std::ifstream file(filepath);
-  if (!file.is_open()) {
+  // --- 使用 tomlplusplus 解析 TOML 文件 ---
+  // NOTE: 使用 tomlplusplus 库来解析 TOML 文件，这是一个现代化的、
+  //       符合 TOML v1.0.0 标准的 C++17 头文件库。相比手写解析器，
+  //       它提供了更强大的功能和更好的错误处理能力。
+  try {
+    toml::table tbl = toml::parse_file(filepath);
+
+    // 在加载新文件之前，清空旧的消息映射表，这是支持动态语言切换的关键步骤。
+    messages.clear();
+
+    // 遍历 TOML 文件中的所有表（每个诊断代码对应一个表）
+    for (const auto& [key, value] : tbl) {
+      if (!value.is_table()) {
+        continue; // 跳过非表类型的条目
+      }
+
+      const toml::table* code_table = value.as_table();
+      if (!code_table) {
+        continue;
+      }
+
+      MessageTemplate tmpl;
+
+      // 读取 message 字段
+      if (auto msg = (*code_table)["message"].value<std::string>()) {
+        tmpl.message = *msg;
+      }
+
+      // 读取 help 字段（可选）
+      if (auto help = (*code_table)["help"].value<std::string>()) {
+        tmpl.help = *help;
+      }
+
+      // 读取 source 字段（可选）
+      if (auto source = (*code_table)["source"].value<std::string>()) {
+        tmpl.source = *source;
+      }
+
+      // 将模板存入映射表
+      messages[std::string(key)] = tmpl;
+    }
+
+    return !messages.empty();
+
+  } catch (const toml::parse_error& err) {
+    // NOTE: 如果解析失败（例如，TOML 格式错误），捕获异常并返回 false。
+    //       这确保了即使本地化文件有问题，编译器也不会崩溃，而是会
+    //       回退到默认语言（en_US）。
+    std::cerr << "Error parsing TOML file '" << filepath << "':\n"
+              << err.description() << "\n  (" << err.source().begin << ")\n";
     return false;
   }
-
-  // --- 手动解析简化的 TOML 格式 ---
-  // NOTE: 这里采用了一个简化的、手写的 TOML 解析器，而不是引入一个完整的
-  //       第三方 TOML 库。这样做的权衡是为了：
-  //       - 优点: 减少外部依赖，使编译器更轻量、更易于构建。
-  //       - 缺点: 解析器功能有限，仅支持 `[section]` 和 `key = "value"`
-  //         格式，对 TOML 文件的格式要求更严格。
-  // 在加载新文件之前，清空旧的消息映射表，这是支持动态语言切换的关键步骤。
-  messages.clear();
-
-  std::string line;
-  std::string current_code;
-  MessageTemplate current_template;
-
-  while (std::getline(file, line)) {
-    // 检查读取错误
-    if (file.bad()) {
-      return false; // I/O 错误，读取失败
-    }
-    // 忽略空行和以 '#' 开头的注释行。
-    if (line.empty() || line[0] == '#') {
-      continue;
-    }
-
-    // --- 解析诊断代码块，例如 `[L0001]` ---
-    if (line[0] == '[') {
-      // 当遇到一个新的代码块时，先保存上一个已解析完成的模板。
-      if (!current_code.empty()) {
-        messages[current_code] = current_template;
-        current_template = MessageTemplate{}; // 重置模板以供下一个代码块使用。
-      }
-
-      size_t end = line.find(']');
-      if (end != std::string::npos) {
-        current_code = line.substr(1, end - 1);
-      }
-      continue;
-    }
-
-    // --- 解析 `key = "value"` 格式的键值对 ---
-    size_t eq_pos = line.find('=');
-    if (eq_pos == std::string::npos) {
-      continue; // 如果没有 '='，则不是有效的键值对，跳过。
-    }
-
-    std::string key = line.substr(0, eq_pos);
-    std::string value = line.substr(eq_pos + 1);
-
-    // --- 清理键和值 ---
-    // NOTE:
-    // 对键和值进行修剪（trimming）操作，去除两端的空白字符和值两端的引号。
-    //       这使得 .toml 文件的格式可以更加宽松（例如，允许 `key = " value "
-    //       `）， 提高了用户编写本地化文件时的容错性。 `find_last_not_of`
-    //       的结果加 1 是为了正确处理 `erase` 的范围。
-    //       如果字符串全为空白，`find_last_not_of` 返回 `npos`，`npos + 1`
-    //       溢出为 0， `erase(0)` 恰好能清空整个字符串，这是一个巧妙的处理。
-    key.erase(0, key.find_first_not_of(" \t"));
-    key.erase(key.find_last_not_of(" \t") + 1);
-
-    value.erase(0, value.find_first_not_of(" \t\""));
-    value.erase(value.find_last_not_of(" \t\"") + 1);
-
-    if (key == "message") {
-      current_template.message = value;
-    } else if (key == "help") {
-      current_template.help = value;
-    } else if (key == "source") {
-      current_template.source = value;
-    }
-  }
-
-  // 文件处理完毕后，保存最后一个解析的模板。
-  if (!current_code.empty()) {
-    messages[current_code] = current_template;
-  }
-
-  return !messages.empty();
 }
 
 void I18nMessages::set_locale(const std::string& locale) {

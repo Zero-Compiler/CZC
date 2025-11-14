@@ -400,8 +400,8 @@ TEST_F(LexerTest, LogicalOperators) {
   auto tokens = tokenize("&& || !");
 
   ASSERT_EQ(tokens.size(), 4);
-  EXPECT_EQ(tokens[0].token_type, TokenType::And);
-  EXPECT_EQ(tokens[1].token_type, TokenType::Or);
+  EXPECT_EQ(tokens[0].token_type, TokenType::AndAnd);
+  EXPECT_EQ(tokens[1].token_type, TokenType::OrOr);
   EXPECT_EQ(tokens[2].token_type, TokenType::Bang);
 }
 
@@ -534,8 +534,8 @@ TEST_F(LexerTest, DoubleCharacterOperators) {
   EXPECT_EQ(tokens[1].token_type, TokenType::BangEqual);
   EXPECT_EQ(tokens[2].token_type, TokenType::LessEqual);
   EXPECT_EQ(tokens[3].token_type, TokenType::GreaterEqual);
-  EXPECT_EQ(tokens[4].token_type, TokenType::And);
-  EXPECT_EQ(tokens[5].token_type, TokenType::Or);
+  EXPECT_EQ(tokens[4].token_type, TokenType::AndAnd);
+  EXPECT_EQ(tokens[5].token_type, TokenType::OrOr);
   EXPECT_EQ(tokens[6].token_type, TokenType::Arrow);
   EXPECT_EQ(tokens[7].token_type, TokenType::DotDot);
 }

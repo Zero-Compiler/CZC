@@ -14,8 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace czc {
-namespace utils {
+namespace czc::utils {
 
 /**
  * @brief 通用错误信息结构体模板。
@@ -26,6 +25,8 @@ namespace utils {
  */
 template <typename LocationType = SourceLocation>
 struct ErrorInfo {
+  using LocationType_t = LocationType; ///< 位置类型别名
+
   diagnostics::DiagnosticCode code; ///< 错误的诊断代码
   LocationType location;            ///< 错误发生的位置
   std::vector<std::string> args;    ///< 用于格式化错误消息的参数
@@ -64,7 +65,7 @@ public:
    * @param[in] args 用于格式化错误消息的参数
    */
   void add(diagnostics::DiagnosticCode code,
-           const typename ErrorType::LocationType& location,
+           const typename ErrorType::LocationType_t& location,
            const std::vector<std::string>& args = {}) {
     errors_.emplace_back(code, location, args);
   }
@@ -112,7 +113,6 @@ private:
   std::vector<ErrorType> errors_; ///< 错误列表
 };
 
-} // namespace utils
-} // namespace czc
+} // namespace czc::utils
 
 #endif // CZC_UTILS_ERROR_COLLECTOR_HPP

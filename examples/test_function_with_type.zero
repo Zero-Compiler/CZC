@@ -1,0 +1,5 @@
+// Function literal with type annotation
+let add : (Integer, Integer) -> Integer = fn (a, b) {
+    return a + b;
+}
+;

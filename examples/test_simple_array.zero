@@ -1,0 +1,2 @@
+// Simple array test
+let numbers : Integer[] = [1, 2, 3];

@@ -1,0 +1,43 @@
+// Test arrays, tuples, and function literals
+// Array types with type annotations
+let numbers : Integer[] = [1, 2, 3, 4, 5];
+let floats : Float[] = [1.0, 2.5, 3.14];
+let strings : String[] = ["hello", "world"];   // Unsized arrays
+let fixed : Integer[5] = [1, 2, 3, 4, 5];
+let matrix : Integer[3][3] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];   // Sized arrays
+let grid : Integer[][] = [[1, 2], [3, 4]];   // Multi-dimensional arrays
+let cube : Float[][][] = [[[1.0]]];   // Tuple literals with type annotations
+let pair : (Integer, String) = (42, "answer");
+let triple : (Float, Bool, String) = (3.14, true, "pi");
+let nested : ((Integer, Integer), String) = ((1, 2), "coords");   // Function literals with type annotations
+let add : (Integer, Integer) -> Integer = fn (a, b) {
+    return a + b;
+}
+;
+let multiply : (Float, Float) -> Float = fn (x, y) {
+    return x * y;
+}
+;   // Function with multiple return values
+let divmod : (Integer, Integer) -> (Integer, Integer) = fn (a, b) {
+    return (a / b, a % b);
+}
+;   // Complex function type
+let transform : ((Integer, Integer), Bool) -> String = fn (coords, flag) {
+    if flag {
+        return "active";
+    }
+ else {
+        return "inactive";
+    }
+}
+;   // Arrays and tuples in expressions
+let first = numbers[0];
+numbers[1] = 99;  // Struct with array and tuple fields
+struct Point {
+    coords: (Float, Float),
+    neighbors: Point[]
+};
+// Type alias with arrays and tuples
+type Matrix = Float[][];
+type Pair = (Integer, Integer);
+type Callback = (String) -> Void;

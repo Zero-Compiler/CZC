@@ -10,8 +10,7 @@
 
 #include <cstddef>
 
-namespace czc {
-namespace formatter {
+namespace czc::formatter {
 
 /**
  * @brief 定义了代码格式化器使用的缩进风格。
@@ -64,7 +63,6 @@ struct FormatOptions {
         newline_before_brace(newline_brace) {}
 };
 
-} // namespace formatter
-} // namespace czc
+} // namespace czc::formatter
 
 #endif // CZC_FORMAT_OPTIONS_HPP

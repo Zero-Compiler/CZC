@@ -1,0 +1,38 @@
+// Comprehensive test of all new features
+// 1. Array types and literals
+let numbers : Integer[] = [1, 2, 3, 4, 5];
+let strings : String[] = ["hello", "world"];
+let fixed : Integer[10] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+let matrix : Integer[][] = [[1, 2], [3, 4]];   // 2. Tuple types and literals
+let pair : (Integer, String) = (42, "answer");
+let triple : (Float, Bool, String) = (3.14, true, "pi");   // 3. Function literals
+let add = fn (a, b) {
+    return a + b;
+}
+;
+let multiply : (Float, Float) -> Float = fn (x, y) {
+    return x * y;
+}
+;   // 4. Struct with new types
+struct DataPoint {
+    values: Float[],
+    labels: String[],
+    metadata: (Integer, String)
+};
+// 5. Type aliases
+type Matrix = Float[][];
+type Coord = (Float, Float);
+type Callback = (String) -> Void;
+type Transform = (Integer, Integer) -> (Integer, Integer);
+// 6. Complex function literal
+let complexFunc : ((Integer, Integer), Bool) -> String = fn (coords, flag) {
+    if flag {
+        return "active";
+    }
+ else {
+        return "inactive";
+    }
+}
+;   // 7. Array operations
+let first = numbers[0];
+numbers[1] = 99;

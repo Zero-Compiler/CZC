@@ -16,12 +16,14 @@
 
 #include <unordered_set>
 
+#include "test_helpers.hpp"
 #include <gtest/gtest.h>
 
 using namespace czc;
 using namespace czc::cst;
 using namespace czc::utils;
 using namespace czc::lexer;
+using namespace czc::test;
 
 /**
  * @brief CST节点测试基类
@@ -84,11 +86,11 @@ TEST_F(CSTNodeTest, AddChildren) {
   parent->add_child(std::make_unique<CSTNode>(CSTNodeType::ExprStmt, loc));
   parent->add_child(std::make_unique<CSTNode>(CSTNodeType::BinaryExpr, loc));
 
-  const auto& children = parent->get_children();
-  EXPECT_EQ(children.size(), 3);
-  EXPECT_EQ(children[0]->get_type(), CSTNodeType::ExprStmt);
-  EXPECT_EQ(children[1]->get_type(), CSTNodeType::ExprStmt);
-  EXPECT_EQ(children[2]->get_type(), CSTNodeType::BinaryExpr);
+  // 使用 helper 函数验证
+  verify_node(parent.get(), CSTNodeType::Program, 3);
+  verify_child_types(
+      parent.get(),
+      {CSTNodeType::ExprStmt, CSTNodeType::ExprStmt, CSTNodeType::BinaryExpr});
 }
 
 /**
@@ -669,4 +671,52 @@ TEST_F(CSTNodeTest, LocationInfoPreservation) {
   // 验证位置仍然保持原值（不被Token覆盖）
   EXPECT_EQ(parent->get_location().line, 10);
   EXPECT_EQ(parent->get_location().column, 15);
+}
+
+/**
+ * @test HelperFunctionMakeCSTNode
+ * @brief 测试 make_cst_node 辅助函数
+ * @details
+ *   验证目标：
+ *   1. make_cst_node 可以创建各种类型的节点
+ *   2. 创建的节点类型和位置信息正确
+ */
+TEST_F(CSTNodeTest, HelperFunctionMakeCSTNode) {
+  auto loc = make_test_location();
+
+  auto node1 = make_cst_node(CSTNodeType::Program, loc);
+  ASSERT_NE(node1, nullptr);
+  verify_node(node1.get(), CSTNodeType::Program);
+
+  auto node2 = make_cst_node(CSTNodeType::BinaryExpr, loc);
+  ASSERT_NE(node2, nullptr);
+  verify_node(node2.get(), CSTNodeType::BinaryExpr);
+
+  auto node3 = make_cst_node(CSTNodeType::StructDeclaration, loc);
+  ASSERT_NE(node3, nullptr);
+  verify_node(node3.get(), CSTNodeType::StructDeclaration);
+}
+
+/**
+ * @test HelperFunctionNodeTypeToString
+ * @brief 测试 cst_node_type_to_string 辅助函数
+ * @details
+ *   验证目标：
+ *   1. 所有节点类型都能转换为字符串
+ *   2. 字符串表示非空且有意义
+ */
+TEST_F(CSTNodeTest, HelperFunctionNodeTypeToString) {
+  std::string program_str = cst_node_type_to_string(CSTNodeType::Program);
+  EXPECT_FALSE(program_str.empty());
+  EXPECT_NE(program_str.find("Program"), std::string::npos);
+
+  std::string binary_str = cst_node_type_to_string(CSTNodeType::BinaryExpr);
+  EXPECT_FALSE(binary_str.empty());
+
+  std::string struct_str =
+      cst_node_type_to_string(CSTNodeType::StructDeclaration);
+  EXPECT_FALSE(struct_str.empty());
+
+  std::string fn_str = cst_node_type_to_string(CSTNodeType::FnDeclaration);
+  EXPECT_FALSE(fn_str.empty());
 }

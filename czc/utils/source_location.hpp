@@ -10,8 +10,7 @@
 
 #include <string>
 
-namespace czc {
-namespace utils {
+namespace czc::utils {
 
 /**
  * @brief 代表源代码中的一个特定区域（或点）。
@@ -58,7 +57,6 @@ struct SourceLocation {
         end_column(end_col ? end_col : col) {}
 };
 
-} // namespace utils
-} // namespace czc
+} // namespace czc::utils
 
 #endif // CZC_SOURCE_LOCATION_HPP

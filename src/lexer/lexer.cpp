@@ -13,8 +13,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace czc {
-namespace lexer {
+namespace czc::lexer {
 
 using namespace czc::diagnostics;
 using namespace czc::utils;
@@ -26,7 +25,8 @@ void Lexer::report_error(DiagnosticCode code, size_t error_line,
   //       通常我们只关心单个字符或符号的位置，因此起始和结束位置是相同的。
   auto loc = SourceLocation(tracker.get_filename(), error_line, error_column,
                             error_line, error_column);
-  error_collector.add(code, loc, args);
+  LexerError error(code, loc, args);
+  error_collector.add(error);
 }
 
 void Lexer::advance() {
@@ -685,11 +685,11 @@ std::optional<Token> Lexer::try_read_two_char_operator(char first_char,
     break;
   case '&':
     if (second_char == '&')
-      return make_two_char_token(TokenType::And, "&&");
+      return make_two_char_token(TokenType::AndAnd, "&&");
     break;
   case '|':
     if (second_char == '|')
-      return make_two_char_token(TokenType::Or, "||");
+      return make_two_char_token(TokenType::OrOr, "||");
     break;
   case '.':
     if (second_char == '.')
@@ -719,14 +719,16 @@ Token Lexer::read_single_char_token(char ch, size_t token_line,
     return Token(TokenType::Equal, "=", token_line, token_column);
   case '!':
     return Token(TokenType::Bang, "!", token_line, token_column);
+  case '~':
+    return Token(TokenType::Tilde, "~", token_line, token_column);
   case '<':
     return Token(TokenType::Less, "<", token_line, token_column);
   case '>':
     return Token(TokenType::Greater, ">", token_line, token_column);
   case '&':
-    return Token(TokenType::Unknown, "&", token_line, token_column);
+    return Token(TokenType::And, "&", token_line, token_column);
   case '|':
-    return Token(TokenType::Unknown, "|", token_line, token_column);
+    return Token(TokenType::Or, "|", token_line, token_column);
   case '(':
     return Token(TokenType::LeftParen, "(", token_line, token_column);
   case ')':
@@ -772,8 +774,7 @@ Token Lexer::next_token() {
 
   // 如果在跳过空白后到达了文件末尾，则返回 EOF Token。
   if (!current_char.has_value()) {
-    return Token(TokenType::EndOfFile, "", tracker.get_line(),
-                 tracker.get_column());
+    return Token::makeEOF();
   }
 
   // 检查是否是注释
@@ -868,6 +869,9 @@ Token Lexer::next_token() {
                    Token(TokenType::BangEqual, "!=", token_line, token_column))
                 : Token(TokenType::Bang, "!", token_line, token_column);
     break;
+  case '~':
+    token = Token(TokenType::Tilde, "~", token_line, token_column);
+    break;
   case '<':
     token = peek(1) == '='
                 ? (advance(),
@@ -883,17 +887,17 @@ Token Lexer::next_token() {
   case '&':
     if (peek(1) == '&') {
       advance();
-      token = Token(TokenType::And, "&&", token_line, token_column);
+      token = Token(TokenType::AndAnd, "&&", token_line, token_column);
     } else {
-      token = Token(TokenType::Unknown, "&", token_line, token_column);
+      token = Token(TokenType::And, "&", token_line, token_column);
     }
     break;
   case '|':
     if (peek(1) == '|') {
       advance();
-      token = Token(TokenType::Or, "||", token_line, token_column);
+      token = Token(TokenType::OrOr, "||", token_line, token_column);
     } else {
-      token = Token(TokenType::Unknown, "|", token_line, token_column);
+      token = Token(TokenType::Or, "|", token_line, token_column);
     }
     break;
   case '(':
@@ -960,5 +964,4 @@ std::vector<Token> Lexer::tokenize() {
   return tokens;
 }
 
-} // namespace lexer
-} // namespace czc
+} // namespace czc::lexer

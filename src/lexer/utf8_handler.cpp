@@ -7,8 +7,7 @@
 
 #include "czc/lexer/utf8_handler.hpp"
 
-namespace czc {
-namespace lexer {
+namespace czc::lexer {
 
 bool Utf8Handler::is_continuation(unsigned char ch) {
   // --- 检查 UTF-8 续字节 (Continuation Byte) ---
@@ -155,5 +154,4 @@ bool Utf8Handler::read_char(const std::vector<char>& input, size_t& pos,
   return true;
 }
 
-} // namespace lexer
-} // namespace czc
+} // namespace czc::lexer

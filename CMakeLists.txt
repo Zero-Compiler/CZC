@@ -9,6 +9,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Code coverage options
 option(ENABLE_COVERAGE "Enable code coverage" OFF)
 
+# Fetch tomlplusplus library
+include(FetchContent)
+FetchContent_Declare(
+    tomlplusplus
+    GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+    GIT_TAG        v3.4.0
+)
+FetchContent_MakeAvailable(tomlplusplus)
+
 if(MSVC)
     add_compile_options(/W4)
 else()
@@ -30,14 +39,21 @@ add_library(czc STATIC
     src/utils/file_collector.cpp
     src/cst/cst_node.cpp
     src/parser/parser.cpp
+    src/parser/parser_decl.cpp
+    src/parser/parser_type.cpp
+    src/parser/parser_stmt.cpp
+    src/parser/parser_expr.cpp
     src/formatter/formatter.cpp
-    src/formatter/error_collector.cpp
+    src/ast/ast_builder.cpp
+    src/ast/ast_visitor.cpp
 )
 
 target_include_directories(czc PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
+
+target_link_libraries(czc PUBLIC tomlplusplus::tomlplusplus)
 
 add_executable(czc-cli
     cli/main.cpp

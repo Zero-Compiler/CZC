@@ -92,3 +92,48 @@ add_executable(test_cst
 target_link_libraries(test_cst PRIVATE czc GTest::gtest_main)
 gtest_discover_tests(test_cst)
 
+# Tests for new features (structs, arrays, tuples, function literals)
+add_executable(test_struct_type_alias
+    test_struct_type_alias.cpp
+)
+target_link_libraries(test_struct_type_alias PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_struct_type_alias)
+
+add_executable(test_array_types
+    test_array_types.cpp
+)
+target_link_libraries(test_array_types PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_array_types)
+
+add_executable(test_tuple_types
+    test_tuple_types.cpp
+)
+target_link_libraries(test_tuple_types PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_tuple_types)
+
+add_executable(test_function_literals
+    test_function_literals.cpp
+)
+target_link_libraries(test_function_literals PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_function_literals)
+
+add_executable(test_cst_edge_cases
+    test_cst_edge_cases.cpp
+)
+target_link_libraries(test_cst_edge_cases PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_cst_edge_cases)
+
+# AST tests
+add_executable(test_ast
+    test_ast.cpp
+)
+target_link_libraries(test_ast PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_ast)
+
+# AST coverage tests (additional tests to improve function coverage)
+add_executable(test_ast_coverage
+    test_ast_coverage.cpp
+)
+target_link_libraries(test_ast_coverage PRIVATE czc GTest::gtest_main)
+gtest_discover_tests(test_ast_coverage)
+

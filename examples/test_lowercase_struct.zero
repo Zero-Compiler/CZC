@@ -1,0 +1,20 @@
+// Test struct literals with lowercase type names
+struct point {
+    x: Integer,
+    y: Integer
+};
+struct person {
+    name: String,
+    age: Integer
+};
+// 小写类型名的结构体字面量
+let p1 = point {
+    x: 10,
+    y: 20};
+let p2 = person {
+    name: "Bob",
+    age: 25};   // 仍然能正确识别 if 语句
+let flag = true;
+if flag {
+    return "yes";
+}

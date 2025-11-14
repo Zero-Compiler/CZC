@@ -12,12 +12,14 @@
 #include <fstream>
 #include <sstream>
 
+#include "test_helpers.hpp"
 #include <gtest/gtest.h>
 
 using namespace czc::lexer;
 using namespace czc::parser;
 using namespace czc::formatter;
 using namespace czc::cst;
+using namespace czc::test;
 
 // --- Test Fixtures ---
 
@@ -54,7 +56,11 @@ TEST_F(CommentsTest, CommentInCST) {
   auto cst = parser.parse();
 
   ASSERT_NE(cst, nullptr);
-  EXPECT_EQ(cst->get_type(), CSTNodeType::Program);
+  verify_node(cst.get(), CSTNodeType::Program);
+
+  // 验证有两个变量声明
+  size_t var_count = count_nodes(cst.get(), CSTNodeType::VarDeclaration);
+  EXPECT_EQ(var_count, 2) << "Should have 2 variable declarations";
 }
 
 TEST_F(CommentsTest, CommentFormatting) {

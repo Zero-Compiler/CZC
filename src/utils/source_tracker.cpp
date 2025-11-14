@@ -7,8 +7,7 @@
 
 #include "czc/utils/source_tracker.hpp"
 
-namespace czc {
-namespace utils {
+namespace czc::utils {
 
 SourceTracker::SourceTracker(const std::string& source,
                              const std::string& fname)
@@ -98,5 +97,4 @@ std::string SourceTracker::get_source_line(size_t line_num) const {
   return std::string(input.begin() + line_start, input.begin() + line_end);
 }
 
-} // namespace utils
-} // namespace czc
+} // namespace czc::utils
