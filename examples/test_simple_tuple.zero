@@ -1,2 +1,0 @@
-// Simple tuple test  
-let pair : (Integer, String) = (42, "answer");

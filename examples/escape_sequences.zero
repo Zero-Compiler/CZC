@@ -1,5 +1,0 @@
-// 转义序列示例
-let str1 = "He said \"Hello\"";
-let str2 = "Line 1\nLine 2";
-let str3 = "Tab:\there";
-let str4 = "Backslash: \\";

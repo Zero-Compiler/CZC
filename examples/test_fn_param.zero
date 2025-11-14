@@ -1,3 +1,0 @@
-fn processArray(arr:Integer[], size:Integer) -> Integer {
-    return size;
-}

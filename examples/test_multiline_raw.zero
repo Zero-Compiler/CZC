@@ -1,9 +1,0 @@
-// 测试普通字符串支持换行
-let multiline = "第一行\n第二行\n第三行";   // 测试 raw string 不处理转义
-let path = r"C:\Users\begonia\Documents";
-let regex = r"\d+\.\d+";   // raw string 也支持换行
-let raw_multiline = r"Line 1
-Line 2
-Line 3";   // 对比：普通字符串处理转义
-let normal = "包含换行符\n和制表符\t的字符串";
-let raw = r"包含换行符\n和制表符\t的字符串";
