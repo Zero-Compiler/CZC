@@ -13,8 +13,8 @@ namespace czc::lexer {
 
 Token::Token(TokenType type, const std::string& val, size_t line, size_t column,
              bool synthetic)
-    : token_type(type), value(val), raw_literal(""), line(line), column(column),
-      is_synthetic(synthetic), is_raw_string(false) {}
+    : token_type(type), value(val), line(line), column(column),
+      is_synthetic(synthetic) {}
 
 std::optional<TokenType> get_keyword(const std::string& word) {
   // NOTE: 使用静态哈希表优化关键字查找性能。
@@ -158,7 +158,6 @@ std::string token_type_to_string(TokenType type) {
   case TokenType::EndOfFile:
     return "EOF";
   case TokenType::Unknown:
-    return "Unknown";
   default:
     return "Unknown";
   }

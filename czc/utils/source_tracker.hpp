@@ -92,7 +92,7 @@ public:
    * @brief 获取当前在输入中的字节位置。
    * @return 返回当前位置的字节索引。
    */
-  size_t get_position() const {
+  [[nodiscard]] size_t get_position() const noexcept {
     return position;
   }
 
@@ -100,7 +100,7 @@ public:
    * @brief 获取当前行号。
    * @return 返回当前位置的行号（从 1 开始）。
    */
-  size_t get_line() const {
+  [[nodiscard]] size_t get_line() const noexcept {
     return line;
   }
 
@@ -108,7 +108,7 @@ public:
    * @brief 获取当前列号。
    * @return 返回当前位置的列号（从 1 开始）。
    */
-  size_t get_column() const {
+  [[nodiscard]] size_t get_column() const noexcept {
     return column;
   }
 
@@ -116,7 +116,7 @@ public:
    * @brief 获取源文件名。
    * @return 返回对源文件名的常量引用。
    */
-  const std::string& get_filename() const {
+  [[nodiscard]] const std::string& get_filename() const noexcept {
     return filename;
   }
 
@@ -139,7 +139,7 @@ public:
    * @brief 获取对整个输入源文本的只读访问权限。
    * @return 返回对内部字符向量的常量引用。
    */
-  const std::vector<char>& get_input() const {
+  [[nodiscard]] const std::vector<char>& get_input() const noexcept {
     return input;
   }
 };

@@ -130,7 +130,7 @@ public:
 
   // 标记字符串字面量是否为原始字符串（r"..."）。
   // 仅对 TokenType::String 有意义，其他类型忽略此字段。
-  bool is_raw_string;
+  bool is_raw_string{false};
 
   /**
    * @brief 构造一个新的 Token 对象。
@@ -150,8 +150,8 @@ public:
    *   使用工厂方法而非直接构造，可以避免重复代码并使意图更清晰。
    * @return 一个表示文件结束的 Token 对象。
    */
-  static Token makeEOF() {
-    return Token(TokenType::EndOfFile, "", 0, 0);
+  [[nodiscard]] static Token makeEOF() {
+    return {TokenType::EndOfFile, "", 0, 0};
   }
 };
 
@@ -161,7 +161,7 @@ public:
  * @return 如果 `word` 是一个关键字，则返回对应的 `TokenType`；
  *         否则返回 `std::nullopt`。
  */
-std::optional<TokenType> get_keyword(const std::string& word);
+[[nodiscard]] std::optional<TokenType> get_keyword(const std::string& word);
 
 /**
  * @brief 将 TokenType 枚举转换为人类可读的字符串表示。
@@ -169,7 +169,7 @@ std::optional<TokenType> get_keyword(const std::string& word);
  * @param[in] type 要转换的 TokenType。
  * @return 该类型的字符串表示（例如，"TokenType::Integer"）。
  */
-std::string token_type_to_string(TokenType type);
+[[nodiscard]] std::string token_type_to_string(TokenType type);
 
 } // namespace czc::lexer
 
