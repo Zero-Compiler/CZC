@@ -144,14 +144,14 @@ public:
   /**
    * @brief 获取节点类型
    */
-  ASTNodeKind get_kind() const {
+  [[nodiscard]] ASTNodeKind get_kind() const noexcept {
     return kind_;
   }
 
   /**
    * @brief 获取源码位置
    */
-  const utils::SourceLocation& get_location() const {
+  [[nodiscard]] const utils::SourceLocation& get_location() const noexcept {
     return location_;
   }
 
@@ -165,7 +165,7 @@ public:
   /**
    * @brief 获取类型信息
    */
-  std::shared_ptr<Type> get_type() const {
+  [[nodiscard]] std::shared_ptr<Type> get_type() const noexcept {
     return type_;
   }
 
@@ -230,7 +230,8 @@ public:
     declarations_.push_back(decl);
   }
 
-  const std::vector<std::shared_ptr<Declaration>>& get_declarations() const {
+  [[nodiscard]] const std::vector<std::shared_ptr<Declaration>>&
+  get_declarations() const noexcept {
     return declarations_;
   }
 
@@ -247,7 +248,7 @@ public:
   Identifier(const std::string& name, const utils::SourceLocation& location)
       : Expression(ASTNodeKind::Identifier, location), name_(name) {}
 
-  const std::string& get_name() const {
+  [[nodiscard]] const std::string& get_name() const noexcept {
     return name_;
   }
 
@@ -264,7 +265,7 @@ public:
   IntegerLiteral(int64_t value, const utils::SourceLocation& location)
       : Expression(ASTNodeKind::IntegerLiteral, location), value_(value) {}
 
-  int64_t get_value() const {
+  [[nodiscard]] int64_t get_value() const noexcept {
     return value_;
   }
 
@@ -284,13 +285,13 @@ public:
       : Expression(ASTNodeKind::BinaryOp, location), op_(op), left_(left),
         right_(right) {}
 
-  BinaryOperator get_operator() const {
+  [[nodiscard]] BinaryOperator get_operator() const noexcept {
     return op_;
   }
-  std::shared_ptr<Expression> get_left() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_left() const noexcept {
     return left_;
   }
-  std::shared_ptr<Expression> get_right() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_right() const noexcept {
     return right_;
   }
 
@@ -313,7 +314,8 @@ public:
     statements_.push_back(stmt);
   }
 
-  const std::vector<std::shared_ptr<Statement>>& get_statements() const {
+  [[nodiscard]] const std::vector<std::shared_ptr<Statement>>&
+  get_statements() const noexcept {
     return statements_;
   }
 
@@ -333,13 +335,13 @@ public:
       : Declaration(ASTNodeKind::VarDecl, location), name_(name), type_(type),
         init_(init) {}
 
-  const std::string& get_name() const {
+  [[nodiscard]] const std::string& get_name() const noexcept {
     return name_;
   }
-  std::shared_ptr<Type> get_type_annotation() const {
+  [[nodiscard]] std::shared_ptr<Type> get_type_annotation() const noexcept {
     return type_;
   }
-  std::shared_ptr<Expression> get_initializer() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_initializer() const noexcept {
     return init_;
   }
 
@@ -358,7 +360,7 @@ public:
   FloatLiteral(double value, const utils::SourceLocation& location)
       : Expression(ASTNodeKind::FloatLiteral, location), value_(value) {}
 
-  double get_value() const {
+  [[nodiscard]] double get_value() const noexcept {
     return value_;
   }
 
@@ -375,7 +377,7 @@ public:
   StringLiteral(const std::string& value, const utils::SourceLocation& location)
       : Expression(ASTNodeKind::StringLiteral, location), value_(value) {}
 
-  const std::string& get_value() const {
+  [[nodiscard]] const std::string& get_value() const noexcept {
     return value_;
   }
 
@@ -392,7 +394,7 @@ public:
   BooleanLiteral(bool value, const utils::SourceLocation& location)
       : Expression(ASTNodeKind::BooleanLiteral, location), value_(value) {}
 
-  bool get_value() const {
+  [[nodiscard]] bool get_value() const noexcept {
     return value_;
   }
 
@@ -411,10 +413,10 @@ public:
       : Expression(ASTNodeKind::UnaryOp, location), op_(op), operand_(operand) {
   }
 
-  UnaryOperator get_operator() const {
+  [[nodiscard]] UnaryOperator get_operator() const noexcept {
     return op_;
   }
-  std::shared_ptr<Expression> get_operand() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_operand() const noexcept {
     return operand_;
   }
 
@@ -434,7 +436,7 @@ public:
             const utils::SourceLocation& location)
       : Expression(ASTNodeKind::ParenExpr, location), expr_(expr) {}
 
-  std::shared_ptr<Expression> get_expression() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_expression() const noexcept {
     return expr_;
   }
 
@@ -455,10 +457,11 @@ public:
       : Expression(ASTNodeKind::CallExpr, location), callee_(callee),
         arguments_(std::move(arguments)) {}
 
-  std::shared_ptr<Expression> get_callee() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_callee() const noexcept {
     return callee_;
   }
-  const std::vector<std::shared_ptr<Expression>>& get_arguments() const {
+  [[nodiscard]] const std::vector<std::shared_ptr<Expression>>&
+  get_arguments() const noexcept {
     return arguments_;
   }
 
@@ -480,10 +483,10 @@ public:
       : Expression(ASTNodeKind::IndexExpr, location), object_(object),
         index_(index) {}
 
-  std::shared_ptr<Expression> get_object() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_object() const noexcept {
     return object_;
   }
-  std::shared_ptr<Expression> get_index() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_index() const noexcept {
     return index_;
   }
 
@@ -504,10 +507,10 @@ public:
       : Expression(ASTNodeKind::MemberExpr, location), object_(object),
         member_(member) {}
 
-  std::shared_ptr<Expression> get_object() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_object() const noexcept {
     return object_;
   }
-  std::string get_member() const {
+  [[nodiscard]] std::string get_member() const noexcept {
     return member_;
   }
 
@@ -526,7 +529,7 @@ public:
            const utils::SourceLocation& location)
       : Statement(ASTNodeKind::ExprStmt, location), expr_(expr) {}
 
-  std::shared_ptr<Expression> get_expression() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_expression() const noexcept {
     return expr_;
   }
 
@@ -544,7 +547,7 @@ public:
              const utils::SourceLocation& location)
       : Statement(ASTNodeKind::ReturnStmt, location), value_(value) {}
 
-  std::shared_ptr<Expression> get_value() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_value() const noexcept {
     return value_;
   }
 
@@ -565,13 +568,13 @@ public:
       : Statement(ASTNodeKind::IfStmt, location), condition_(condition),
         then_branch_(then_branch), else_branch_(else_branch) {}
 
-  std::shared_ptr<Expression> get_condition() const {
+  [[nodiscard]] std::shared_ptr<Expression> get_condition() const noexcept {
     return condition_;
   }
-  std::shared_ptr<Statement> get_then_branch() const {
+  [[nodiscard]] std::shared_ptr<Statement> get_then_branch() const noexcept {
     return then_branch_;
   }
-  std::shared_ptr<Statement> get_else_branch() const {
+  [[nodiscard]] std::shared_ptr<Statement> get_else_branch() const noexcept {
     return else_branch_;
   }
 
@@ -591,10 +594,10 @@ public:
             const utils::SourceLocation& location)
       : ASTNode(ASTNodeKind::VarDecl, location), name_(name), type_(type) {}
 
-  const std::string& get_name() const {
+  [[nodiscard]] const std::string& get_name() const noexcept {
     return name_;
   }
-  std::shared_ptr<Type> get_type() const {
+  [[nodiscard]] std::shared_ptr<Type> get_type() const noexcept {
     return type_;
   }
 
@@ -617,16 +620,17 @@ public:
       : Declaration(ASTNodeKind::FunctionDecl, location), name_(name),
         parameters_(parameters), return_type_(return_type), body_(body) {}
 
-  const std::string& get_name() const {
+  [[nodiscard]] const std::string& get_name() const noexcept {
     return name_;
   }
-  const std::vector<std::shared_ptr<Parameter>>& get_parameters() const {
+  [[nodiscard]] const std::vector<std::shared_ptr<Parameter>>&
+  get_parameters() const noexcept {
     return parameters_;
   }
-  std::shared_ptr<Type> get_return_type() const {
+  [[nodiscard]] std::shared_ptr<Type> get_return_type() const noexcept {
     return return_type_;
   }
-  std::shared_ptr<BlockStmt> get_body() const {
+  [[nodiscard]] std::shared_ptr<BlockStmt> get_body() const noexcept {
     return body_;
   }
 
@@ -648,10 +652,10 @@ public:
               const utils::SourceLocation& loc)
       : ASTNode(ASTNodeKind::StructField, loc), name_(name), type_(type) {}
 
-  std::string get_name() const {
+  [[nodiscard]] std::string get_name() const noexcept {
     return name_;
   }
-  std::shared_ptr<Type> get_type() const {
+  [[nodiscard]] std::shared_ptr<Type> get_type() const noexcept {
     return type_;
   }
 
@@ -673,10 +677,11 @@ public:
       : Declaration(ASTNodeKind::StructDecl, loc), name_(name),
         fields_(std::move(fields)) {}
 
-  std::string get_name() const {
+  [[nodiscard]] std::string get_name() const noexcept {
     return name_;
   }
-  const std::vector<std::shared_ptr<StructField>>& get_fields() const {
+  [[nodiscard]] const std::vector<std::shared_ptr<StructField>>&
+  get_fields() const noexcept {
     return fields_;
   }
 

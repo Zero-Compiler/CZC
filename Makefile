@@ -1,4 +1,4 @@
-.PHONY: all build release debug clean test install help fmt tidy pullall pullerrmsg coverage coverage-report benchmark docs runbeforecommit
+.PHONY: all build release debug clean test install help fmt tidy pullall pullerrmsg coverage coverage-report benchmark docs runbeforecommit analyze analyze-clang-tidy analyze-cppcheck analyze-full
 
 # ANSI 颜色代码定义
 COLOR_RESET   := \033[0m
@@ -52,7 +52,7 @@ build: release
 release:
 	$(call ts_msg,Building CZC Compiler (Release Mode))
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)╔═══════════════════════════════════════╗\n$(COLOR_RESET)"
-	@printf "$(COLOR_BLUE)$(COLOR_BOLD)║  CZC COMPILER - RELEASE BUILD        ║\n$(COLOR_RESET)"
+	@printf "$(COLOR_BLUE)$(COLOR_BOLD)║    CZ COMPILER - RELEASE BUILD        ║\n$(COLOR_RESET)"
 	@printf "$(COLOR_BLUE)$(COLOR_BOLD)╚═══════════════════════════════════════╝\n$(COLOR_RESET)"
 	@printf "$(COLOR_CYAN)Configuration: $(COLOR_BOLD)Release (Optimized)$(COLOR_RESET)\n"
 	@printf "$(COLOR_CYAN)CPU Cores: $(COLOR_BOLD)$(NPROC)$(COLOR_RESET)\n"
@@ -75,7 +75,7 @@ release:
 debug:
 	$(call ts_msg,Building CZC Compiler (Debug Mode))
 	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)╔═══════════════════════════════════════╗\n$(COLOR_RESET)"
-	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)║  CZC COMPILER - DEBUG BUILD          ║\n$(COLOR_RESET)"
+	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)║    CZ COMPILER - DEBUG BUILD          ║\n$(COLOR_RESET)"
 	@printf "$(COLOR_YELLOW)$(COLOR_BOLD)╚═══════════════════════════════════════╝\n$(COLOR_RESET)"
 	@printf "$(COLOR_CYAN)Configuration: $(COLOR_BOLD)Debug + Coverage$(COLOR_RESET)\n"
 	@printf "$(COLOR_CYAN)CPU Cores: $(COLOR_BOLD)$(NPROC)$(COLOR_RESET)\n"

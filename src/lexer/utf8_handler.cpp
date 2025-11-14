@@ -94,7 +94,7 @@ bool Utf8Handler::read_char(const std::string& input, size_t& pos,
     return false;
   }
 
-  unsigned char first_byte = static_cast<unsigned char>(input[pos]);
+  auto first_byte = static_cast<unsigned char>(input[pos]);
   size_t char_len = get_char_length(first_byte);
 
   // 检查计算出的字符长度是否有效，以及输入字符串中是否还有足够的字节来构成一个完整的字符。
@@ -126,7 +126,7 @@ bool Utf8Handler::read_char(const std::vector<char>& input, size_t& pos,
     return false;
   }
 
-  unsigned char first_byte = static_cast<unsigned char>(input[pos]);
+  auto first_byte = static_cast<unsigned char>(input[pos]);
   size_t char_len = get_char_length(first_byte);
 
   // 检查计算出的字符长度是否有效，以及输入字符串中是否还有足够的字节来构成一个完整的字符。

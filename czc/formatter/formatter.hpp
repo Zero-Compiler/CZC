@@ -47,7 +47,7 @@ public:
    * @param[in] root 指向 CST 根节点的指针。
    * @return 格式化后的源代码字符串。如果根节点为空，则返回空字符串。
    */
-  std::string format(const cst::CSTNode* root);
+  [[nodiscard]] std::string format(const cst::CSTNode* root);
 
   /**
    * @brief 获取对内部错误收集器的访问权限。

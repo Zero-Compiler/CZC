@@ -121,7 +121,7 @@ public:
    * @brief 获取节点类型。
    * @return 节点的类型枚举值。
    */
-  CSTNodeType get_type() const {
+  [[nodiscard]] CSTNodeType get_type() const noexcept {
     return node_type;
   }
 
@@ -129,7 +129,7 @@ public:
    * @brief 获取节点的源码位置。
    * @return 节点的源码位置信息。
    */
-  const utils::SourceLocation& get_location() const {
+  [[nodiscard]] const utils::SourceLocation& get_location() const noexcept {
     return location;
   }
 
@@ -143,7 +143,8 @@ public:
    * @brief 获取所有子节点。
    * @return 子节点列表的常量引用。
    */
-  const std::vector<std::unique_ptr<CSTNode>>& get_children() const {
+  [[nodiscard]] const std::vector<std::unique_ptr<CSTNode>>&
+  get_children() const noexcept {
     return children;
   }
 
@@ -159,7 +160,7 @@ public:
    * @brief 获取关联的 Token。
    * @return Token 的可选值。
    */
-  const std::optional<lexer::Token>& get_token() const {
+  [[nodiscard]] const std::optional<lexer::Token>& get_token() const noexcept {
     return token;
   }
 
@@ -185,7 +186,7 @@ protected:
  * @param[in] type 节点类型。
  * @return 类型的字符串表示。
  */
-std::string cst_node_type_to_string(CSTNodeType type);
+[[nodiscard]] std::string cst_node_type_to_string(CSTNodeType type);
 
 /**
  * @brief 创建一个新的 CST 节点。
@@ -193,8 +194,8 @@ std::string cst_node_type_to_string(CSTNodeType type);
  * @param[in] location 源码位置。
  * @return 新创建的节点的智能指针。
  */
-std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
-                                       const utils::SourceLocation& location);
+[[nodiscard]] std::unique_ptr<CSTNode>
+make_cst_node(CSTNodeType type, const utils::SourceLocation& location);
 
 /**
  * @brief 创建一个带 Token 的 CST 节点。
@@ -202,8 +203,8 @@ std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
  * @param[in] token Token 对象。
  * @return 新创建的节点的智能指针。
  */
-std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
-                                       const lexer::Token& token);
+[[nodiscard]] std::unique_ptr<CSTNode> make_cst_node(CSTNodeType type,
+                                                     const lexer::Token& token);
 
 } // namespace czc::cst
 

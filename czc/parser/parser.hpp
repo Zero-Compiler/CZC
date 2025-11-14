@@ -47,13 +47,13 @@ public:
    * @brief 解析 Token 流并生成 CST。
    * @return 解析成功返回程序根节点，失败返回 nullptr。
    */
-  std::unique_ptr<cst::CSTNode> parse();
+  [[nodiscard]] std::unique_ptr<cst::CSTNode> parse();
 
   /**
    * @brief 获取解析过程中收集的所有错误。
    * @return 错误列表的常量引用。
    */
-  const std::vector<ParserError>& get_errors() const {
+  [[nodiscard]] const std::vector<ParserError>& get_errors() const noexcept {
     return error_collector.get_errors();
   }
 
@@ -61,7 +61,7 @@ public:
    * @brief 检查是否有解析错误。
    * @return 如果有错误返回 true，否则返回 false。
    */
-  bool has_errors() const {
+  [[nodiscard]] bool has_errors() const noexcept {
     return error_collector.has_errors();
   }
 

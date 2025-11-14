@@ -649,43 +649,59 @@ ASTBuilder::build_identifier(const cst::CSTNode* cst_node) {
 // === 辅助方法实现 ===
 
 BinaryOperator ASTBuilder::parse_binary_operator(const std::string& op_str) {
-  if (op_str == "+")
+  if (op_str == "+") {
     return BinaryOperator::Add;
-  if (op_str == "-")
+  }
+  if (op_str == "-") {
     return BinaryOperator::Sub;
-  if (op_str == "*")
+  }
+  if (op_str == "*") {
     return BinaryOperator::Mul;
-  if (op_str == "/")
+  }
+  if (op_str == "/") {
     return BinaryOperator::Div;
-  if (op_str == "%")
+  }
+  if (op_str == "%") {
     return BinaryOperator::Mod;
-  if (op_str == "==")
+  }
+  if (op_str == "==") {
     return BinaryOperator::Eq;
-  if (op_str == "!=")
+  }
+  if (op_str == "!=") {
     return BinaryOperator::Ne;
-  if (op_str == "<")
+  }
+  if (op_str == "<") {
     return BinaryOperator::Lt;
-  if (op_str == "<=")
+  }
+  if (op_str == "<=") {
     return BinaryOperator::Le;
-  if (op_str == ">")
+  }
+  if (op_str == ">") {
     return BinaryOperator::Gt;
-  if (op_str == ">=")
+  }
+  if (op_str == ">=") {
     return BinaryOperator::Ge;
-  if (op_str == "&&")
+  }
+  if (op_str == "&&") {
     return BinaryOperator::And;
-  if (op_str == "||")
+  }
+  if (op_str == "||") {
     return BinaryOperator::Or;
+  }
 
   throw std::runtime_error("Unknown binary operator: " + op_str);
 }
 
 UnaryOperator ASTBuilder::parse_unary_operator(const std::string& op_str) {
-  if (op_str == "+")
+  if (op_str == "+") {
     return UnaryOperator::Plus;
-  if (op_str == "-")
+  }
+  if (op_str == "-") {
     return UnaryOperator::Minus;
-  if (op_str == "!")
+  }
+  if (op_str == "!") {
     return UnaryOperator::Not;
+  }
 
   throw std::runtime_error("Unknown unary operator: " + op_str);
 }

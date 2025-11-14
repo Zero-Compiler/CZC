@@ -165,13 +165,13 @@ public:
    * @brief 对整个输入字符串执行词法分析，并返回所有 Token 的列表。
    * @return 包含所有解析出的 Token 的向量，不包括 `EndOfFile` Token。
    */
-  std::vector<Token> tokenize();
+  [[nodiscard]] std::vector<Token> tokenize();
 
   /**
    * @brief 获取对内部错误收集器的只读访问权限。
    * @return 对 LexErrorCollector 对象的常量引用。
    */
-  const LexErrorCollector& get_errors() const {
+  [[nodiscard]] const LexErrorCollector& get_errors() const noexcept {
     return error_collector;
   }
 };
