@@ -1,0 +1,387 @@
+# English translations for CZC compiler diagnostics
+# File: resources/i18n/en.toml
+
+[meta]
+language = "English"
+locale = "en"
+version = "0.0.1"
+
+# =============================================================================
+# Lexer Errors (E0001 - E0999)
+# =============================================================================
+
+[E0001]
+message = "missing hex digits after `0x`"
+explanation = """
+A hexadecimal literal was started with `0x` but no valid hex digits followed.
+
+Hexadecimal literals must have at least one digit (0-9, a-f, A-F) after the `0x` prefix.
+
+**Examples:**
+```zero
+let valid = 0xFF;     // OK
+let invalid = 0x;     // Error: no digits after 0x
+```
+"""
+
+[E0002]
+message = "missing octal digits after `0o`"
+explanation = """
+An octal literal was started with `0o` but no valid octal digits followed.
+
+Octal literals must have at least one digit (0-7) after the `0o` prefix.
+
+**Examples:**
+```zero
+let valid = 0o755;    // OK
+let invalid = 0o;     // Error: no digits after 0o
+```
+"""
+
+[E0003]
+message = "missing binary digits after `0b`"
+explanation = """
+A binary literal was started with `0b` but no valid binary digits followed.
+
+Binary literals must have at least one digit (0 or 1) after the `0b` prefix.
+
+**Examples:**
+```zero
+let valid = 0b1010;   // OK
+let invalid = 0b;     // Error: no digits after 0b
+```
+"""
+
+[E0004]
+message = "invalid digit `{digit}` in {base} literal"
+explanation = """
+An invalid digit was found in a numeric literal for the specified base.
+
+- Binary (0b): only 0 and 1 are valid
+- Octal (0o): only 0-7 are valid  
+- Decimal: only 0-9 are valid
+- Hexadecimal (0x): only 0-9, a-f, A-F are valid
+
+**Examples:**
+```zero
+let binary_error = 0b102;    // Error: '2' is not valid in binary
+let octal_error = 0o789;     // Error: '8' and '9' are not valid in octal
+```
+"""
+
+[E0005]
+message = "number too large to fit in any integer type"
+explanation = """
+The numeric literal is too large to be represented by any integer type.
+
+The maximum value for the largest integer type (i128/u128) has been exceeded.
+
+Consider breaking the value into smaller components or using a different representation.
+"""
+
+[E0006]
+message = "unterminated string literal"
+explanation = """
+A string literal was started but never closed.
+
+String literals must end with the same quote character that started them.
+
+**Examples:**
+```zero
+let valid = "hello world";      // OK
+let invalid = "hello world;     // Error: missing closing quote
+```
+"""
+
+[E0007]
+message = "unterminated character literal"
+explanation = """
+A character literal was started but never closed.
+
+Character literals must end with a single quote.
+
+**Examples:**
+```zero
+let valid = 'a';      // OK
+let invalid = 'a;     // Error: missing closing quote
+```
+"""
+
+[E0008]
+message = "unterminated block comment"
+explanation = """
+A block comment `/* */` was started but never closed.
+
+Block comments must be closed with `*/`. Nested block comments are supported.
+
+**Examples:**
+```zero
+/* This is valid */
+
+/* This is /* nested */ also valid */
+
+/* This is invalid - missing close
+```
+"""
+
+[E0009]
+message = "invalid escape sequence `\\{char}`"
+explanation = """
+An unrecognized escape sequence was found in a string or character literal.
+
+Valid escape sequences:
+- `\\n` - newline
+- `\\r` - carriage return
+- `\\t` - tab
+- `\\\\` - backslash
+- `\\'` - single quote
+- `\\"` - double quote
+- `\\0` - null character
+- `\\x{HH}` - hex escape (2 digits)
+- `\\u{{HHHH}}` - unicode escape (4 digits)
+
+**Examples:**
+```zero
+let valid = "hello\\nworld";    // OK: newline
+let invalid = "hello\\qworld";  // Error: \\q is not valid
+```
+"""
+
+[E0010]
+message = "invalid Unicode codepoint: U+{codepoint}"
+explanation = """
+The Unicode escape sequence represents an invalid Unicode codepoint.
+
+Valid Unicode codepoints are in the range U+0000 to U+10FFFF, excluding the 
+surrogate range U+D800 to U+DFFF.
+
+**Examples:**
+```zero
+let valid = "\\u{1F600}";       // OK: 😀
+let invalid = "\\u{FFFFFF}";    // Error: out of range
+```
+"""
+
+[E0011]
+message = "unexpected character: `{char}`"
+explanation = """
+An unexpected character was encountered that is not valid in this context.
+
+This character is not part of any valid token in the Zero language.
+"""
+
+[E0012]
+message = "invalid UTF-8 sequence"
+explanation = """
+The source file contains an invalid UTF-8 byte sequence.
+
+Zero source files must be valid UTF-8. Please check your file encoding.
+"""
+
+[E0013]
+message = "empty character literal"
+explanation = """
+A character literal must contain exactly one character.
+
+**Examples:**
+```zero
+let valid = 'a';    // OK
+let invalid = '';   // Error: empty character literal
+```
+"""
+
+[E0014]
+message = "character literal may only contain one codepoint"
+explanation = """
+A character literal must contain exactly one Unicode codepoint.
+
+For multiple characters, use a string literal instead.
+
+**Examples:**
+```zero
+let valid = 'a';          // OK: one character
+let invalid = 'ab';       // Error: two characters
+let string = "ab";        // OK: use string for multiple characters
+```
+"""
+
+# =============================================================================
+# CLI Errors (E1001 - E1999)
+# =============================================================================
+
+[E1001]
+message = "file not found: `{path}`"
+explanation = """
+The specified file could not be found.
+
+Please check that:
+- The file path is correct
+- The file exists
+- You have permission to read the file
+"""
+
+[E1002]
+message = "file too large: `{path}`"
+explanation = """
+The specified file exceeds the maximum allowed size.
+
+The maximum file size is 10MB. Please split larger files or contact the 
+developers if you need to process larger files.
+"""
+
+[E1003]
+message = "failed to open file: `{path}`"
+explanation = """
+The file exists but could not be opened.
+
+Please check that:
+- You have permission to read the file
+- The file is not locked by another process
+- The file system is accessible
+"""
+
+# =============================================================================
+# Lexer Module Errors (lexer.* keys)
+# =============================================================================
+
+[lexer]
+# Number errors
+missing_hex_digits.message = "missing hexadecimal digits after `0x`"
+missing_hex_digits.explanation = """
+A hexadecimal literal was started with `0x` but no valid hex digits followed.
+
+Hexadecimal literals must have at least one digit (0-9, a-f, A-F) after the `0x` prefix.
+
+**Examples:**
+```zero
+let valid = 0xFF;     // OK
+let invalid = 0x;     // Error: no digits after 0x
+```
+"""
+missing_hex_digits.label = "expected hex digit here"
+missing_hex_digits.help = "add hexadecimal digits (0-9, a-f, A-F) after `0x`"
+
+missing_binary_digits.message = "missing binary digits after `0b`"
+missing_binary_digits.explanation = """
+A binary literal was started with `0b` but no valid binary digits followed.
+
+Binary literals must have at least one digit (0 or 1) after the `0b` prefix.
+"""
+missing_binary_digits.label = "expected binary digit here"
+missing_binary_digits.help = "add binary digits (0 or 1) after `0b`"
+
+missing_octal_digits.message = "missing octal digits after `0o`"
+missing_octal_digits.explanation = """
+An octal literal was started with `0o` but no valid octal digits followed.
+
+Octal literals must have at least one digit (0-7) after the `0o` prefix.
+"""
+missing_octal_digits.label = "expected octal digit here"
+missing_octal_digits.help = "add octal digits (0-7) after `0o`"
+
+missing_exponent_digits.message = "missing digits in exponent"
+missing_exponent_digits.explanation = """
+A scientific notation number was started but no exponent digits followed.
+"""
+missing_exponent_digits.label = "expected digit here"
+missing_exponent_digits.help = "add digits after the exponent sign"
+
+invalid_trailing_char.message = "invalid trailing character in number literal"
+invalid_trailing_char.explanation = """
+A number literal was followed by an invalid character.
+"""
+invalid_trailing_char.label = "unexpected character here"
+
+invalid_number_suffix.message = "invalid number suffix"
+invalid_number_suffix.explanation = """
+An unrecognized suffix was found on a number literal.
+"""
+invalid_number_suffix.label = "invalid suffix"
+
+# String errors
+invalid_escape_sequence.message = "invalid escape sequence"
+invalid_escape_sequence.explanation = """
+An unrecognized escape sequence was found in a string literal.
+
+Valid escape sequences:
+- `\\n` - newline
+- `\\r` - carriage return
+- `\\t` - tab
+- `\\\\` - backslash
+- `\\'` - single quote
+- `\\"` - double quote
+- `\\0` - null character
+- `\\x{HH}` - hex escape (2 digits)
+- `\\u{{HHHH}}` - unicode escape
+"""
+invalid_escape_sequence.label = "invalid escape here"
+invalid_escape_sequence.help = "use a valid escape sequence"
+
+unterminated_string.message = "unterminated string literal"
+unterminated_string.explanation = """
+A string literal was started but never closed with a matching quote.
+
+String literals must end with the same quote character that started them.
+
+**Examples:**
+```zero
+let valid = "hello world";      // OK
+let invalid = "hello world;     // Error: missing closing quote
+```
+"""
+unterminated_string.label = "string literal starts here"
+unterminated_string.help = "add a closing `\"` to terminate the string"
+
+invalid_hex_escape.message = "invalid hexadecimal escape sequence"
+invalid_hex_escape.explanation = """
+A hex escape `\\xHH` requires exactly two hexadecimal digits.
+"""
+invalid_hex_escape.label = "invalid hex escape here"
+invalid_hex_escape.help = "use exactly two hexadecimal digits after `\\x`"
+
+invalid_unicode_escape.message = "invalid Unicode escape sequence"
+invalid_unicode_escape.explanation = """
+A Unicode escape `\\u{XXXX}` was malformed.
+"""
+invalid_unicode_escape.label = "invalid unicode escape here"
+invalid_unicode_escape.help = "use the format `\\u{HHHH}` with valid hex digits"
+
+unterminated_raw_string.message = "unterminated raw string literal"
+unterminated_raw_string.explanation = """
+A raw string literal was started but never closed.
+"""
+unterminated_raw_string.label = "raw string starts here"
+unterminated_raw_string.help = "close the raw string with matching quotes and hashes"
+
+# Character errors
+invalid_character.message = "invalid character"
+invalid_character.explanation = """
+An unexpected character was encountered that is not valid in this context.
+"""
+invalid_character.label = "unexpected character"
+
+invalid_utf8_sequence.message = "invalid UTF-8 sequence"
+invalid_utf8_sequence.explanation = """
+The source file contains an invalid UTF-8 byte sequence.
+
+Zero source files must be valid UTF-8. Please check your file encoding.
+"""
+invalid_utf8_sequence.label = "invalid UTF-8 here"
+invalid_utf8_sequence.help = "ensure the source file is valid UTF-8"
+
+# Comment errors
+unterminated_block_comment.message = "unterminated block comment"
+unterminated_block_comment.explanation = """
+A block comment `/* */` was started but never closed.
+
+Block comments must be closed with `*/`.
+"""
+unterminated_block_comment.label = "block comment starts here"
+unterminated_block_comment.help = "add `*/` to close the block comment"
+
+# General errors
+token_too_long.message = "token length exceeds limit"
+token_too_long.explanation = """
+A single token exceeded the maximum allowed length (65535 bytes).
+"""
+token_too_long.label = "token is too long"

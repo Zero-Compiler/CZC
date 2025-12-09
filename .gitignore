@@ -39,3 +39,24 @@
 
 # debug information files
 *.dwo
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+build/
+
+# macOS specific files
+.DS_Store
+
+# Makefile templates
+Makefile.template
+
+# copilot files
+.copilot/
+
+# Coverage output
+default.profraw
+*.profdata
+*.profraw
+coverage_html/

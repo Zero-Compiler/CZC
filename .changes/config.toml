@@ -1,0 +1,17 @@
+[branches]
+base = "main"
+release = "release"
+
+[tags]
+chore = "Chores"
+feat = "New Features"
+fix = "Bug Fixes"
+perf = "Performance Improvements"
+refactor = "Refactors"
+
+[packages.czc]
+path = "."
+resolver = "cpp"
+
+[resolver.cpp.pre-check]
+url = ""
